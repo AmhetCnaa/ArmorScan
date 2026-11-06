@@ -246,3 +246,86 @@ def get_complete_security_middleware() -> Dict[str, str]:
             "app.add_middleware(SecurityHeadersMiddleware)"
         ),
     }
+
+
+def get_cookie_hygiene_remediations() -> Dict[str, str]:
+    """Generates remediation snippets for secure cookie attributes (HttpOnly, Secure, SameSite)."""
+    return {
+        "express": (
+            "// Express.js with express-session:\n"
+            "const session = require('express-session');\n\n"
+            "app.use(session({\n"
+            "  name: '__Host-session',\n"
+            "  secret: process.env.SESSION_SECRET,\n"
+            "  resave: false,\n"
+            "  saveUninitialized: false,\n"
+            "  cookie: {\n"
+            "    secure: true,      // Requires HTTPS\n"
+            "    httpOnly: true,    // Prevents JavaScript access (XSS mitigation)\n"
+            "    sameSite: 'lax',   // CSRF protection ('lax' or 'strict')\n"
+            "    path: '/',\n"
+            "    maxAge: 3600000    // 1 hour\n"
+            "  }\n"
+            "}));"
+        ),
+        "fastapi": (
+            "# FastAPI secure cookie response:\n"
+            "from fastapi import Response\n\n"
+            "@app.post('/api/login')\n"
+            "async def login(response: Response):\n"
+            "    response.set_cookie(\n"
+            "        key='__Host-auth_token',\n"
+            "        value=jwt_token,\n"
+            "        httponly=True,   # Mitigates XSS cookie theft\n"
+            "        secure=True,     # Only sent over HTTPS\n"
+            "        samesite='lax',  # Mitigates CSRF\n"
+            "        path='/',\n"
+            "        max_age=3600\n"
+            "    )\n"
+            "    return {'status': 'authenticated'}"
+        ),
+        "django": (
+            "# Django settings.py (Production Security Checklist):\n"
+            "SESSION_COOKIE_SECURE = True     # Transmit session cookie over HTTPS only\n"
+            "SESSION_COOKIE_HTTPONLY = True   # Block document.cookie JS access\n"
+            "SESSION_COOKIE_SAMESITE = 'Lax'  # Prevent CSRF\n"
+            "CSRF_COOKIE_SECURE = True        # Transmit CSRF cookie over HTTPS only\n"
+            "CSRF_COOKIE_HTTPONLY = False     # Set to True if not needed by JS\n"
+            "CSRF_COOKIE_SAMESITE = 'Lax'"
+        ),
+    }
+
+
+def get_cookie_prefix_remediations() -> Dict[str, str]:
+    """Generates remediation guidance for __Host- and __Secure- cookie prefixes."""
+    return {
+        "express": (
+            "// Enforce __Host- prefix in Express.js:\n"
+            "// Note: __Host- requires Secure, Path=/, and NO Domain attribute.\n"
+            "res.cookie('__Host-session', token, {\n"
+            "  secure: true,\n"
+            "  httpOnly: true,\n"
+            "  sameSite: 'lax',\n"
+            "  path: '/'\n"
+            "});"
+        ),
+        "fastapi": (
+            "# Enforce __Host- prefix in FastAPI:\n"
+            "response.set_cookie(\n"
+            "    key='__Host-session',\n"
+            "    value=token,\n"
+            "    secure=True,\n"
+            "    httponly=True,\n"
+            "    samesite='lax',\n"
+            "    path='/',\n"
+            ")"
+        ),
+        "django": (
+            "# Django does not yet native-prefix session cookie names, but you can set:\n"
+            "SESSION_COOKIE_NAME = '__Host-session'\n"
+            "SESSION_COOKIE_SECURE = True\n"
+            "SESSION_COOKIE_PATH = '/'\n"
+            "SESSION_COOKIE_DOMAIN = None  # Must NOT specify domain for __Host-"
+        ),
+    }
+
