@@ -60,11 +60,8 @@ class InputReflectionModule(BaseModule):
         passed_checks: List[str],
     ) -> None:
         canary_id = uuid.uuid4().hex[:6]
-        # Canary payload with special characters: quotes and angle brackets
-        canary_payload = f"armorscan{canary_id}\"<'probe>"
-        # Verbatim unencoded marker
-        unescaped_marker = f"armorscan{canary_id}\"<'probe>"
-        unescaped_tag_marker = f"<'probe>"
+        canary_token = f"armorscan{canary_id}"
+        canary_payload = f"{canary_token}\"<'probe>"
 
         test_url = self._build_probe_url(target.raw_url, param_name, canary_payload)
         resp = await client.get(test_url)
@@ -75,24 +72,33 @@ class InputReflectionModule(BaseModule):
         text = resp.text
 
         # If canary is not reflected at all, parameter is not reflected
-        if f"armorscan{canary_id}" not in text:
+        if canary_token not in text:
             passed_checks.append(f"param-{param_name}:not-reflected")
             return
 
-        # Check if properly HTML-encoded (e.g. &lt; or &#39; or &#60;)
+        # Check if properly HTML-encoded (e.g. &lt; or &#39; or &#x27; or &#60;)
         is_encoded = (
-            f"&lt;&#39;probe&gt;" in text
+            f"&lt;&#x27;probe&gt;" in text
+            or f"&lt;&#39;probe&gt;" in text
             or f"&lt;&apos;probe&gt;" in text
             or f"&lt;'probe&gt;" in text
             or f"&#60;" in text
             or f"&quot;&lt;" in text
+            or f"&quot;&lt;&#x27;" in text
         )
 
-        # Check if unescaped angle brackets or quotes are reflected
-        if unescaped_marker in text or unescaped_tag_marker in text:
-            context = self._analyze_reflection_context(text, f"armorscan{canary_id}")
+        # Unescaped markers tied directly to the canary token
+        has_unescaped = (
+            f"{canary_token}\"<'probe>" in text
+            or f"{canary_token}<'probe>" in text
+            or (f"{canary_token}<" in text and not is_encoded)
+            or (f"{canary_token}\"" in text and not is_encoded)
+        )
 
-            if context == "script":
+        if has_unescaped:
+            contexts = self._find_all_reflection_contexts(text, canary_token)
+
+            if "script" in contexts:
                 findings.append(
                     Finding(
                         id="SCRIPT_CONTEXT_INPUT_REFLECTION",
@@ -111,7 +117,8 @@ class InputReflectionModule(BaseModule):
                         owasp_category="A03:2021-Injection",
                     )
                 )
-            elif context == "attribute":
+
+            if "attribute" in contexts:
                 findings.append(
                     Finding(
                         id="ATTRIBUTE_CONTEXT_INPUT_REFLECTION",
@@ -130,7 +137,8 @@ class InputReflectionModule(BaseModule):
                         owasp_category="A03:2021-Injection",
                     )
                 )
-            else:
+
+            if "body" in contexts:
                 findings.append(
                     Finding(
                         id="UNENCODED_HTML_INPUT_REFLECTION",
@@ -159,24 +167,29 @@ class InputReflectionModule(BaseModule):
         new_query = urlencode(params, doseq=True)
         return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
 
-    def _analyze_reflection_context(self, html_text: str, token: str) -> str:
-        """Heuristically identify whether token resides in a <script> block, an attribute, or body."""
-        idx = html_text.find(token)
-        if idx == -1:
-            return "body"
+    def _find_all_reflection_contexts(self, html_text: str, token: str) -> Set[str]:
+        """Find all distinct HTML contexts (script, attribute, body) where token occurs."""
+        contexts: Set[str] = set()
+        start = 0
+        while True:
+            idx = html_text.find(token, start)
+            if idx == -1:
+                break
 
-        # Check for <script> context: find last <script or </script before token
-        prefix = html_text[:idx].lower()
-        last_script_open = prefix.rfind("<script")
-        last_script_close = prefix.rfind("</script")
+            prefix = html_text[:idx].lower()
+            last_script_open = prefix.rfind("<script")
+            last_script_close = prefix.rfind("</script")
 
-        if last_script_open > last_script_close:
-            return "script"
+            if last_script_open > last_script_close:
+                contexts.add("script")
+            else:
+                last_tag_open = prefix.rfind("<")
+                last_tag_close = prefix.rfind(">")
+                if last_tag_open > last_tag_close:
+                    contexts.add("attribute")
+                else:
+                    contexts.add("body")
 
-        # Check for attribute context: inside a tag <tag attr="...token..."
-        last_tag_open = prefix.rfind("<")
-        last_tag_close = prefix.rfind(">")
-        if last_tag_open > last_tag_close:
-            return "attribute"
+            start = idx + len(token)
 
-        return "body"
+        return contexts or {"body"}

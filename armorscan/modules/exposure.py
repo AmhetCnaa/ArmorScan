@@ -56,9 +56,9 @@ class ExposureAuditModule(BaseModule):
 
         base_url = target.base_url
 
-        # Step 1: Establish Canary 404 Baseline
+        path_prefix = target.path.rstrip("/") if (target.path and target.path != "/") else ""
         canary_token = uuid.uuid4().hex[:12]
-        canary_url = f"{base_url}/armorscan-canary-404-{canary_token}"
+        canary_url = f"{base_url}{path_prefix}/armorscan-canary-404-{canary_token}"
         canary_resp = await client.get(canary_url)
 
         canary_status = canary_resp.status_code
@@ -79,7 +79,7 @@ class ExposureAuditModule(BaseModule):
             "/robots.txt",
         ]
 
-        probe_urls = [f"{base_url}{p}" for p in paths_to_probe]
+        probe_urls = [f"{base_url}{path_prefix}{p}" for p in paths_to_probe]
         responses = await client.burst_requests(probe_urls, concurrency=10)
 
         probe_map: Dict[str, HttpResponse] = {

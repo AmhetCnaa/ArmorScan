@@ -1,0 +1,200 @@
+description: "ArmorScan Controlled Benchmark Ground Truth Dataset"
+version: "1.0.0"
+endpoints:
+  - id: "reflection_vulnerable"
+    path: "/vuln/reflect?q=test"
+    module: "reflection"
+    type: "vulnerable"
+    expected_findings:
+      - "SCRIPT_CONTEXT_INPUT_REFLECTION"
+      - "UNENCODED_HTML_INPUT_REFLECTION"
+    forbidden_findings: []
+
+  - id: "reflection_safe"
+    path: "/safe/reflect?q=test"
+    module: "reflection"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "SCRIPT_CONTEXT_INPUT_REFLECTION"
+      - "UNENCODED_HTML_INPUT_REFLECTION"
+      - "ATTRIBUTE_CONTEXT_INPUT_REFLECTION"
+
+  - id: "redirect_vulnerable"
+    path: "/vuln/redirect?next=/dashboard"
+    module: "redirect"
+    type: "vulnerable"
+    expected_findings:
+      - "OPEN_REDIRECT_UNVALIDATED"
+    forbidden_findings: []
+
+  - id: "redirect_safe"
+    path: "/safe/redirect?next=/dashboard"
+    module: "redirect"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "OPEN_REDIRECT_UNVALIDATED"
+      - "CLIENT_SIDE_OPEN_REDIRECT"
+
+  - id: "error_leak_vulnerable"
+    path: "/vuln/error?id=1"
+    module: "error_leak"
+    type: "vulnerable"
+    expected_findings:
+      - "DATABASE_ERROR_DISCLOSURE"
+    forbidden_findings: []
+
+  - id: "error_leak_safe"
+    path: "/safe/error?id=1"
+    module: "error_leak"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "DATABASE_ERROR_DISCLOSURE"
+      - "STACK_TRACE_DISCLOSURE"
+
+  - id: "jwt_audit_vulnerable"
+    path: "/vuln/jwt"
+    module: "jwt_audit"
+    type: "vulnerable"
+    expected_findings:
+      - "JWT_INSECURE_ALGORITHM_NONE"
+      - "JWT_MISSING_EXPIRATION"
+      - "JWT_SENSITIVE_DATA_IN_PAYLOAD"
+    forbidden_findings: []
+
+  - id: "jwt_audit_safe"
+    path: "/safe/jwt"
+    module: "jwt_audit"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "JWT_INSECURE_ALGORITHM_NONE"
+      - "JWT_MISSING_EXPIRATION"
+      - "JWT_SENSITIVE_DATA_IN_PAYLOAD"
+
+  - id: "secret_leak_vulnerable"
+    path: "/vuln/secrets"
+    module: "secret_leak"
+    type: "vulnerable"
+    expected_findings:
+      - "OPENAI_API_KEY_LEAK"
+      - "AWS_ACCESS_KEY_LEAK"
+      - "STRIPE_SECRET_KEY_LEAK"
+      - "SLACK_WEBHOOK_LEAK"
+      - "INTERNAL_IP_DISCLOSURE"
+    forbidden_findings: []
+
+  - id: "secret_leak_safe"
+    path: "/safe/secrets"
+    module: "secret_leak"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "OPENAI_API_KEY_LEAK"
+      - "AWS_ACCESS_KEY_LEAK"
+      - "GITHUB_PAT_LEAK"
+      - "STRIPE_SECRET_KEY_LEAK"
+      - "SLACK_WEBHOOK_LEAK"
+      - "INTERNAL_IP_DISCLOSURE"
+
+  - id: "headers_vulnerable"
+    path: "/vuln/headers"
+    module: "headers"
+    type: "vulnerable"
+    expected_findings:
+      - "MISSING_CSP"
+      - "MISSING_X_FRAME_OPTIONS"
+      - "MISSING_X_CONTENT_TYPE_OPTIONS"
+      - "MISSING_REFERRER_POLICY"
+      - "MISSING_PERMISSIONS_POLICY"
+      - "SERVER_VERSION_DISCLOSURE"
+    forbidden_findings: []
+
+  - id: "headers_safe"
+    path: "/safe/headers"
+    module: "headers"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "MISSING_HSTS"
+      - "MISSING_CSP"
+      - "MISSING_X_FRAME_OPTIONS"
+      - "MISSING_X_CONTENT_TYPE_OPTIONS"
+      - "SERVER_VERSION_DISCLOSURE"
+      - "HSTS_ON_HTTP"
+
+  - id: "cookies_vulnerable"
+    path: "/vuln/cookies"
+    module: "cookies"
+    type: "vulnerable"
+    expected_findings:
+      - "COOKIE_MISSING_HTTPONLY_SESSION"
+      - "COOKIE_MISSING_SECURE_SESSION"
+      - "COOKIE_MISSING_SAMESITE"
+    forbidden_findings: []
+
+  - id: "cookies_safe"
+    path: "/safe/cookies"
+    module: "cookies"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "COOKIE_MISSING_HTTPONLY_SESSION"
+      - "COOKIE_MISSING_SECURE_SESSION"
+      - "COOKIE_MISSING_SAMESITE"
+
+  - id: "cors_vulnerable"
+    path: "/vuln/cors"
+    module: "cors"
+    type: "vulnerable"
+    expected_findings:
+      - "CORS_ARBITRARY_ORIGIN_WITH_CREDENTIALS"
+      - "HTTP_TRACE_METHOD_ENABLED"
+    forbidden_findings: []
+
+  - id: "cors_safe"
+    path: "/safe/cors"
+    module: "cors"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "CORS_ARBITRARY_ORIGIN_WITH_CREDENTIALS"
+      - "CORS_TRUST_NULL_ORIGIN"
+      - "CORS_WILDCARD_CREDENTIALS_CONFLICT"
+      - "HTTP_TRACE_METHOD_ENABLED"
+
+  - id: "ratelimit_vulnerable"
+    path: "/vuln/ratelimit"
+    module: "ratelimit"
+    type: "vulnerable"
+    expected_findings:
+      - "MISSING_RATE_LIMITING"
+    forbidden_findings: []
+
+  - id: "ratelimit_safe"
+    path: "/safe/ratelimit"
+    module: "ratelimit"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "MISSING_RATE_LIMITING"
+
+  - id: "exposure_vulnerable"
+    path: "/vuln/exposure"
+    module: "exposure"
+    type: "vulnerable"
+    expected_findings:
+      - "EXPOSED_ENV_FILE"
+      - "EXPOSED_GIT_REPOSITORY"
+    forbidden_findings: []
+
+  - id: "exposure_safe"
+    path: "/safe/exposure"
+    module: "exposure"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "EXPOSED_ENV_FILE"
+      - "EXPOSED_GIT_REPOSITORY"

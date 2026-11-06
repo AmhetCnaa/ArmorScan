@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  # 1. Controlled Lab Application (FastAPI Ground Truth Benchmark)
+  labapp:
+    build:
+      context: ./labapp
+      dockerfile: Dockerfile
+    container_name: armorscan-labapp
+    ports:
+      - "8888:8888"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8888
+    restart: unless-stopped
+
+  # 2. OWASP Juice Shop (Modern Vulnerable Single Page Application)
+  juice-shop:
+    image: bkimminich/juice-shop:v16.0.0
+    container_name: armorscan-juice-shop
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # 3. Damn Vulnerable Web Application (Classic Web Vulnerabilities)
+  dvwa:
+    image: vulnerables/web-dvwa:latest
+    container_name: armorscan-dvwa
+    ports:
+      - "8080:80"
+    restart: unless-stopped

@@ -70,7 +70,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "target",
         nargs="?",
-        help="Target URL or command (e.g., https://example.com or 'discover')",
+        help="Target URL or command (e.g., https://example.com, 'discover', or 'benchmark')",
     )
     parser.add_argument(
         "host_or_target",
@@ -228,12 +228,24 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         host = args.host_or_target or "127.0.0.1"
         return await run_discover_async(host, console)
 
-    # 3. Handle 'scan' sub-syntax: 'armorscan scan https://...'
+    # 3. Handle 'benchmark' command
+    if raw_target and raw_target.lower() == "benchmark":
+        from scripts.run_benchmark import main_async as run_benchmark_async
+        benchmark_args = argparse.Namespace(
+            url=args.host_or_target or "http://127.0.0.1:8888",
+            ground_truth="benchmark/ground_truth.yaml",
+            output="benchmark/results.md",
+            min_precision=0.95,
+            min_recall=0.95,
+        )
+        return await run_benchmark_async(benchmark_args)
+
+    # 4. Handle 'scan' sub-syntax: 'armorscan scan https://...'
     if raw_target and raw_target.lower() == "scan":
         raw_target = args.host_or_target
 
     if not raw_target:
-        console.print("[bold red]Error:[/bold red] Missing target URL. Usage: [cyan]armorscan https://example.com[/cyan] or [cyan]armorscan discover[/cyan]")
+        console.print("[bold red]Error:[/bold red] Missing target URL. Usage: [cyan]armorscan https://example.com[/cyan], [cyan]armorscan discover[/cyan], or [cyan]armorscan benchmark[/cyan]")
         return 2
 
     try:

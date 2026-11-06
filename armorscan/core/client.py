@@ -151,7 +151,11 @@ class HttpClient:
                 "Accept": "*/*",
                 "Accept-Language": "en-US,en;q=0.9",
             }
-            # Using trust_env=False avoids httpx URL parsing bugs with [::1] in NO_PROXY.
+            # Ensure localhost and 127.0.0.1 bypass proxy
+            mounts = {
+                "all://localhost": httpx.AsyncHTTPTransport(verify=self.verify_ssl),
+                "all://127.0.0.1": httpx.AsyncHTTPTransport(verify=self.verify_ssl),
+            }
             self._client = httpx.AsyncClient(
                 verify=self.verify_ssl,
                 timeout=self.timeout,
@@ -160,6 +164,7 @@ class HttpClient:
                 max_redirects=self.max_redirects,
                 http2=self.http2,
                 proxy=self.proxy,
+                mounts=mounts,
                 trust_env=False,
             )
 
