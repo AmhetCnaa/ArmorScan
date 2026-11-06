@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 import httpx
 
 from armorscan import __version__
+from armorscan.core.auth import AuthConfig
 from armorscan.core.models import ScanTarget
 
 DEFAULT_USER_AGENT = (
@@ -92,6 +93,7 @@ class HttpClient:
         max_redirects: int = 5,
         http2: bool = True,
         proxy: Optional[Union[str, bool]] = "auto",
+        auth_config: Optional[AuthConfig] = None,
     ):
         if verify_ssl is True:
             ca_bundle = os.environ.get("SSL_CERT_FILE")
@@ -108,6 +110,7 @@ class HttpClient:
         self.follow_redirects = follow_redirects
         self.max_redirects = max_redirects
         self.http2 = http2
+        self.auth_config = auth_config
 
         # Resolve proxy
         if proxy == "auto":
@@ -119,6 +122,7 @@ class HttpClient:
             self.proxy = None
 
         self._client: Optional[httpx.AsyncClient] = None
+        self._unauth_client: Optional[httpx.AsyncClient] = None
 
     @classmethod
     def for_target(
@@ -126,6 +130,7 @@ class HttpClient:
         target: ScanTarget,
         verify_ssl: bool = True,
         proxy: Optional[str] = "auto",
+        auth_config: Optional[AuthConfig] = None,
         **kwargs,
     ) -> HttpClient:
         """Create a client configured appropriately for target (e.g. bypassing proxy for localhost)."""
@@ -134,7 +139,7 @@ class HttpClient:
             resolved_proxy = None
             verify_ssl = False  # Localhost often uses self-signed or HTTP
 
-        return cls(verify_ssl=verify_ssl, proxy=resolved_proxy, **kwargs)
+        return cls(verify_ssl=verify_ssl, proxy=resolved_proxy, auth_config=auth_config, **kwargs)
 
     async def __aenter__(self) -> HttpClient:
         await self.start()
@@ -144,9 +149,9 @@ class HttpClient:
         await self.close()
 
     async def start(self) -> None:
-        """Initialize the underlying httpx AsyncClient."""
+        """Initialize the underlying httpx AsyncClients (authenticated and unauthenticated)."""
         if self._client is None or self._client.is_closed:
-            headers = {
+            base_headers = {
                 "User-Agent": self.user_agent,
                 "Accept": "*/*",
                 "Accept-Language": "en-US,en;q=0.9",
@@ -156,10 +161,33 @@ class HttpClient:
                 "all://localhost": httpx.AsyncHTTPTransport(verify=self.verify_ssl),
                 "all://127.0.0.1": httpx.AsyncHTTPTransport(verify=self.verify_ssl),
             }
+
+            # 1. Authenticated client
+            auth_headers = dict(base_headers)
+            cookies = None
+            if self.auth_config:
+                auth_headers.update(self.auth_config.headers)
+                if self.auth_config.cookies:
+                    cookies = self.auth_config.cookies
+
             self._client = httpx.AsyncClient(
                 verify=self.verify_ssl,
                 timeout=self.timeout,
-                headers=headers,
+                headers=auth_headers,
+                cookies=cookies,
+                follow_redirects=self.follow_redirects,
+                max_redirects=self.max_redirects,
+                http2=self.http2,
+                proxy=self.proxy,
+                mounts=mounts,
+                trust_env=False,
+            )
+
+            # 2. Dedicated unauthenticated client (no credentials, no auth cookies)
+            self._unauth_client = httpx.AsyncClient(
+                verify=self.verify_ssl,
+                timeout=self.timeout,
+                headers=base_headers,
                 follow_redirects=self.follow_redirects,
                 max_redirects=self.max_redirects,
                 http2=self.http2,
@@ -169,16 +197,63 @@ class HttpClient:
             )
 
     async def close(self) -> None:
-        """Close the underlying httpx client."""
+        """Close the underlying httpx clients."""
         if self._client is not None and not self._client.is_closed:
             await self._client.aclose()
             self._client = None
+        if self._unauth_client is not None and not self._unauth_client.is_closed:
+            await self._unauth_client.aclose()
+            self._unauth_client = None
 
     @property
     def client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             raise RuntimeError("HttpClient is not started. Use 'async with client:' or call 'await client.start()'")
         return self._client
+
+    @property
+    def unauth_client(self) -> httpx.AsyncClient:
+        if self._unauth_client is None or self._unauth_client.is_closed:
+            raise RuntimeError("HttpClient is not started. Use 'async with client:' or call 'await client.start()'")
+        return self._unauth_client
+
+    async def request_unauthenticated(
+        self,
+        method: str,
+        url: str,
+        *,
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, Any]] = None,
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        follow_redirects: Optional[bool] = None,
+        timeout: Optional[Union[float, httpx.Timeout]] = None,
+    ) -> HttpResponse:
+        """Execute an HTTP request strictly without authentication headers or session cookies."""
+        start_time = time.monotonic()
+        try:
+            req_kwargs: Dict[str, Any] = {}
+            if headers:
+                req_kwargs["headers"] = headers
+            if params:
+                req_kwargs["params"] = params
+            if data:
+                req_kwargs["data"] = data
+            if json is not None:
+                req_kwargs["json"] = json
+            if follow_redirects is not None:
+                req_kwargs["follow_redirects"] = follow_redirects
+            if timeout is not None:
+                req_kwargs["timeout"] = timeout
+
+            raw = await self.unauth_client.request(method, url, **req_kwargs)
+            elapsed = time.monotonic() - start_time
+            return HttpResponse(response=raw, elapsed=elapsed)
+        except Exception as e:
+            return HttpResponse(error=f"Unauthenticated request error: {e}", elapsed=time.monotonic() - start_time)
+
+    async def get_unauthenticated(self, url: str, **kwargs) -> HttpResponse:
+        return await self.request_unauthenticated("GET", url, **kwargs)
 
     async def request(
         self,

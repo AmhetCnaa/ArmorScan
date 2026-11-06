@@ -13,7 +13,7 @@ from armorscan.core.models import Grade, ScanResult, ScanSummary, ScanTarget
 
 def test_default_modules_count():
     modules = get_default_modules(burst_count=10)
-    assert len(modules) == 11
+    assert len(modules) == 12
     names = [m.name for m in modules]
     assert "headers" in names
     assert "tls_ssl" in names
@@ -26,6 +26,7 @@ def test_default_modules_count():
     assert "error_leak" in names
     assert "jwt_audit" in names
     assert "secret_leak" in names
+    assert "authz_check" in names
 
 
 def test_cli_parser_defaults():

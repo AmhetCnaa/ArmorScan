@@ -16,6 +16,7 @@ import yaml
 from armorscan.core.client import HttpClient
 from armorscan.core.models import Finding, ModuleResult, ScanTarget
 from armorscan.modules.base import BaseModule
+from armorscan.modules.authz_check import AuthzCheckModule
 from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
 from armorscan.modules.error_leak import ErrorLeakModule
@@ -38,6 +39,7 @@ MODULE_MAP: Dict[str, type[BaseModule]] = {
     "cors": CorsAndMethodModule,
     "ratelimit": RateLimitModule,
     "exposure": ExposureAuditModule,
+    "authz_check": AuthzCheckModule,
 }
 
 

@@ -8,8 +8,9 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 import time
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
+from armorscan.core.auth import AuthConfig
 from armorscan.core.client import HttpClient
 from armorscan.core.models import Confidence, Finding, ModuleResult, ScanResult, ScanTarget
 from armorscan.core.scoring import ScoringEngine
@@ -27,12 +28,14 @@ class ScanRunner:
         timeout: float = 10.0,
         concurrency: int = 5,
         suppression_engine: Optional[SuppressionEngine] = None,
+        auth_config: Optional[AuthConfig] = None,
     ):
         self.modules: List[BaseModule] = modules or []
         self.verify_ssl = verify_ssl
         self.timeout = timeout
         self.concurrency = concurrency
         self.suppression_engine = suppression_engine or SuppressionEngine.find_and_load()
+        self.auth_config = auth_config
 
     @staticmethod
     def deduplicate_findings(modules: List[ModuleResult]) -> None:
@@ -74,7 +77,19 @@ class ScanRunner:
         started_at = datetime.now(timezone.utc)
         start_mono = time.monotonic()
 
-        async with HttpClient.for_target(target, verify_ssl=self.verify_ssl) as client:
+        meta: dict[str, Any] = {}
+        async with HttpClient.for_target(target, verify_ssl=self.verify_ssl, auth_config=self.auth_config) as client:
+            # 0. Execute login macro or session verification if configured
+            if self.auth_config and self.auth_config.login_url:
+                login_ok, login_msg = await self.auth_config.perform_login(client, target.base_url)
+                meta["login_success"] = login_ok
+                meta["login_message"] = login_msg
+
+            if self.auth_config and self.auth_config.check_url:
+                sess_ok, sess_msg = await self.auth_config.verify_session(client, target.base_url)
+                meta["session_verified"] = sess_ok
+                meta["session_message"] = sess_msg
+
             semaphore = asyncio.Semaphore(self.concurrency)
 
             async def _run_single(mod: BaseModule) -> ModuleResult:
@@ -110,4 +125,5 @@ class ScanRunner:
             duration_seconds=duration,
             summary=summary,
             modules=module_results,
+            meta=meta,
         )

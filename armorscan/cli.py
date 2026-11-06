@@ -20,11 +20,13 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeEl
 from rich.table import Table
 
 from armorscan import __version__
+from armorscan.core.auth import AuthConfig
 from armorscan.core.client import HttpClient
 from armorscan.core.crawler import WebCrawler
 from armorscan.core.models import ScanResult, ScanTarget
 from armorscan.core.runner import ScanRunner
 from armorscan.core.suppression import SuppressionEngine
+from armorscan.modules.authz_check import AuthzCheckModule
 from armorscan.modules.base import BaseModule
 from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
@@ -45,7 +47,7 @@ from armorscan.reporters.json_rep import JsonReporter
 
 
 def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
-    """Instantiate standard suite of all 11 security auditing modules."""
+    """Instantiate standard suite of all 12 security auditing modules."""
     return [
         SecurityHeadersModule(),
         TlsSslModule(),
@@ -58,6 +60,7 @@ def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
         ErrorLeakModule(),
         JwtAuditModule(),
         SecretLeakModule(),
+        AuthzCheckModule(),
     ]
 
 
@@ -135,6 +138,61 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="PATH",
         help="Path to .armorscanignore file for suppressing accepted security findings.",
+    )
+    parser.add_argument(
+        "--auth-header",
+        action="append",
+        metavar="HEADER",
+        help="Authentication header, e.g. 'Authorization: Bearer <token>'. Can be repeated.",
+    )
+    parser.add_argument(
+        "--auth-cookie",
+        action="append",
+        metavar="COOKIE",
+        help="Authentication session cookie, e.g. 'session=xyz'. Can be repeated.",
+    )
+    parser.add_argument(
+        "--auth-custom-header",
+        action="append",
+        metavar="HEADER",
+        help="Custom authentication header, e.g. 'X-API-Key: key123'. Can be repeated.",
+    )
+    parser.add_argument(
+        "--auth-check-url",
+        default=None,
+        metavar="PATH",
+        help="Session health check URL to verify active login state (e.g. /api/me).",
+    )
+    parser.add_argument(
+        "--auth-check-status",
+        type=int,
+        default=200,
+        metavar="STATUS",
+        help="Expected HTTP status for valid session check (default: 200).",
+    )
+    parser.add_argument(
+        "--auth-check-body",
+        default=None,
+        metavar="STRING",
+        help="Expected substring in session health check response body.",
+    )
+    parser.add_argument(
+        "--login-url",
+        default=None,
+        metavar="URL",
+        help="Automated login macro endpoint URL (e.g. /api/login).",
+    )
+    parser.add_argument(
+        "--login-body",
+        default=None,
+        metavar="DATA",
+        help="Request payload for login macro (JSON or form string).",
+    )
+    parser.add_argument(
+        "--login-token-path",
+        default=None,
+        metavar="PATH",
+        help="JSON dot-notation path to extract token from login response (e.g. 'data.token').",
     )
     parser.add_argument(
         "-k",
@@ -267,11 +325,35 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
 
     verify_ssl = False if args.insecure else (not target.is_localhost)
 
-    # 4. Optional Web Crawling
+    # 4. Authenticated Session Configuration
+    auth_config = AuthConfig(
+        check_url=args.auth_check_url,
+        check_status=args.auth_check_status,
+        check_body=args.auth_check_body,
+        login_url=args.login_url,
+        login_body=args.login_body,
+        login_token_path=args.login_token_path,
+    )
+    if args.auth_header:
+        for h in args.auth_header:
+            auth_config.add_header(h)
+    if args.auth_cookie:
+        for c in args.auth_cookie:
+            auth_config.add_cookie(c)
+    if args.auth_custom_header:
+        for ch in args.auth_custom_header:
+            auth_config.add_custom_header(ch)
+
+    if auth_config.has_auth and not args.quiet:
+        console.print("🔐 [bold cyan]Authenticated scanning enabled[/bold cyan] (custom credentials / macro configured)\n")
+
+    # 5. Optional Web Crawling
     if args.crawl:
         if not args.quiet:
             console.print(f"🕷️ [bold cyan]Crawling endpoints (depth={args.depth}, max_pages={args.max_pages})...[/bold cyan]")
-        async with HttpClient.for_target(target, verify_ssl=verify_ssl) as client:
+        async with HttpClient.for_target(target, verify_ssl=verify_ssl, auth_config=auth_config) as client:
+            if auth_config.login_url:
+                await auth_config.perform_login(client, target.base_url)
             crawler = WebCrawler(max_depth=args.depth, max_pages=args.max_pages)
             crawl_res = await crawler.crawl(target, client)
             if not args.quiet:
@@ -282,7 +364,7 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
                 )
                 console.print(f"   [dim]Sample routes: {', '.join(crawl_res.discovered_paths[:6])}[/dim]\n")
 
-    # 5. Execute Security Audits
+    # 6. Execute Security Audits
     modules = get_default_modules(burst_count=args.burst)
     suppression_engine = SuppressionEngine.find_and_load(custom_path=args.ignore_file)
     runner = ScanRunner(
@@ -290,6 +372,7 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         verify_ssl=verify_ssl,
         concurrency=args.concurrency,
         suppression_engine=suppression_engine,
+        auth_config=auth_config,
     )
 
     if not args.quiet:
@@ -318,8 +401,12 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     else:
         scan_result = await runner.scan(target)
 
-    # 6. Render Console Output
+    # 7. Render Console Output
     if not args.quiet:
+        if scan_result.meta.get("login_success") is False:
+            console.print(f"⚠️ [bold yellow]Login Macro Warning:[/bold yellow] {scan_result.meta.get('login_message')}\n")
+        if scan_result.meta.get("session_verified") is False:
+            console.print(f"⚠️ [bold yellow]Session Verification Warning:[/bold yellow] {scan_result.meta.get('session_message')}\n")
         reporter.render_scan_results(scan_result)
 
     # 7. Generate Reports

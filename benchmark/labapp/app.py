@@ -367,3 +367,68 @@ async def vuln_git_config():
 @app.get("/safe/.git/HEAD")
 async def safe_exposure_404():
     return PlainTextResponse("Not Found", status_code=404)
+
+
+# ==============================================================================
+# 11. AUTHORIZATION & AUTHENTICATION GATES (BOLA / IDOR)
+# ==============================================================================
+@app.post("/api/login")
+async def labapp_login(request: Request):
+    """Mock login endpoint for macro authentication testing."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    user = body.get("user", "test_user") if isinstance(body, dict) else "test_user"
+    return JSONResponse(
+        status_code=200,
+        content={
+            "status": "success",
+            "data": {
+                "token": "armorscan_mock_jwt_token_valid_session_12345",
+                "user": user,
+            },
+        },
+        headers={"Set-Cookie": "session_id=mock_sess_abc123; Path=/; HttpOnly"},
+    )
+
+
+@app.get("/api/me")
+async def labapp_check_session(authorization: Optional[str] = Header(default=None)):
+    """Session check keep-alive endpoint."""
+    if authorization and "Bearer" in authorization:
+        return JSONResponse(status_code=200, content={"status": "active", "user": "test_user"})
+    return JSONResponse(status_code=401, content={"error": "Session expired or invalid"})
+
+
+@app.get("/vuln/idor")
+async def vuln_idor_profile(authorization: Optional[str] = Header(default=None)):
+    """Intentionally vulnerable: Returns private user profile without requiring authorization."""
+    return JSONResponse(
+        status_code=200,
+        content={
+            "user_id": "usr_998822",
+            "username": "alice_corporate",
+            "email": "alice@corporate-target.internal",
+            "role": "billing_administrator",
+            "balance": 145000.50,
+            "private_notes": "Internal audit record: confidential account data",
+        },
+    )
+
+
+@app.get("/safe/idor")
+async def safe_idor_profile(authorization: Optional[str] = Header(default=None)):
+    """Safe: Enforces strict Authorization bearer token gate; returns 401 Unauthorized if missing."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"error": "Unauthorized: Missing authentication token"})
+    return JSONResponse(
+        status_code=200,
+        content={
+            "user_id": "usr_998822",
+            "username": "alice_corporate",
+            "email": "alice@corporate-target.internal",
+            "role": "billing_administrator",
+            "balance": 145000.50,
+        },
+    )

@@ -1,13 +1,14 @@
 # 🛡️ ArmorScan Ground Truth Benchmark Report
 
-> **Execution Date:** 2026-11-06 23:35:36 UTC  
+> **Execution Date:** 2026-11-06 23:45:25 UTC  
 > **Target Base URL:** `http://127.0.0.1:8888`  
-> **Total Evaluated Endpoints:** 20  
+> **Total Evaluated Endpoints:** 22  
 
 ## 📊 Module Accuracy & Verification Metrics
 
 | Module | True Positives (TP) | False Positives (FP) | False Negatives (FN) | Precision | Recall | F1-Score | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `authz_check` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `cookies` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `cors` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `error_leak` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
@@ -18,7 +19,7 @@
 | `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| **OVERALL** | **26** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
+| **OVERALL** | **27** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
 
 ## 🔍 Endpoint Test Case Breakdown
 
@@ -44,3 +45,5 @@
 | `ratelimit_safe` | `ratelimit` | `/safe/ratelimit` | Safe (Clean) | *(None)* | *(None)* | ✅ OK |
 | `exposure_vulnerable` | `exposure` | `/vuln/exposure` | Vulnerable | `EXPOSED_ENV_FILE`, `EXPOSED_GIT_REPOSITORY` | `EXPOSED_ENV_FILE`, `EXPOSED_GIT_REPOSITORY` | ✅ OK |
 | `exposure_safe` | `exposure` | `/safe/exposure` | Safe (Clean) | *(None)* | *(None)* | ✅ OK |
+| `authz_check_vulnerable` | `authz_check` | `/vuln/idor` | Vulnerable | `MISSING_AUTHENTICATION_GATE` | `MISSING_AUTHENTICATION_GATE` | ✅ OK |
+| `authz_check_safe` | `authz_check` | `/safe/idor` | Safe (Clean) | *(None)* | *(None)* | ✅ OK |

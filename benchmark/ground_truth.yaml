@@ -198,3 +198,20 @@ endpoints:
     forbidden_findings:
       - "EXPOSED_ENV_FILE"
       - "EXPOSED_GIT_REPOSITORY"
+
+  - id: "authz_check_vulnerable"
+    path: "/vuln/idor"
+    module: "authz_check"
+    type: "vulnerable"
+    expected_findings:
+      - "MISSING_AUTHENTICATION_GATE"
+    forbidden_findings: []
+
+  - id: "authz_check_safe"
+    path: "/safe/idor"
+    module: "authz_check"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "MISSING_AUTHENTICATION_GATE"
+      - "BROKEN_OBJECT_LEVEL_AUTH"

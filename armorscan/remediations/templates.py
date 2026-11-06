@@ -696,6 +696,62 @@ def get_secret_leak_remediations() -> Dict[str, str]:
     }
 
 
+def get_authz_remediations() -> Dict[str, str]:
+    """Generates remediation patterns for missing authentication gates and BOLA/IDOR protection."""
+    return {
+        "fastapi": (
+            "# Enforce mandatory authentication dependency in FastAPI:\n"
+            "from fastapi import Depends, HTTPException, status\n"
+            "from fastapi.security import OAuth2PasswordBearer\n\n"
+            "oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/api/login')\n\n"
+            "async def get_current_user(token: str = Depends(oauth2_scheme)):\n"
+            "    user = verify_token(token)\n"
+            "    if not user:\n"
+            "        raise HTTPException(\n"
+            "            status_code=status.HTTP_401_UNAUTHORIZED,\n"
+            "            detail='Authentication credentials required',\n"
+            "            headers={'WWW-Authenticate': 'Bearer'},\n"
+            "        )\n"
+            "    return user\n\n"
+            "@app.get('/api/user/profile')\n"
+            "async def get_profile(current_user: User = Depends(get_current_user)):\n"
+            "    return {'id': current_user.id, 'username': current_user.username}"
+        ),
+        "express": (
+            "// Enforce authentication guard middleware in Express.js:\n"
+            "const jwt = require('jsonwebtoken');\n\n"
+            "function authenticateToken(req, res, next) {\n"
+            "  const authHeader = req.headers['authorization'];\n"
+            "  const token = authHeader && authHeader.split(' ')[1];\n"
+            "  if (!token) {\n"
+            "    return res.status(401).json({ error: 'Access token required' });\n"
+            "  }\n"
+            "  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {\n"
+            "    if (err) return res.status(403).json({ error: 'Invalid or expired token' });\n"
+            "    req.user = user;\n"
+            "    next();\n"
+            "  });\n"
+            "}\n\n"
+            "// Apply to protected routes:\n"
+            "app.use('/api/user', authenticateToken);"
+        ),
+        "nginx": (
+            "# Enforce auth_request subrequest verification in Nginx:\n"
+            "location /api/private/ {\n"
+            "    auth_request /auth/verify;\n"
+            "    error_page 401 = @unauthorized;\n"
+            "    proxy_pass http://backend_upstream;\n"
+            "}\n\n"
+            "location = /auth/verify {\n"
+            "    internal;\n"
+            "    proxy_pass http://auth_service/verify;\n"
+            "    proxy_pass_request_body off;\n"
+            "    proxy_set_header Content-Length '';\n"
+            "}"
+        ),
+    }
+
+
 
 
 
