@@ -7,8 +7,25 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from rich.console import Console
 
-from armorscan.cli import build_parser, run_scan_async
+from armorscan.cli import build_parser, get_default_modules, run_scan_async
 from armorscan.core.models import Grade, ScanResult, ScanSummary, ScanTarget
+
+
+def test_default_modules_count():
+    modules = get_default_modules(burst_count=10)
+    assert len(modules) == 11
+    names = [m.name for m in modules]
+    assert "headers" in names
+    assert "tls_ssl" in names
+    assert "cookies" in names
+    assert "exposure" in names
+    assert "cors" in names
+    assert "ratelimit" in names
+    assert "reflection" in names
+    assert "redirect" in names
+    assert "error_leak" in names
+    assert "jwt_audit" in names
+    assert "secret_leak" in names
 
 
 def test_cli_parser_defaults():

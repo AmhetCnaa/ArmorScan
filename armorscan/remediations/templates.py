@@ -539,5 +539,163 @@ def get_rate_limit_remediations() -> Dict[str, str]:
     }
 
 
+def get_reflection_remediations() -> Dict[str, str]:
+    """Generates context-aware encoding and sanitization remediations for XSS mitigation."""
+    return {
+        "express": (
+            "// 1. In Express templates (EJS/Handlebars/Pug):\n"
+            "// Always use auto-escaping syntax: <%= query %> (EJS) or {{ query }} (Handlebars)\n"
+            "// Never use raw HTML output: <%- query %> or {{{ query }}}\n\n"
+            "// 2. For rich HTML user input, sanitize using DOMPurify / sanitize-html:\n"
+            "const sanitizeHtml = require('sanitize-html');\n"
+            "const cleanInput = sanitizeHtml(req.query.q, {\n"
+            "  allowedTags: ['b', 'i', 'em', 'strong', 'a'],\n"
+            "  allowedAttributes: { 'a': ['href'] }\n"
+            "});"
+        ),
+        "fastapi": (
+            "# In FastAPI / Jinja2 templates:\n"
+            "# 1. Ensure Jinja2 autoescape is enabled (default in FastAPI Starlette Templates):\n"
+            "from fastapi.templating import Jinja2Templates\n"
+            "templates = Jinja2Templates(directory='templates', autoescape=True)\n\n"
+            "# 2. For manual string responses, use html.escape:\n"
+            "import html\n"
+            "safe_output = html.escape(user_query)"
+        ),
+        "react": (
+            "// In React / Vue frontend:\n"
+            "// Native JSX automatically escapes strings: <div>{userInput}</div>\n"
+            "// NEVER use dangerouslySetInnerHTML with unsanitized user content:\n"
+            "// AVOID: <div dangerouslySetInnerHTML={{ __html: userInput }} />\n"
+            "// SAFE: import DOMPurify from 'dompurify';\n"
+            "<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userInput) }} />"
+        ),
+    }
+
+
+def get_open_redirect_remediations() -> Dict[str, str]:
+    """Generates remediation rules for validating redirect URLs and preventing Open Redirects."""
+    return {
+        "express": (
+            "// Enforce safe redirects in Express.js:\n"
+            "const allowedHosts = ['myapp.com', 'auth.myapp.com'];\n\n"
+            "app.get('/login', (req, res) => {\n"
+            "  const target = req.query.redirect || '/dashboard';\n"
+            "  // 1. Only allow relative paths starting with / (disallowing //)\n"
+            "  if (target.startsWith('/') && !target.startsWith('//')) {\n"
+            "    return res.redirect(target);\n"
+            "  }\n"
+            "  // 2. Or validate against explicit host whitelist\n"
+            "  try {\n"
+            "    const parsed = new URL(target, 'https://myapp.com');\n"
+            "    if (allowedHosts.includes(parsed.hostname)) {\n"
+            "      return res.redirect(target);\n"
+            "    }\n"
+            "  } catch (e) {}\n"
+            "  return res.redirect('/dashboard');\n"
+            "});"
+        ),
+        "fastapi": (
+            "# Enforce safe redirects in FastAPI:\n"
+            "from urllib.parse import urlparse\n"
+            "from fastapi.responses import RedirectResponse\n\n"
+            "ALLOWED_DOMAINS = {'myapp.com', 'auth.myapp.com'}\n\n"
+            "@app.get('/auth/callback')\n"
+            "def auth_callback(next_url: str = '/dashboard'):\n"
+            "    # Relative path check\n"
+            "    if next_url.startswith('/') and not next_url.startswith('//'):\n"
+            "        return RedirectResponse(url=next_url)\n"
+            "    # Absolute URL whitelist check\n"
+            "    parsed = urlparse(next_url)\n"
+            "    if parsed.netloc in ALLOWED_DOMAINS:\n"
+            "        return RedirectResponse(url=next_url)\n"
+            "    return RedirectResponse(url='/dashboard')"
+        ),
+    }
+
+
+def get_error_leak_remediations() -> Dict[str, str]:
+    """Generates error masking and generic exception handler templates."""
+    return {
+        "express": (
+            "// Global centralized error handler in Express (place as last app.use):\n"
+            "app.use((err, req, res, next) => {\n"
+            "  console.error(err.stack); // Log internally\n"
+            "  if (process.env.NODE_ENV === 'production') {\n"
+            "    res.status(500).json({ error: 'Internal Server Error' });\n"
+            "  } else {\n"
+            "    res.status(500).json({ error: err.message, stack: err.stack });\n"
+            "  }\n"
+            "});"
+        ),
+        "fastapi": (
+            "# Global generic exception handler in FastAPI:\n"
+            "from fastapi import Request\n"
+            "from fastapi.responses import JSONResponse\n\n"
+            "@app.exception_handler(Exception)\n"
+            "async def generic_exception_handler(request: Request, exc: Exception):\n"
+            "    # Log detailed traceback to internal secure logger\n"
+            "    logger.exception(f'Unhandled error at {request.url}: {exc}')\n"
+            "    # Return opaque message to client\n"
+            "    return JSONResponse(\n"
+            "        status_code=500,\n"
+            "        content={'error': 'An unexpected error occurred. Please contact support.'}\n"
+            "    )"
+        ),
+        "django": (
+            "# In Django settings.py for production:\n"
+            "DEBUG = False\n"
+            "ALLOWED_HOSTS = ['yourdomain.com', 'www.yourdomain.com']\n"
+            "# Define custom 500 handler in urls.py:\n"
+            "handler500 = 'my_app.views.custom_500'"
+        ),
+    }
+
+
+def get_jwt_audit_remediations() -> Dict[str, str]:
+    """Generates remediation patterns for secure JSON Web Token lifecycle and algorithm enforcement."""
+    return {
+        "express": (
+            "// Secure JWT signing in Node.js / Express:\n"
+            "const jwt = require('jsonwebtoken');\n\n"
+            "// 1. Explicitly specify robust asymmetric algorithm (RS256) or strong HMAC (HS256)\n"
+            "// 2. Enforce short expiration time (e.g. 15m for access token)\n"
+            "const token = jwt.sign(\n"
+            "  { sub: user.id, role: user.role }, // Minimal claims, NEVER include passwords/secrets\n"
+            "  process.env.JWT_SECRET,\n"
+            "  { algorithm: 'HS256', expiresIn: '15m' }\n"
+            ");"
+        ),
+        "fastapi": (
+            "# Secure JWT creation in Python / FastAPI:\n"
+            "from datetime import datetime, timedelta, timezone\n"
+            "from jose import jwt\n\n"
+            "SECRET_KEY = os.getenv('JWT_SECRET_KEY')\n"
+            "ALGORITHM = 'HS256'\n\n"
+            "def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=15)):\n"
+            "    to_encode = data.copy()\n"
+            "    expire = datetime.now(timezone.utc) + expires_delta\n"
+            "    to_encode.update({'exp': expire})\n"
+            "    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)"
+        ),
+    }
+
+
+def get_secret_leak_remediations() -> Dict[str, str]:
+    """Generates architecture guidance for keeping credentials off client-side bundles."""
+    return {
+        "general": (
+            "# Environment Variable & API Key Hardening:\n"
+            "# 1. Store all secret keys in server-side environment variables (.env / AWS Secrets Manager / Vault).\n"
+            "# 2. In Vite / Next.js / Create React App:\n"
+            "#    - NEVER prefix secret keys with NEXT_PUBLIC_ or VITE_.\n"
+            "#    - Only public IDs (like Google Analytics tracking ID) belong in client bundles.\n"
+            "# 3. Route third-party API calls (OpenAI, Stripe, AWS) through a backend proxy endpoint:\n"
+            "#    Client (Browser) -> Your Backend API -> Third-Party Service (with hidden API Key)"
+        ),
+    }
+
+
+
 
 

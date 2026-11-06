@@ -7,14 +7,22 @@
 
 ## ⚡ Key Highlights
 - 🚀 **Blazing Fast**: Asynchronous HTTP/2 scanning with `httpx` (typical scan takes **< 1.5 seconds**).
+- 🧬 **Deep Application & Logic Auditor (v0.3.0)**:
+  - 🎯 **Input Reflection & Context Analysis**: Probes query and form parameters with non-harmful canary tokens to identify unencoded reflections in raw HTML bodies, `<script>` tags, and attribute contexts.
+  - 🔄 **Open Redirect Testing**: Tests navigation parameters against unvalidated external redirects via HTTP 3xx `Location` and client-side `<meta http-equiv="refresh">` tags.
+  - 💥 **Error-Based Info & Database Leakage**: Injects unexpected probes to detect verbose database errors (MySQL, PostgreSQL, Oracle, SQLite, MongoDB) and unhandled stack traces (Python, Node.js, Java, PHP).
+  - 🔑 **JWT Client Security & Lifecycle**: Automatically decodes client-side and cookie-based JWTs to flag `alg: none` bypasses, missing/excessive `exp` expiration claims, and plaintext credential leaks.
+  - 🕵️ **DOM & Client-Side Secret Hunter**: Scans HTML source and linked same-origin JS bundles for exposed API keys (OpenAI, AWS, GitHub, Stripe, Slack, Google) and private RFC 1918 IPs with automated masking.
 - 🔒 **Security Headers & TLS**: Deep inspection of HSTS, CSP (`unsafe-inline`, `unsafe-eval`, wildcards), Clickjacking, MIME-sniffing, and server version leaks.
 - 🍪 **Cookie Hygiene**: Heuristic session token detection (`session`, `jwt`, `token`, `auth`, `PHPSESSID`), `Secure`, `HttpOnly`, `SameSite`, and modern `__Host-` / `__Secure-` prefix standards.
 - 📂 **Sensitive File & Disclosure**: Canary 404 baseline to eliminate SPA/catch-all false positives while detecting leaked `.env`, `.git/HEAD`, `.DS_Store`, WordPress backups, and OpenAPI schemas.
 - 🌐 **CORS & Method Security**: Arbitrary origin reflection with credentials, null origin trust, domain regex bypasses, and dangerous HTTP verbs (TRACE/XST, PUT, DELETE).
-- ⏱️ **Rate Limiting & DoS Resilience**: Safe, non-destructive 18-request burst test verifying HTTP 429 throttling and RateLimit-* headers.
+- ⏱️ **Rate Limiting & DoS Resilience**: Safe, non-destructive burst test verifying HTTP 429 throttling and RateLimit-* headers.
+- 🕷️ **Smart Web Crawler / Spider**: Automated internal link discovery (`--crawl`, `--depth`, `--max-pages`).
+- 🔍 **Local Port & Database Sniffer**: `armorscan discover 127.0.0.1` for dev servers and unauthenticated databases.
 - 📊 **Triple Reporting**: Rich interactive terminal UI, standalone zero-CDN HTML report, and machine-readable JSON.
 - 🔄 **DevSecOps / CI/CD Quality Gate**: Exit code 1 enforcement via `--fail-under <SCORE>` to stop compromised pull requests before deployment.
-- 🛠️ **Production-Ready Remediation**: Copy-paste configuration blocks for **Nginx**, **Express.js**, **FastAPI**, and **Django**.
+- 🛠️ **Production-Ready Remediation**: Copy-paste configuration blocks for **Nginx**, **Express.js**, **FastAPI**, and **Django**, plus `--export-patch`.
 
 ---
 
@@ -173,7 +181,7 @@ jobs:
 ## 🧪 Running the Test Suite
 
 ```bash
-# Execute all 63 automated unit and integration tests
+# Execute all 84 automated unit and integration tests
 pytest -v
 ```
 

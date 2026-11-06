@@ -27,10 +27,15 @@ from armorscan.core.runner import ScanRunner
 from armorscan.modules.base import BaseModule
 from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
+from armorscan.modules.error_leak import ErrorLeakModule
 from armorscan.modules.exposure import ExposureAuditModule
 from armorscan.modules.headers import SecurityHeadersModule
+from armorscan.modules.jwt_audit import JwtAuditModule
 from armorscan.modules.ports import LocalPortSniffer
 from armorscan.modules.ratelimit import RateLimitModule
+from armorscan.modules.redirect import OpenRedirectModule
+from armorscan.modules.reflection import InputReflectionModule
+from armorscan.modules.secret_leak import SecretLeakModule
 from armorscan.modules.tls_ssl import TlsSslModule
 from armorscan.remediations.patch_exporter import PatchExporter
 from armorscan.reporters.console import ConsoleReporter
@@ -39,7 +44,7 @@ from armorscan.reporters.json_rep import JsonReporter
 
 
 def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
-    """Instantiate standard suite of all 6 security auditing modules."""
+    """Instantiate standard suite of all 11 security auditing modules."""
     return [
         SecurityHeadersModule(),
         TlsSslModule(),
@@ -47,6 +52,11 @@ def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
         ExposureAuditModule(),
         CorsAndMethodModule(),
         RateLimitModule(burst_count=burst_count),
+        InputReflectionModule(),
+        OpenRedirectModule(),
+        ErrorLeakModule(),
+        JwtAuditModule(),
+        SecretLeakModule(),
     ]
 
 
