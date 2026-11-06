@@ -495,4 +495,49 @@ def get_method_security_remediations() -> Dict[str, str]:
     }
 
 
+def get_rate_limit_remediations() -> Dict[str, str]:
+    """Generates remediation configurations for HTTP rate limiting and brute-force mitigation."""
+    return {
+        "nginx": (
+            "# In your nginx.conf http {} block:\n"
+            "limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;\n"
+            "limit_req_status 429;\n\n"
+            "# In your server {} or location {} block:\n"
+            "location /api/ {\n"
+            "    limit_req zone=api_limit burst=20 nodelay;\n"
+            "    proxy_pass http://backend_upstream;\n"
+            "}"
+        ),
+        "express": (
+            "// In Express.js using express-rate-limit:\n"
+            "const rateLimit = require('express-rate-limit');\n\n"
+            "const apiLimiter = rateLimit({\n"
+            "  windowMs: 15 * 60 * 1000, // 15 minutes\n"
+            "  max: 100, // Limit each IP to 100 requests per window\n"
+            "  standardHeaders: true, // Return RateLimit-* headers\n"
+            "  legacyHeaders: false, // Disable X-RateLimit-* headers\n"
+            "  message: { error: 'Too many requests, please try again later.' },\n"
+            "  statusCode: 429,\n"
+            "});\n\n"
+            "app.use('/api/', apiLimiter);"
+        ),
+        "fastapi": (
+            "# In FastAPI using slowapi:\n"
+            "from fastapi import FastAPI, Request\n"
+            "from slowapi import Limiter, _rate_limit_exceeded_handler\n"
+            "from slowapi.util import get_remote_address\n"
+            "from slowapi.errors import RateLimitExceeded\n\n"
+            "limiter = Limiter(key_func=get_remote_address)\n"
+            "app = FastAPI()\n"
+            "app.state.limiter = limiter\n"
+            "app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)\n\n"
+            "@app.get('/api/sensitive')\n"
+            "@limiter.limit('15/minute')\n"
+            "async def sensitive_route(request: Request):\n"
+            "    return {'status': 'success'}"
+        ),
+    }
+
+
+
 
