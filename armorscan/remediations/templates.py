@@ -329,3 +329,74 @@ def get_cookie_prefix_remediations() -> Dict[str, str]:
         ),
     }
 
+
+def get_dotfile_exposure_remediations() -> Dict[str, str]:
+    """Generates remediation rules to block dotfiles (.env, .git) and backup files."""
+    return {
+        "nginx": (
+            "# In your nginx server {} block:\n"
+            "# 1. Block access to all hidden files and directories (except .well-known for ACME/SSL)\n"
+            "location ~ /\\.(?!well-known) {\n"
+            "    deny all;\n"
+            "    return 404;\n"
+            "}\n\n"
+            "# 2. Block access to backup, source, and config extensions\n"
+            "location ~* \\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|env)$ {\n"
+            "    deny all;\n"
+            "    return 404;\n"
+            "}"
+        ),
+        "apache": (
+            "# In your .htaccess or VirtualHost block:\n"
+            "# 1. Deny access to dotfiles (.env, .git)\n"
+            '<FilesMatch "^\\.">\n'
+            "    Require all denied\n"
+            "</FilesMatch>\n\n"
+            "# 2. Deny access to sensitive files and backups\n"
+            '<FilesMatch "\\.(bak|config|sql|ini|log|env)$">\n'
+            "    Require all denied\n"
+            "</FilesMatch>"
+        ),
+        "express": (
+            "// In Express.js static middleware:\n"
+            "// Set dotfiles to 'deny' or 'ignore'\n"
+            "const express = require('express');\n"
+            "const app = express();\n\n"
+            "app.use(express.static('public', {\n"
+            "  dotfiles: 'deny',\n"
+            "  etag: true,\n"
+            "}));"
+        ),
+    }
+
+
+def get_openapi_exposure_remediations() -> Dict[str, str]:
+    """Guidance on securing or disabling public OpenAPI/Swagger specs in production."""
+    return {
+        "fastapi": (
+            "# Disable Swagger & Redoc in FastAPI production:\n"
+            "import os\n"
+            "from fastapi import FastAPI\n\n"
+            "is_prod = os.getenv('ENV') == 'production'\n"
+            "app = FastAPI(\n"
+            "    docs_url=None if is_prod else '/docs',\n"
+            "    redoc_url=None if is_prod else '/redoc',\n"
+            "    openapi_url=None if is_prod else '/openapi.json',\n"
+            ")"
+        ),
+        "express": (
+            "// Protect Swagger UI with authentication in Express:\n"
+            "const swaggerUi = require('swagger-ui-express');\n"
+            "const basicAuth = require('express-basic-auth');\n\n"
+            "if (process.env.NODE_ENV === 'production') {\n"
+            "  app.use('/api-docs', basicAuth({\n"
+            "    users: { 'admin': process.env.DOCS_PASSWORD },\n"
+            "    challenge: true,\n"
+            "  }), swaggerUi.serve, swaggerUi.setup(swaggerDocument));\n"
+            "} else {\n"
+            "  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));\n"
+            "}"
+        ),
+    }
+
+
