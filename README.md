@@ -63,7 +63,27 @@ armorscan https://myapp.example.com \
   --fail-under 85
 ```
 
-### 4. Testing with Self-Signed Certificates (Localhost SSL)
+### 4. Smart Web Crawler & Multi-Page Discovery (v0.2.0)
+```bash
+# Automatically discover internal links, routes, and forms up to depth 3
+armorscan https://myapp.example.com --crawl --depth 3 --max-pages 25
+```
+
+### 5. Local Port & Database Sniffer (`armorscan discover`) (v0.2.0)
+```bash
+# Discover active web servers (3000, 5173, 8000) and unauthenticated databases (Redis, Mongo, Postgres)
+armorscan discover 127.0.0.1
+```
+
+### 6. Auto-Remediation Patch Exporter (`--export-patch`) (v0.2.0)
+```bash
+# Export production-ready configuration files directly to disk:
+armorscan --export-patch nginx    # Generates security-headers.conf
+armorscan --export-patch express  # Generates securityMiddleware.js
+armorscan --export-patch fastapi  # Generates security_middleware.py
+```
+
+### 7. Testing with Self-Signed Certificates (Localhost SSL)
 ```bash
 armorscan https://localhost:3000 --insecure
 ```
@@ -153,7 +173,7 @@ jobs:
 ## 🧪 Running the Test Suite
 
 ```bash
-# Execute all 53 automated unit and integration tests
+# Execute all 63 automated unit and integration tests
 pytest -v
 ```
 
