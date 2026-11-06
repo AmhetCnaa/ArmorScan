@@ -13,7 +13,7 @@ from armorscan.core.models import Grade, ScanResult, ScanSummary, ScanTarget
 
 def test_default_modules_count():
     modules = get_default_modules(burst_count=10)
-    assert len(modules) == 12
+    assert len(modules) == 13
     names = [m.name for m in modules]
     assert "headers" in names
     assert "tls_ssl" in names
@@ -27,6 +27,7 @@ def test_default_modules_count():
     assert "jwt_audit" in names
     assert "secret_leak" in names
     assert "authz_check" in names
+    assert "multi_step" in names
 
 
 def test_cli_parser_defaults():
@@ -120,3 +121,9 @@ def test_cli_parser_ignore_file():
     parser = build_parser()
     args = parser.parse_args(["https://target.com", "--ignore-file", ".customignore"])
     assert args.ignore_file == ".customignore"
+
+
+def test_cli_parser_schema():
+    parser = build_parser()
+    args = parser.parse_args(["https://target.com", "--schema", "swagger.json"])
+    assert args.schema == "swagger.json"

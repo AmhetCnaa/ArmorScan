@@ -23,6 +23,7 @@ from armorscan.modules.error_leak import ErrorLeakModule
 from armorscan.modules.exposure import ExposureAuditModule
 from armorscan.modules.headers import SecurityHeadersModule
 from armorscan.modules.jwt_audit import JwtAuditModule
+from armorscan.modules.multi_step import MultiStepLogicModule
 from armorscan.modules.ratelimit import RateLimitModule
 from armorscan.modules.redirect import OpenRedirectModule
 from armorscan.modules.reflection import InputReflectionModule
@@ -40,6 +41,7 @@ MODULE_MAP: Dict[str, type[BaseModule]] = {
     "ratelimit": RateLimitModule,
     "exposure": ExposureAuditModule,
     "authz_check": AuthzCheckModule,
+    "multi_step": MultiStepLogicModule,
 }
 
 

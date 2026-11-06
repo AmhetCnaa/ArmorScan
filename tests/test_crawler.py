@@ -91,3 +91,43 @@ async def test_crawler_max_pages_limit():
 
             result = await crawler.crawl(target, client)
             assert result.pages_crawled <= 3
+
+
+@pytest.mark.asyncio
+async def test_crawler_extracts_form_parameters_and_filters_csrf():
+    target = ScanTarget.from_url("https://forms.test.dev")
+    crawler = WebCrawler(max_depth=1, max_pages=2)
+
+    form_html = """
+    <html>
+      <body>
+        <form action="/login" method="POST">
+          <input type="text" name="username" value="admin">
+          <input type="password" name="password">
+          <input type="hidden" name="csrf_token" value="abc123xyz">
+          <input type="hidden" name="_csrf" value="secret">
+          <input type="text" name="remember_me">
+        </form>
+      </body>
+    </html>
+    """
+
+    async with HttpClient(proxy=None) as client:
+        with respx.mock(base_url="https://forms.test.dev", assert_all_called=False) as respx_mock:
+            respx_mock.get("/").respond(status_code=200, text=form_html, headers={"Content-Type": "text/html"})
+            respx_mock.get("/login").respond(status_code=200, text="Login page", headers={"Content-Type": "text/html"})
+
+            result = await crawler.crawl(target, client)
+
+            assert len(result.forms) >= 1
+            login_form = result.forms[0]
+            assert "username" in login_form.parameters
+            assert "password" in login_form.parameters
+            assert "remember_me" in login_form.parameters
+            # CSRF tokens should be filtered out from fuzzable parameters
+            assert "csrf_token" not in login_form.parameters
+            assert "_csrf" not in login_form.parameters
+
+            assert "username" in result.discovered_parameters
+            assert "csrf_token" not in result.discovered_parameters
+

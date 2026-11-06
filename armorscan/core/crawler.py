@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from armorscan.core.client import HttpClient
 from armorscan.core.models import ScanTarget
+from armorscan.core.schema import ApiEndpoint, GraphQLAuditor, OpenApiParser
 
 # Media and asset extensions to ignore during web crawl
 IGNORED_EXTENSIONS = {
@@ -25,7 +26,14 @@ IGNORED_EXTENSIONS = {
 }
 
 HREF_REGEX = re.compile(r"""(?:href|action|src)=["']([^"'#\s>]+)["']""", re.IGNORECASE)
-FORM_REGEX = re.compile(r"""<form\b[^>]*action=["']([^"']*)["'][^>]*>""", re.IGNORECASE)
+FORM_BLOCK_REGEX = re.compile(r"""<form\b([^>]*)>(.*?)</form>""", re.IGNORECASE | re.DOTALL)
+INPUT_REGEX = re.compile(r"""<input\b([^>]*)>""", re.IGNORECASE)
+ATTR_REGEX = re.compile(r"""([a-zA-Z_0-9-]+)\s*=\s*["']([^"']*)["']""")
+
+CSRF_PARAMETER_NAMES = {
+    "csrf", "csrf_token", "_csrf", "authenticity_token",
+    "_token", "csrfmiddlewaretoken", "antiforgery", "xsrf_token",
+}
 
 
 class DiscoveredForm(BaseModel):
@@ -33,6 +41,8 @@ class DiscoveredForm(BaseModel):
     page_url: str
     action_url: str
     method: str = "GET"
+    parameters: List[str] = Field(default_factory=list, description="Fuzzable input parameter names")
+    inputs: List[Dict[str, str]] = Field(default_factory=list, description="Detailed input field metadata")
 
 
 class CrawlResult(BaseModel):
@@ -42,6 +52,10 @@ class CrawlResult(BaseModel):
     discovered_paths: List[str] = Field(default_factory=list)
     pages_crawled: int = 0
     forms: List[DiscoveredForm] = Field(default_factory=list)
+    api_endpoints: List[ApiEndpoint] = Field(default_factory=list, description="Endpoints discovered via OpenAPI or GraphQL")
+    discovered_parameters: Set[str] = Field(default_factory=set, description="All discovered fuzzable parameters")
+    graphql_url: Optional[str] = None
+    graphql_introspection_active: bool = False
 
 
 class WebCrawler:
@@ -60,9 +74,15 @@ class WebCrawler:
         self.max_pages = max_pages
         self.concurrency = concurrency
 
-    async def crawl(self, target: ScanTarget, client: HttpClient) -> CrawlResult:
+    async def crawl(
+        self,
+        target: ScanTarget,
+        client: HttpClient,
+        custom_schema_path: Optional[str] = None,
+    ) -> CrawlResult:
         """
-        Execute scoped breadth-first search on the target application.
+        Execute scoped breadth-first search on the target application,
+        combined with automated API schema discovery (OpenAPI/Swagger/GraphQL).
         """
         start_url = target.raw_url
         target_host = target.host.lower()
@@ -73,6 +93,29 @@ class WebCrawler:
         discovered_urls: Set[str] = {start_url}
         discovered_paths: Set[str] = {target.path or "/"}
         forms: List[DiscoveredForm] = []
+        discovered_parameters: Set[str] = set()
+        api_endpoints: List[ApiEndpoint] = []
+
+        # 0. API Schema Discovery (OpenAPI / Swagger)
+        schema_url, parsed_api = await OpenApiParser.discover_and_parse(
+            client, target.base_url, custom_schema_path=custom_schema_path
+        )
+        if parsed_api:
+            api_endpoints.extend(parsed_api)
+            for ep in parsed_api:
+                sample_url = ep.build_test_url(target.base_url)
+                discovered_urls.add(sample_url)
+                discovered_paths.add(ep.path)
+                for p in ep.parameters:
+                    if p.name.lower() not in CSRF_PARAMETER_NAMES:
+                        discovered_parameters.add(p.name)
+
+        # 0.1 GraphQL Introspection Probe
+        gql_active, gql_url, gql_ops = await GraphQLAuditor.audit_graphql(client, target.base_url)
+        if gql_ops:
+            api_endpoints.extend(gql_ops)
+            for op in gql_ops:
+                discovered_paths.add(op.path)
 
         # Queue holds (url, current_depth)
         queue: List[Tuple[str, int]] = [(start_url, 0)]
@@ -98,6 +141,9 @@ class WebCrawler:
             # Extract links and forms from HTML
             extracted_links, page_forms = self._parse_html(current_url, resp.text)
             forms.extend(page_forms)
+            for f in page_forms:
+                for p in f.parameters:
+                    discovered_parameters.add(p)
 
             for link in extracted_links:
                 normalized = self._normalize_link(current_url, link, target_scheme, target_host, target_port)
@@ -120,10 +166,14 @@ class WebCrawler:
             discovered_paths=sorted(list(discovered_paths)),
             pages_crawled=len(visited),
             forms=forms,
+            api_endpoints=api_endpoints,
+            discovered_parameters=discovered_parameters,
+            graphql_url=gql_url,
+            graphql_introspection_active=gql_active,
         )
 
     def _parse_html(self, page_url: str, html_text: str) -> Tuple[List[str], List[DiscoveredForm]]:
-        """Extract links and forms using fast regular expressions."""
+        """Extract links, forms, and input parameters using regular expressions."""
         links: List[str] = []
         forms: List[DiscoveredForm] = []
 
@@ -133,11 +183,47 @@ class WebCrawler:
             if link and not link.startswith(("javascript:", "mailto:", "tel:", "#")):
                 links.append(link)
 
-        # Find form submissions
-        for match in FORM_REGEX.finditer(html_text):
-            action = match.group(1).strip() or page_url
+        # Find complete form blocks and extract input parameters
+        for block_match in FORM_BLOCK_REGEX.finditer(html_text):
+            form_tag_attrs = block_match.group(1)
+            form_inner = block_match.group(2)
+
+            # Extract action and method
+            action_m = re.search(r"""action=["']([^"']*)["']""", form_tag_attrs, re.IGNORECASE)
+            action = action_m.group(1).strip() if action_m else page_url
             full_action = urljoin(page_url, action)
-            forms.append(DiscoveredForm(page_url=page_url, action_url=full_action))
+
+            method_m = re.search(r"""method=["']([^"']*)["']""", form_tag_attrs, re.IGNORECASE)
+            method = method_m.group(1).upper() if method_m else "GET"
+
+            form_params: List[str] = []
+            inputs_meta: List[Dict[str, str]] = []
+
+            for input_match in INPUT_REGEX.finditer(form_inner):
+                attrs = dict(ATTR_REGEX.findall(input_match.group(1)))
+                name = attrs.get("name", "").strip()
+                input_type = attrs.get("type", "text").strip().lower()
+
+                if name and name.lower() not in CSRF_PARAMETER_NAMES:
+                    form_params.append(name)
+                    inputs_meta.append({"name": name, "type": input_type, "value": attrs.get("value", "")})
+
+            forms.append(
+                DiscoveredForm(
+                    page_url=page_url,
+                    action_url=full_action,
+                    method=method,
+                    parameters=form_params,
+                    inputs=inputs_meta,
+                )
+            )
+
+        # Fallback for unclosed <form> tags
+        if not forms:
+            for match in re.finditer(r"""<form\b[^>]*action=["']([^"']*)["'][^>]*>""", html_text, re.IGNORECASE):
+                action = match.group(1).strip() or page_url
+                full_action = urljoin(page_url, action)
+                forms.append(DiscoveredForm(page_url=page_url, action_url=full_action))
 
         return links, forms
 

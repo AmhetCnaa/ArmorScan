@@ -150,6 +150,38 @@ class ExposureAuditModule(BaseModule):
             passed_checks,
         )
 
+        # 3.8 Check GraphQL Introspection
+        try:
+            gql_resp = await client.post(
+                f"{base_url}{path_prefix}/graphql",
+                json={"query": "{__schema{types{name}}}"},
+                headers={"Content-Type": "application/json"},
+            )
+            if gql_resp.ok and gql_resp.status_code == 200 and "__schema" in gql_resp.text:
+                findings.append(
+                    Finding(
+                        id="GRAPHQL_INTROSPECTION_ENABLED",
+                        title="GraphQL Schema Introspection Enabled",
+                        description=(
+                            f"GraphQL schema introspection is publicly enabled on '{base_url}{path_prefix}/graphql'. "
+                            "Introspection allows unauthenticated clients to enumerate the full schema, queries, mutations, and types."
+                        ),
+                        severity=Severity.LOW,
+                        confidence=Confidence.CONFIRMED,
+                        module=self.name,
+                        impact="Information Disclosure: Exposes hidden API queries, internal fields, and data models to attackers.",
+                        evidence=f"Introspection query response returned __schema definition: {gql_resp.text[:120].strip()}",
+                        curl_command=Finding.build_curl("POST", f"{base_url}{path_prefix}/graphql", headers={"Content-Type": "application/json"}, data='{"query":"{__schema{types{name}}}"}'),
+                        remediation="Disable GraphQL introspection in production environments.",
+                        cwe_id="CWE-200",
+                        owasp_category="A01:2021-Broken Access Control",
+                    )
+                )
+            else:
+                passed_checks.append("graphql-introspection-disabled")
+        except Exception:
+            passed_checks.append("graphql-introspection-disabled")
+
         return ModuleResult(
             module_name=self.name,
             display_name=self.display_name,

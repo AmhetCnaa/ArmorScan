@@ -215,3 +215,20 @@ endpoints:
     forbidden_findings:
       - "MISSING_AUTHENTICATION_GATE"
       - "BROKEN_OBJECT_LEVEL_AUTH"
+
+  - id: "multi_step_vulnerable"
+    path: "/vuln/logic_idor?user_id=usr_alice"
+    module: "multi_step"
+    type: "vulnerable"
+    expected_findings:
+      - "CROSS_TENANT_OBJECT_ACCESS"
+    forbidden_findings: []
+
+  - id: "multi_step_safe"
+    path: "/safe/logic_idor?user_id=usr_alice"
+    module: "multi_step"
+    type: "safe"
+    expected_findings: []
+    forbidden_findings:
+      - "CROSS_TENANT_OBJECT_ACCESS"
+

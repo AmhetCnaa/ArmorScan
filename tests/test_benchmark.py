@@ -29,7 +29,7 @@ async def test_ground_truth_benchmark_quality_gate():
         report = await runner.run_benchmark()
 
         # Quality Gate Assertions
-        assert len(report.test_cases) == 22
+        assert len(report.test_cases) == 24
         assert report.overall.precision >= 0.95, f"Precision fell below gate: {report.overall.precision:.2%}"
         assert report.overall.recall >= 0.95, f"Recall fell below gate: {report.overall.recall:.2%}"
         assert report.overall.fp == 0, f"False positives detected: {report.overall.fp}"

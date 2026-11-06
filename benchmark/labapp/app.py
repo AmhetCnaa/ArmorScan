@@ -432,3 +432,71 @@ async def safe_idor_profile(authorization: Optional[str] = Header(default=None))
             "balance": 145000.50,
         },
     )
+
+
+# ==============================================================================
+# 12. MULTI-STEP LOGIC & TENANT ISOLATION (BOLA / IDOR)
+# ==============================================================================
+@app.get("/vuln/logic_idor")
+async def vuln_logic_idor(user_id: str = Query(default="usr_alice")):
+    """Intentionally vulnerable: Allows accessing any tenant's data simply by changing user_id."""
+    database_records = {
+        "usr_alice": {"user_id": "usr_alice", "tenant": "Alice Corp", "balance": 5000, "orders": [101, 102]},
+        "usr_bob": {"user_id": "usr_bob", "tenant": "Bob Industries", "balance": 185000, "orders": [999, 1000]},
+    }
+    record = database_records.get(user_id, {"user_id": user_id, "data": "generic confidential tenant record"})
+    return JSONResponse(status_code=200, content=record)
+
+
+@app.get("/safe/logic_idor")
+async def safe_logic_idor(user_id: str = Query(default="usr_alice")):
+    """Safe: Validates tenant isolation; returns 403 Forbidden when requesting other tenant IDs."""
+    if user_id != "usr_alice":
+        return JSONResponse(
+            status_code=403,
+            content={"error": f"Forbidden: You do not have permission to view tenant record '{user_id}'"},
+        )
+    return JSONResponse(
+        status_code=200,
+        content={"user_id": "usr_alice", "tenant": "Alice Corp", "balance": 5000, "orders": [101, 102]},
+    )
+
+
+# ==============================================================================
+# 13. GRAPHQL INTROSPECTION TESTBED
+# ==============================================================================
+@app.post("/vuln/graphql")
+async def vuln_graphql_endpoint(request: Request):
+    """Intentionally vulnerable: Public GraphQL endpoint with full introspection enabled."""
+    return JSONResponse(
+        status_code=200,
+        content={
+            "data": {
+                "__schema": {
+                    "queryType": {"name": "Query"},
+                    "mutationType": {"name": "Mutation"},
+                    "types": [
+                        {
+                            "name": "Query",
+                            "kind": "OBJECT",
+                            "fields": [{"name": "getUser"}, {"name": "listInvoices"}, {"name": "systemHealth"}],
+                        },
+                        {
+                            "name": "Mutation",
+                            "kind": "OBJECT",
+                            "fields": [{"name": "deleteAccount"}, {"name": "updateRole"}],
+                        },
+                    ],
+                }
+            }
+        },
+    )
+
+
+@app.post("/safe/graphql")
+async def safe_graphql_endpoint(request: Request):
+    """Safe: GraphQL endpoint with introspection disabled."""
+    return JSONResponse(
+        status_code=400,
+        content={"errors": [{"message": "GraphQL schema introspection has been disabled in production."}]},
+    )

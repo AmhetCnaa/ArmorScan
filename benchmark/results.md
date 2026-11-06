@@ -1,8 +1,8 @@
 # 🛡️ ArmorScan Ground Truth Benchmark Report
 
-> **Execution Date:** 2026-11-06 23:45:25 UTC  
+> **Execution Date:** 2026-11-06 23:56:11 UTC  
 > **Target Base URL:** `http://127.0.0.1:8888`  
-> **Total Evaluated Endpoints:** 22  
+> **Total Evaluated Endpoints:** 24  
 
 ## 📊 Module Accuracy & Verification Metrics
 
@@ -15,11 +15,12 @@
 | `exposure` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `headers` | 6 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `jwt_audit` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `multi_step` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `ratelimit` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| **OVERALL** | **27** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
+| **OVERALL** | **28** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
 
 ## 🔍 Endpoint Test Case Breakdown
 
@@ -47,3 +48,5 @@
 | `exposure_safe` | `exposure` | `/safe/exposure` | Safe (Clean) | *(None)* | *(None)* | ✅ OK |
 | `authz_check_vulnerable` | `authz_check` | `/vuln/idor` | Vulnerable | `MISSING_AUTHENTICATION_GATE` | `MISSING_AUTHENTICATION_GATE` | ✅ OK |
 | `authz_check_safe` | `authz_check` | `/safe/idor` | Safe (Clean) | *(None)* | *(None)* | ✅ OK |
+| `multi_step_vulnerable` | `multi_step` | `/vuln/logic_idor?user_id=usr_alice` | Vulnerable | `CROSS_TENANT_OBJECT_ACCESS` | `CROSS_TENANT_OBJECT_ACCESS` | ✅ OK |
+| `multi_step_safe` | `multi_step` | `/safe/logic_idor?user_id=usr_alice` | Safe (Clean) | *(None)* | *(None)* | ✅ OK |

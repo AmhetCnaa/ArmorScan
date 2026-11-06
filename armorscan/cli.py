@@ -34,6 +34,7 @@ from armorscan.modules.error_leak import ErrorLeakModule
 from armorscan.modules.exposure import ExposureAuditModule
 from armorscan.modules.headers import SecurityHeadersModule
 from armorscan.modules.jwt_audit import JwtAuditModule
+from armorscan.modules.multi_step import MultiStepLogicModule
 from armorscan.modules.ports import LocalPortSniffer
 from armorscan.modules.ratelimit import RateLimitModule
 from armorscan.modules.redirect import OpenRedirectModule
@@ -47,7 +48,7 @@ from armorscan.reporters.json_rep import JsonReporter
 
 
 def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
-    """Instantiate standard suite of all 12 security auditing modules."""
+    """Instantiate standard suite of all 13 security auditing modules."""
     return [
         SecurityHeadersModule(),
         TlsSslModule(),
@@ -61,6 +62,7 @@ def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
         JwtAuditModule(),
         SecretLeakModule(),
         AuthzCheckModule(),
+        MultiStepLogicModule(),
     ]
 
 
@@ -138,6 +140,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="PATH",
         help="Path to .armorscanignore file for suppressing accepted security findings.",
+    )
+    parser.add_argument(
+        "--schema",
+        default=None,
+        metavar="PATH_OR_URL",
+        help="OpenAPI/Swagger schema file or remote URL to ingest for schema-driven endpoint discovery.",
     )
     parser.add_argument(
         "--auth-header",
@@ -355,13 +363,17 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
             if auth_config.login_url:
                 await auth_config.perform_login(client, target.base_url)
             crawler = WebCrawler(max_depth=args.depth, max_pages=args.max_pages)
-            crawl_res = await crawler.crawl(target, client)
+            crawl_res = await crawler.crawl(target, client, custom_schema_path=args.schema)
             if not args.quiet:
                 console.print(
                     f"   Discovered [bold green]{len(crawl_res.discovered_paths)}[/bold green] paths across "
                     f"[bold green]{crawl_res.pages_crawled}[/bold green] crawled pages. "
-                    f"Found {len(crawl_res.forms)} HTML forms."
+                    f"Found {len(crawl_res.forms)} HTML forms ({len(crawl_res.discovered_parameters)} fuzzable params)."
                 )
+                if crawl_res.api_endpoints:
+                    console.print(f"   Parsed [bold green]{len(crawl_res.api_endpoints)}[/bold green] schema API operations from OpenAPI/Swagger/GraphQL.")
+                if crawl_res.graphql_introspection_active:
+                    console.print(f"   ⚡ [bold yellow]GraphQL Introspection active on:[/bold yellow] [cyan]{crawl_res.graphql_url}[/cyan]")
                 console.print(f"   [dim]Sample routes: {', '.join(crawl_res.discovered_paths[:6])}[/dim]\n")
 
     # 6. Execute Security Audits
