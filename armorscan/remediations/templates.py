@@ -400,3 +400,99 @@ def get_openapi_exposure_remediations() -> Dict[str, str]:
     }
 
 
+def get_cors_remediations() -> Dict[str, str]:
+    """Generates remediation configurations for secure Cross-Origin Resource Sharing (CORS)."""
+    return {
+        "express": (
+            "// Secure CORS configuration in Express.js:\n"
+            "const cors = require('cors');\n\n"
+            "const whitelist = ['https://yourdomain.com', 'https://app.yourdomain.com'];\n"
+            "const corsOptions = {\n"
+            "  origin: function (origin, callback) {\n"
+            "    // Allow requests with no origin (like mobile apps or curl) or in whitelist\n"
+            "    if (!origin || whitelist.indexOf(origin) !== -1) {\n"
+            "      callback(null, true);\n"
+            "    } else {\n"
+            "      callback(new Error('Blocked by CORS policy'));\n"
+            "    }\n"
+            "  },\n"
+            "  credentials: true,\n"
+            "  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],\n"
+            "  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],\n"
+            "  maxAge: 86400,\n"
+            "};\n\n"
+            "app.use(cors(corsOptions));"
+        ),
+        "fastapi": (
+            "# Secure CORS configuration in FastAPI:\n"
+            "from fastapi import FastAPI\n"
+            "from fastapi.middleware.cors import CORSMiddleware\n\n"
+            "app = FastAPI()\n\n"
+            "origins = [\n"
+            "    'https://yourdomain.com',\n"
+            "    'https://app.yourdomain.com',\n"
+            "]\n\n"
+            "app.add_middleware(\n"
+            "    CORSMiddleware,\n"
+            "    allow_origins=origins,        # Explicit origin whitelist (never use ['*'] with credentials)\n"
+            "    allow_credentials=True,\n"
+            "    allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],\n"
+            "    allow_headers=['Content-Type', 'Authorization'],\n"
+            "    max_age=86400,\n"
+            ")"
+        ),
+        "nginx": (
+            "# Secure CORS configuration in Nginx:\n"
+            "# Whitelist specific trusted origins using map:\n"
+            "map $http_origin $cors_origin {\n"
+            "    default '';\n"
+            "    '~^https://(www\\.)?yourdomain\\.com$' '$http_origin';\n"
+            "    '~^https://app\\.yourdomain\\.com$' '$http_origin';\n"
+            "}\n\n"
+            "server {\n"
+            "    # ...\n"
+            "    add_header Access-Control-Allow-Origin $cors_origin always;\n"
+            "    add_header Access-Control-Allow-Credentials 'true' always;\n"
+            "    add_header Access-Control-Allow-Methods 'GET, POST, OPTIONS, PUT, DELETE' always;\n"
+            "    add_header Access-Control-Allow-Headers 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;\n"
+            "}"
+        ),
+    }
+
+
+def get_method_security_remediations() -> Dict[str, str]:
+    """Generates remediation rules to disable TRACE/TRACK and restrict dangerous HTTP verbs."""
+    return {
+        "nginx": (
+            "# Disable TRACE and restrict HTTP methods in Nginx:\n"
+            "if ($request_method = TRACE) {\n"
+            "    return 405;\n"
+            "}\n\n"
+            "# Alternatively, allow only approved methods in a location block:\n"
+            "location / {\n"
+            "    limit_except GET POST OPTIONS HEAD {\n"
+            "        deny all;\n"
+            "    }\n"
+            "}"
+        ),
+        "apache": (
+            "# Disable TRACE method in Apache httpd.conf:\n"
+            "TraceEnable Off\n\n"
+            "# Restrict methods in .htaccess:\n"
+            "<LimitExcept GET POST OPTIONS HEAD>\n"
+            "    Require all denied\n"
+            "</LimitExcept>"
+        ),
+        "express": (
+            "// Block TRACE / TRACK in Express.js:\n"
+            "app.use((req, res, next) => {\n"
+            "  if (req.method === 'TRACE' || req.method === 'TRACK') {\n"
+            "    return res.status(405).send('Method Not Allowed');\n"
+            "  }\n"
+            "  next();\n"
+            "});"
+        ),
+    }
+
+
+
