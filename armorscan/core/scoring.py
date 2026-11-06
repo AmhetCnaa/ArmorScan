@@ -19,11 +19,16 @@ class ScoringEngine:
         medium_count = 0
         low_count = 0
         info_count = 0
+        suppressed_count = 0
         passed_checks_count = 0
 
         for mod in modules:
             passed_checks_count += len(mod.passed_checks)
             for finding in mod.findings:
+                if finding.is_suppressed:
+                    suppressed_count += 1
+                    continue
+
                 if finding.severity == Severity.CRITICAL:
                     critical_count += 1
                 elif finding.severity == Severity.HIGH:
@@ -36,7 +41,7 @@ class ScoringEngine:
                     info_count += 1
 
         total_findings = critical_count + high_count + medium_count + low_count + info_count
-        total_checks = passed_checks_count + total_findings
+        total_checks = passed_checks_count + total_findings + suppressed_count
 
         # Calculate penalty
         penalty = (
@@ -57,6 +62,7 @@ class ScoringEngine:
             medium_count=medium_count,
             low_count=low_count,
             info_count=info_count,
+            suppressed_count=suppressed_count,
             score=final_score,
             grade=grade,
         )

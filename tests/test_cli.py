@@ -113,3 +113,9 @@ async def test_cli_quality_gate_passed(tmp_path):
     assert exit_code == 0
     assert Path(html_out).exists()
     assert Path(json_out).exists()
+
+
+def test_cli_parser_ignore_file():
+    parser = build_parser()
+    args = parser.parse_args(["https://target.com", "--ignore-file", ".customignore"])
+    assert args.ignore_file == ".customignore"

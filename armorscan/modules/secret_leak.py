@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import urljoin, urlparse
 
 from armorscan.core.client import HttpClient, HttpResponse
-from armorscan.core.models import Finding, ModuleResult, ScanTarget, Severity
+from armorscan.core.models import Confidence, Finding, ModuleResult, ScanTarget, Severity
 from armorscan.modules.base import BaseModule
 from armorscan.remediations.templates import get_secret_leak_remediations
 
@@ -93,14 +93,14 @@ class SecretLeakModule(BaseModule):
 
         html_text = resp.text
         # Scan HTML body
-        self._scan_content_for_secrets(html_text, "HTML Document", findings)
+        self._scan_content_for_secrets(html_text, target, target.raw_url, "HTML Document", findings, client)
 
         # 2. Extract and fetch up to 4 client-side JS bundles
         js_urls = self._extract_js_urls(target, html_text)
         for js_url in js_urls[:4]:
             js_resp = await client.get(js_url)
             if js_resp.ok and js_resp.text:
-                self._scan_content_for_secrets(js_resp.text, f"JavaScript Bundle ({js_url})", findings)
+                self._scan_content_for_secrets(js_resp.text, target, js_url, f"JavaScript Bundle ({js_url})", findings, client)
 
         if not findings:
             passed_checks.append("no-hardcoded-secrets-in-client-assets")
@@ -127,8 +127,16 @@ class SecretLeakModule(BaseModule):
 
         return urls
 
-    def _scan_content_for_secrets(self, content: str, source_label: str, findings: List[Finding]) -> None:
-        """Scan text using compiled secret rules."""
+    def _scan_content_for_secrets(
+        self,
+        content: str,
+        target: ScanTarget,
+        asset_url: str,
+        source_label: str,
+        findings: List[Finding],
+        client: HttpClient,
+    ) -> None:
+        """Scan text using compiled secret rules with masked context snippet."""
         for rule in SECRET_RULES:
             rule_id = rule["id"]
             pattern: re.Pattern = rule["pattern"]
@@ -142,6 +150,13 @@ class SecretLeakModule(BaseModule):
                 sample_match = matches[0]
                 masked_match = self._mask_secret(sample_match)
 
+                # Safe masked context snippet
+                raw_snippet = Finding.extract_context_snippet(content, sample_match)
+                masked_snippet = raw_snippet.replace(sample_match, masked_match)
+
+                curl_cmd = Finding.build_curl("GET", asset_url)
+                req_snippet = f"GET {asset_url} HTTP/1.1\nHost: {target.host}\nUser-Agent: {client.user_agent}"
+
                 findings.append(
                     Finding(
                         id=rule_id,
@@ -151,9 +166,14 @@ class SecretLeakModule(BaseModule):
                             f"from {source_label}."
                         ),
                         severity=rule["severity"],
+                        confidence=Confidence.CONFIRMED,
                         module=self.name,
                         impact=rule["impact"],
                         evidence=f"Matched secret (masked): {masked_match}",
+                        curl_command=curl_cmd,
+                        request_snippet=req_snippet,
+                        response_snippet=masked_snippet,
+                        affected_urls=[asset_url],
                         remediation="Revoke the exposed key immediately and move all secret credentials to server-side environment variables.",
                         remediation_snippets=get_secret_leak_remediations(),
                         cwe_id="CWE-798",

@@ -14,7 +14,7 @@ import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from armorscan.core.client import HttpClient, HttpResponse
-from armorscan.core.models import Finding, ModuleResult, ScanTarget, Severity
+from armorscan.core.models import Confidence, Finding, ModuleResult, ScanTarget, Severity
 from armorscan.modules.base import BaseModule
 from armorscan.remediations.templates import get_jwt_audit_remediations
 
@@ -80,7 +80,7 @@ class JwtAuditModule(BaseModule):
             )
 
         for raw_jwt in collected_jwts:
-            self._audit_jwt(raw_jwt, findings, passed_checks)
+            self._audit_jwt(raw_jwt, target, findings, passed_checks)
 
         return ModuleResult(
             module_name=self.name,
@@ -89,7 +89,7 @@ class JwtAuditModule(BaseModule):
             passed_checks=passed_checks,
         )
 
-    def _audit_jwt(self, raw_jwt: str, findings: List[Finding], passed_checks: List[str]) -> None:
+    def _audit_jwt(self, raw_jwt: str, target: ScanTarget, findings: List[Finding], passed_checks: List[str]) -> None:
         parts = raw_jwt.split(".")
         if len(parts) < 2:
             return
@@ -99,6 +99,8 @@ class JwtAuditModule(BaseModule):
 
         if not header or not payload:
             return
+
+        curl_cmd = Finding.build_curl("GET", target.raw_url)
 
         # 1. Check 'alg: none' algorithm bypass
         alg = str(header.get("alg", "")).lower()
@@ -112,9 +114,12 @@ class JwtAuditModule(BaseModule):
                         "This allows attackers to strip cryptographic signatures and forge arbitrary authentication claims."
                     ),
                     severity=Severity.CRITICAL,
+                    confidence=Confidence.CONFIRMED,
                     module=self.name,
                     impact="Complete Authentication Bypass: Attackers can impersonate any user, including administrators.",
                     evidence=f"JWT Header: {json.dumps(header)}",
+                    curl_command=curl_cmd,
+                    affected_urls=[target.raw_url],
                     remediation="Reject tokens with 'alg: none' and enforce strong cryptographic algorithms (RS256, Ed25519, HS256).",
                     remediation_snippets=get_jwt_audit_remediations(),
                     references=["https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/"],
@@ -136,9 +141,12 @@ class JwtAuditModule(BaseModule):
                     title="Missing Expiration Claim ('exp') in JWT",
                     description="The JWT payload does not define an 'exp' claim, making the token valid indefinitely.",
                     severity=Severity.MEDIUM,
+                    confidence=Confidence.CONFIRMED,
                     module=self.name,
                     impact="Token Persistence: If the token is leaked or intercepted, it remains valid indefinitely.",
                     evidence=f"Payload keys: {', '.join(payload.keys())}",
+                    curl_command=curl_cmd,
+                    affected_urls=[target.raw_url],
                     remediation="Always set an 'exp' expiration claim with a short lifespan (15 to 60 minutes).",
                     remediation_snippets=get_jwt_audit_remediations(),
                     cwe_id="CWE-613",
@@ -155,9 +163,12 @@ class JwtAuditModule(BaseModule):
                         title=f"Excessive JWT Expiration Lifetime ({days} days remaining)",
                         description=f"JWT token has an unusually long lifetime of {days} days before expiring.",
                         severity=Severity.LOW,
+                        confidence=Confidence.FIRM,
                         module=self.name,
                         impact="Widened vulnerability window if the user's browser or device is compromised.",
                         evidence=f"exp timestamp: {exp} (approx {days} days)",
+                        curl_command=curl_cmd,
+                        affected_urls=[target.raw_url],
                         remediation="Shorten access token lifetime and use rotating refresh tokens for session renewal.",
                         remediation_snippets=get_jwt_audit_remediations(),
                         cwe_id="CWE-613",
@@ -180,9 +191,12 @@ class JwtAuditModule(BaseModule):
                         "JWT payloads are merely base64-encoded, NOT encrypted, and visible to anyone inspecting the token."
                     ),
                     severity=Severity.HIGH,
+                    confidence=Confidence.CONFIRMED,
                     module=self.name,
                     impact="Credential Leakage: Exposes cleartext passwords or internal secrets to client-side scripts and network logs.",
                     evidence=f"Disclosed payload keys: {', '.join(exposed_keys)}",
+                    curl_command=curl_cmd,
+                    affected_urls=[target.raw_url],
                     remediation="Never store passwords, secrets, or private keys inside JWT claims.",
                     remediation_snippets=get_jwt_audit_remediations(),
                     cwe_id="CWE-312",

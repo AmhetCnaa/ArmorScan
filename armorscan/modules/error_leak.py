@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from armorscan.core.client import HttpClient, HttpResponse
-from armorscan.core.models import Finding, ModuleResult, ScanTarget, Severity
+from armorscan.core.models import Confidence, Finding, ModuleResult, ScanTarget, Severity
 from armorscan.modules.base import BaseModule
 from armorscan.remediations.templates import get_error_leak_remediations
 
@@ -53,10 +53,23 @@ class ErrorLeakModule(BaseModule):
         parsed_url = urlparse(target.raw_url)
         existing_params = parse_qs(parsed_url.query)
 
-        # Baseline check on root first
+        # Baseline check on root first (establish baseline response)
         base_resp = await client.get(target.raw_url)
+        baseline_leaks: Set[str] = set()
         if base_resp.ok and base_resp.text:
-            self._scan_text_for_leaks(base_resp.text, "Baseline Target URL", findings, passed_checks)
+            baseline_leaks = self._extract_leak_keys(base_resp.text)
+            if baseline_leaks:
+                self._scan_text_for_leaks(
+                    base_resp.text,
+                    target,
+                    client,
+                    "Baseline Target URL",
+                    target.raw_url,
+                    findings,
+                    passed_checks,
+                    baseline_leaks=set(),
+                    is_baseline=True,
+                )
 
         # Probe parameters
         params_to_test = list(existing_params.keys()) if existing_params else ["id", "user", "page"]
@@ -66,8 +79,19 @@ class ErrorLeakModule(BaseModule):
                 probe_url = self._build_probe_url(target.raw_url, param, probe)
                 resp = await client.get(probe_url)
                 if resp.ok and resp.text:
-                    if self._scan_text_for_leaks(resp.text, f"Param '{param}' with probe '{probe}'", findings, passed_checks):
-                        break  # Found leak for this param, stop probing other probes for it
+                    # Only report leaks if not already present in the baseline
+                    if self._scan_text_for_leaks(
+                        resp.text,
+                        target,
+                        client,
+                        f"Param '{param}' with probe '{probe}'",
+                        probe_url,
+                        findings,
+                        passed_checks,
+                        baseline_leaks=baseline_leaks,
+                        is_baseline=False,
+                    ):
+                        break  # Found leak for this param, proceed to next param
 
         if not findings and passed_checks:
             passed_checks.append("no-stack-traces-or-db-errors-disclosed")
@@ -79,21 +103,47 @@ class ErrorLeakModule(BaseModule):
             passed_checks=passed_checks,
         )
 
+    def _extract_leak_keys(self, text: str) -> Set[str]:
+        """Extract set of DB/Trace keys already present in a given response body."""
+        keys: Set[str] = set()
+        for pattern, name in DB_ERROR_PATTERNS:
+            if re.search(pattern, text, re.IGNORECASE):
+                keys.add(f"db:{name}")
+        for pattern, name in STACK_TRACE_PATTERNS:
+            if re.search(pattern, text):
+                keys.add(f"trace:{name}")
+        return keys
+
     def _scan_text_for_leaks(
         self,
         text: str,
+        target: ScanTarget,
+        client: HttpClient,
         source_label: str,
+        probe_url: str,
         findings: List[Finding],
         passed_checks: List[str],
+        baseline_leaks: Set[str],
+        is_baseline: bool = False,
     ) -> bool:
-        """Scan response text against DB and stack trace signatures."""
+        """Scan response text against DB and stack trace signatures with diff analysis."""
         leak_found = False
+
+        curl_cmd = Finding.build_curl("GET", probe_url)
+        req_snippet = f"GET {probe_url} HTTP/1.1\nHost: {target.host}\nUser-Agent: {client.user_agent}"
+        confidence = Confidence.FIRM if is_baseline else Confidence.CONFIRMED
 
         # 1. Database Error Check
         for pattern, db_name in DB_ERROR_PATTERNS:
+            leak_key = f"db:{db_name}"
+            if leak_key in baseline_leaks and not is_baseline:
+                # Part of static baseline content, not an active injection error
+                continue
+
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                evidence_snippet = text[max(0, match.start() - 30) : min(len(text), match.end() + 80)].strip()
+                matched_str = match.group(0)
+                context_snippet = Finding.extract_context_snippet(text, matched_str)
                 findings.append(
                     Finding(
                         id="DATABASE_ERROR_DISCLOSURE",
@@ -103,12 +153,17 @@ class ErrorLeakModule(BaseModule):
                             f"triggered by: {source_label}."
                         ),
                         severity=Severity.HIGH,
+                        confidence=confidence,
                         module=self.name,
                         impact=(
                             "Schema Reconnaissance & SQLi: Raw database errors expose internal column/table names "
                             "and serve as immediate proof of SQL injection or improper query handling."
                         ),
-                        evidence=f"Matched {db_name} pattern: '{evidence_snippet}'",
+                        evidence=f"Matched {db_name} pattern: '{matched_str}'",
+                        curl_command=curl_cmd,
+                        request_snippet=req_snippet,
+                        response_snippet=context_snippet,
+                        affected_urls=[target.raw_url],
                         remediation="Catch all database exceptions and return generic opaque error messages.",
                         remediation_snippets=get_error_leak_remediations(),
                         cwe_id="CWE-209",
@@ -120,9 +175,14 @@ class ErrorLeakModule(BaseModule):
 
         # 2. Stack Trace / Debugger Check
         for pattern, trace_name in STACK_TRACE_PATTERNS:
+            leak_key = f"trace:{trace_name}"
+            if leak_key in baseline_leaks and not is_baseline:
+                continue
+
             match = re.search(pattern, text)
             if match:
-                evidence_snippet = text[max(0, match.start() - 20) : min(len(text), match.end() + 100)].strip()
+                matched_str = match.group(0)
+                context_snippet = Finding.extract_context_snippet(text, matched_str)
                 findings.append(
                     Finding(
                         id="STACK_TRACE_DISCLOSURE",
@@ -132,12 +192,17 @@ class ErrorLeakModule(BaseModule):
                             f"triggered by: {source_label}."
                         ),
                         severity=Severity.HIGH,
+                        confidence=confidence,
                         module=self.name,
                         impact=(
                             "Information Disclosure: Reveals backend source file paths, third-party library versions, "
                             "and application call flows, assisting targeted exploitation."
                         ),
-                        evidence=f"Matched trace signature: '{evidence_snippet}'",
+                        evidence=f"Matched trace signature: '{matched_str}'",
+                        curl_command=curl_cmd,
+                        request_snippet=req_snippet,
+                        response_snippet=context_snippet,
+                        affected_urls=[target.raw_url],
                         remediation="Disable DEBUG mode in production and configure global generic error handling.",
                         remediation_snippets=get_error_leak_remediations(),
                         cwe_id="CWE-209",

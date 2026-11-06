@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Set
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from armorscan.core.client import HttpClient, HttpResponse
-from armorscan.core.models import Finding, ModuleResult, ScanTarget, Severity
+from armorscan.core.models import Confidence, Finding, ModuleResult, ScanTarget, Severity
 from armorscan.modules.base import BaseModule
 from armorscan.remediations.templates import get_open_redirect_remediations
 
@@ -91,6 +91,9 @@ class OpenRedirectModule(BaseModule):
             # 1. Check HTTP 3xx Location header
             if status in (301, 302, 303, 307, 308) and location:
                 if location.startswith(TEST_EXTERNAL_URL) or location.startswith(TEST_PROTOCOL_RELATIVE) or "example.com/armorscan-test" in location:
+                    curl_cmd = Finding.build_curl("GET", probe_url)
+                    req_snippet = f"GET {probe_url} HTTP/1.1\nHost: {target.host}\nUser-Agent: {client.user_agent}"
+                    resp_snippet = f"HTTP/1.1 {status} Found\nLocation: {location}\nContent-Length: {len(resp.text)}"
                     findings.append(
                         Finding(
                             id="OPEN_REDIRECT_UNVALIDATED",
@@ -100,6 +103,7 @@ class OpenRedirectModule(BaseModule):
                                 f"'{param_name}' is manipulated with arbitrary external URLs."
                             ),
                             severity=Severity.HIGH,
+                            confidence=Confidence.CONFIRMED,
                             module=self.name,
                             impact=(
                                 "Phishing & Credential Theft: Attackers craft trusted-looking links on your domain "
@@ -107,6 +111,10 @@ class OpenRedirectModule(BaseModule):
                                 "users to rogue phishing pages, stealing session tokens and credentials."
                             ),
                             evidence=f"GET {probe_url} -> HTTP {status} Location: {location}",
+                            curl_command=curl_cmd,
+                            request_snippet=req_snippet,
+                            response_snippet=resp_snippet,
+                            affected_urls=[target.raw_url],
                             remediation="Validate redirect destinations against an explicit whitelist or enforce relative paths (/...).",
                             remediation_snippets=get_open_redirect_remediations(),
                             references=["https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html"],
@@ -119,15 +127,23 @@ class OpenRedirectModule(BaseModule):
             # 2. Check HTML Meta Refresh or JS location redirection
             if resp.status_code == 200 and resp.text:
                 if re.search(r"""<meta\s+http-equiv=["']refresh["']\s+content=["'][^"']*example\.com/armorscan-test""", resp.text, re.IGNORECASE):
+                    curl_cmd = Finding.build_curl("GET", probe_url)
+                    req_snippet = f"GET {probe_url} HTTP/1.1\nHost: {target.host}\nUser-Agent: {client.user_agent}"
+                    context_snippet = Finding.extract_context_snippet(resp.text, "example.com/armorscan-test")
                     findings.append(
                         Finding(
                             id="CLIENT_SIDE_OPEN_REDIRECT",
                             title=f"Client-Side Open Redirect via Meta Refresh ({param_name})",
                             description=f"HTML page executes a client-side redirect to an untrusted external URL via '{param_name}'.",
                             severity=Severity.MEDIUM,
+                            confidence=Confidence.CONFIRMED,
                             module=self.name,
                             impact="Phishing & credential theft through client-side HTML redirect injection.",
                             evidence=f"Meta refresh redirect to example.com detected in response.",
+                            curl_command=curl_cmd,
+                            request_snippet=req_snippet,
+                            response_snippet=context_snippet,
+                            affected_urls=[target.raw_url],
                             remediation="Do not render untrusted URLs in meta refresh tags.",
                             remediation_snippets=get_open_redirect_remediations(),
                             cwe_id="CWE-601",

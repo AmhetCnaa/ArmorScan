@@ -24,6 +24,7 @@ from armorscan.core.client import HttpClient
 from armorscan.core.crawler import WebCrawler
 from armorscan.core.models import ScanResult, ScanTarget
 from armorscan.core.runner import ScanRunner
+from armorscan.core.suppression import SuppressionEngine
 from armorscan.modules.base import BaseModule
 from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
@@ -128,6 +129,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="PATH",
         help="Output path for machine-readable JSON report.",
+    )
+    parser.add_argument(
+        "--ignore-file",
+        default=None,
+        metavar="PATH",
+        help="Path to .armorscanignore file for suppressing accepted security findings.",
     )
     parser.add_argument(
         "-k",
@@ -277,7 +284,13 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
 
     # 5. Execute Security Audits
     modules = get_default_modules(burst_count=args.burst)
-    runner = ScanRunner(modules=modules, verify_ssl=verify_ssl, concurrency=args.concurrency)
+    suppression_engine = SuppressionEngine.find_and_load(custom_path=args.ignore_file)
+    runner = ScanRunner(
+        modules=modules,
+        verify_ssl=verify_ssl,
+        concurrency=args.concurrency,
+        suppression_engine=suppression_engine,
+    )
 
     if not args.quiet:
         with Progress(

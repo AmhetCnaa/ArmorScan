@@ -77,15 +77,30 @@ class ConsoleReporter:
                 # Severity Badge
                 sev_color = f.severity.color
                 sev_badge = f"[{sev_color}][ {f.severity.value} ][/{sev_color}]"
+                conf_badge = f"[{f.confidence.color}][{f.confidence.value.upper()}][/{f.confidence.color}]"
+                status_cell = f"{sev_badge}\n{conf_badge}"
+                if f.is_suppressed:
+                    status_cell += "\n[dim magenta][SUPPRESSED][/dim magenta]"
 
                 # Description & Impact
                 desc_text = f"[bold white]{f.title}[/bold white]\n[dim]{f.description}[/dim]"
                 if f.evidence:
-                    # Single-line truncated evidence
                     clean_evidence = f.evidence.strip().replace("\n", " ")
                     if len(clean_evidence) > 90:
                         clean_evidence = clean_evidence[:87] + "..."
                     desc_text += f"\n[dim yellow]⚡ Evidence: {clean_evidence}[/dim yellow]"
+
+                if f.affected_urls and len(f.affected_urls) > 1:
+                    desc_text += f"\n[cyan]🔗 Affects {len(f.affected_urls)} endpoints[/cyan]"
+
+                if f.curl_command:
+                    curl_preview = f.curl_command.splitlines()[0]
+                    if len(curl_preview) > 85:
+                        curl_preview = curl_preview[:82] + "..."
+                    desc_text += f"\n[dim cyan]💻 Reproduce: {curl_preview}[/dim cyan]"
+
+                if f.is_suppressed:
+                    desc_text += f"\n[dim magenta]🛡️ Suppressed: {f.suppression_reason}[/dim magenta]"
 
                 # Standard tags
                 standards = []
@@ -96,7 +111,7 @@ class ConsoleReporter:
                     standards.append(cat_short)
                 standards_str = "\n".join(standards) if standards else "-"
 
-                table.add_row(sev_badge, f.id, desc_text, standards_str)
+                table.add_row(status_cell, f.id, desc_text, standards_str)
 
             self.console.print(table)
             self.console.print()

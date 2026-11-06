@@ -42,6 +42,7 @@ class HtmlReporter:
         findings_html = []
         for idx, f in enumerate(findings):
             sev_class = f.severity.value.lower()
+            conf_class = f.confidence.value.lower()
             safe_id = html.escape(f.id)
             safe_title = html.escape(f.title)
             safe_desc = html.escape(f.description)
@@ -49,6 +50,10 @@ class HtmlReporter:
             safe_evidence = html.escape(f.evidence or "")
             cwe = html.escape(f.cwe_id or "")
             owasp = html.escape(f.owasp_category or "")
+
+            # Confidence & Suppression Badges
+            conf_badge = f'<span class="badge badge-conf-{conf_class}">[{f.confidence.value.upper()}]</span>'
+            suppressed_badge = '<span class="badge badge-suppressed">🛡️ SUPPRESSED</span>' if f.is_suppressed else ""
 
             # Build remediation tabs
             tabs_nav = []
@@ -86,12 +91,62 @@ class HtmlReporter:
                     f'</div>'
                 )
 
+            # Suppression explanation banner
+            suppression_banner = ""
+            if f.is_suppressed:
+                safe_supp_reason = html.escape(f.suppression_reason or "Suppressed via .armorscanignore rule")
+                suppression_banner = (
+                    f'<div class="suppression-box">'
+                    f'  <strong>🛡️ Accepted Risk / Suppressed:</strong> {safe_supp_reason}'
+                    f'</div>'
+                )
+
+            # cURL Reproduction block
+            curl_block = ""
+            if f.curl_command:
+                safe_curl = html.escape(f.curl_command)
+                curl_block = (
+                    f'<div class="reproduction-block">'
+                    f'  <div class="code-header">'
+                    f'    <span class="code-lang">💻 Reproduce with cURL</span>'
+                    f'    <button class="copy-btn" onclick="copySnippet(this, `{safe_curl}`)">'
+                    f'      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>'
+                    f'      <span>Copy cURL</span>'
+                    f'    </button>'
+                    f'  </div>'
+                    f'  <pre class="evidence-code"><code>{safe_curl}</code></pre>'
+                    f'</div>'
+                )
+
+            # Response context snippet (±2 lines)
+            snippet_block = ""
+            if f.response_snippet:
+                safe_resp_snippet = html.escape(f.response_snippet)
+                snippet_block = (
+                    f'<div class="evidence-block">'
+                    f'  <div class="evidence-title">📄 Response Context (±2 lines)</div>'
+                    f'  <pre class="evidence-code"><code>{safe_resp_snippet}</code></pre>'
+                    f'</div>'
+                )
+
+            # Observed evidence block
             evidence_block = ""
             if safe_evidence:
                 evidence_block = (
                     f'<div class="evidence-block">'
                     f'  <div class="evidence-title">⚡ Observed Evidence</div>'
                     f'  <pre class="evidence-code"><code>{safe_evidence}</code></pre>'
+                    f'</div>'
+                )
+
+            # Affected endpoints block
+            affected_block = ""
+            if f.affected_urls:
+                items = "".join(f"<li><code>{html.escape(u)}</code></li>" for u in f.affected_urls)
+                affected_block = (
+                    f'<div class="affected-urls-block">'
+                    f'  <div class="evidence-title">🔗 Affected Endpoints ({len(f.affected_urls)})</div>'
+                    f'  <ul class="affected-urls-list">{items}</ul>'
                     f'</div>'
                 )
 
@@ -102,11 +157,15 @@ class HtmlReporter:
                 standards_tags.append(f'<span class="badge badge-owasp">{owasp}</span>')
             standards_html = "".join(standards_tags)
 
+            supp_data = "true" if f.is_suppressed else "false"
+
             card_html = f"""
-            <div class="finding-card sev-{sev_class}" data-severity="{f.severity.value}" data-text="{safe_title} {safe_id} {safe_desc} {cwe}">
+            <div class="finding-card sev-{sev_class}" data-severity="{f.severity.value}" data-suppressed="{supp_data}" data-text="{safe_title} {safe_id} {safe_desc} {cwe}">
               <div class="finding-header" onclick="toggleAccordion(this)">
                 <div class="finding-header-left">
                   <span class="badge badge-{sev_class}">{f.severity.value}</span>
+                  {conf_badge}
+                  {suppressed_badge}
                   <span class="finding-code">{safe_id}</span>
                   <span class="finding-title">{safe_title}</span>
                 </div>
@@ -116,12 +175,16 @@ class HtmlReporter:
                 </div>
               </div>
               <div class="finding-details">
+                {suppression_banner}
                 <div class="desc-section">
                   <p class="desc-text">{safe_desc}</p>
                   <div class="impact-box">
                     <strong>💥 Exploit Impact:</strong> {safe_impact}
                   </div>
                 </div>
+                {affected_block}
+                {curl_block}
+                {snippet_block}
                 {evidence_block}
                 {remediation_section}
               </div>
@@ -136,6 +199,19 @@ class HtmlReporter:
           <p>No vulnerabilities or misconfigurations detected on target.</p>
         </div>
         """
+
+        suppressed_metric_card = ""
+        suppressed_filter_pill = ""
+        if summary.suppressed_count > 0:
+            suppressed_metric_card = f"""
+            <div class="metric-card">
+              <div class="metric-value" style="color: #94a3b8;">{summary.suppressed_count}</div>
+              <div class="metric-name">Suppressed</div>
+            </div>
+            """
+            suppressed_filter_pill = f"""
+            <button class="filter-btn" onclick="filterSeverity('SUPPRESSED', this)">Suppressed ({summary.suppressed_count})</button>
+            """
 
         # Generate Full HTML
         return f"""<!DOCTYPE html>
@@ -313,7 +389,7 @@ class HtmlReporter:
 
     .metrics-grid {{
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       gap: 12px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
@@ -454,6 +530,11 @@ class HtmlReporter:
     .badge-cwe      {{ background: rgba(255, 255, 255, 0.06); color: #e5e7eb; }}
     .badge-owasp    {{ background: rgba(139, 92, 246, 0.2); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }}
 
+    .badge-conf-confirmed {{ background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }}
+    .badge-conf-firm      {{ background: rgba(6, 182, 212, 0.2);  color: #38bdf8; border: 1px solid #06b6d4; }}
+    .badge-conf-tentative {{ background: rgba(234, 179, 8, 0.2);  color: #facc15; border: 1px solid #eab308; }}
+    .badge-suppressed     {{ background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid #94a3b8; }}
+
     .finding-code {{
       font-family: var(--font-mono);
       font-size: 12px;
@@ -500,6 +581,47 @@ class HtmlReporter:
       font-size: 13px;
       color: #fca5a5;
       margin-bottom: 16px;
+    }}
+
+    .suppression-box {{
+      background: rgba(148, 163, 184, 0.08);
+      border-left: 3px solid #94a3b8;
+      padding: 10px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+    }}
+
+    .reproduction-block {{
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }}
+
+    .affected-urls-block {{
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }}
+
+    .affected-urls-list {{
+      list-style: none;
+      padding: 0;
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }}
+
+    .affected-urls-list li code {{
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #38bdf8;
     }}
 
     .evidence-block {{
@@ -706,6 +828,7 @@ class HtmlReporter:
             <div class="metric-value" style="color: {theme_primary};">{len(findings)}</div>
             <div class="metric-name">Findings</div>
           </div>
+          {suppressed_metric_card}
         </div>
       </div>
     </section>
@@ -719,6 +842,7 @@ class HtmlReporter:
         <button class="filter-btn" onclick="filterSeverity('MEDIUM', this)">Medium ({summary.medium_count})</button>
         <button class="filter-btn" onclick="filterSeverity('LOW', this)">Low ({summary.low_count})</button>
         <button class="filter-btn" onclick="filterSeverity('INFO', this)">Info ({summary.info_count})</button>
+        {suppressed_filter_pill}
       </div>
       <input type="text" id="searchInput" class="search-box" placeholder="Filter findings by text..." oninput="filterSearch()">
     </div>
@@ -761,9 +885,18 @@ class HtmlReporter:
 
       cards.forEach(card => {{
         const cardSev = card.getAttribute('data-severity');
+        const cardSupp = card.getAttribute('data-suppressed');
         const text = card.getAttribute('data-text').toLowerCase();
 
-        const matchSev = (currentSeverity === 'ALL' || cardSev === currentSeverity);
+        let matchSev = false;
+        if (currentSeverity === 'ALL') {{
+          matchSev = true;
+        }} else if (currentSeverity === 'SUPPRESSED') {{
+          matchSev = (cardSupp === 'true');
+        }} else {{
+          matchSev = (cardSev === currentSeverity && cardSupp !== 'true');
+        }}
+
         const matchText = (!query || text.includes(query));
 
         if (matchSev && matchText) {{

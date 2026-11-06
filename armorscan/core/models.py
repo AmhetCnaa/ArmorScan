@@ -77,6 +77,20 @@ class Grade(str, Enum):
         }[self]
 
 
+class Confidence(str, Enum):
+    CONFIRMED = "confirmed"  # Verified by dynamic multi-pass probe or exact canary match
+    FIRM = "firm"            # High confidence behavioral or structured evidence
+    TENTATIVE = "tentative"  # Heuristic, signature-only, or unverified response
+
+    @property
+    def color(self) -> str:
+        return {
+            Confidence.CONFIRMED: "bold green",
+            Confidence.FIRM: "cyan",
+            Confidence.TENTATIVE: "yellow",
+        }[self]
+
+
 class Finding(BaseModel):
     """Represents an individual security finding/vulnerability detected during a scan."""
     id: str = Field(..., description="Unique machine-friendly identifier, e.g., 'MISSING_HSTS'")
@@ -86,6 +100,13 @@ class Finding(BaseModel):
     module: str = Field(..., description="Name of the module that produced this finding")
     impact: str = Field(..., description="Security impact / exploit risk explanation")
     evidence: Optional[str] = Field(default=None, description="Actual evidence from the response (e.g. headers, URL)")
+    confidence: Confidence = Field(default=Confidence.FIRM, description="Finding confidence rating (confirmed, firm, tentative)")
+    curl_command: Optional[str] = Field(default=None, description="Ready-to-use curl command to reproduce the finding")
+    request_snippet: Optional[str] = Field(default=None, description="Full HTTP request representation (method, URL, headers)")
+    response_snippet: Optional[str] = Field(default=None, description="HTTP response snippet (matching lines with ±2 lines of context)")
+    affected_urls: List[str] = Field(default_factory=list, description="List of all affected URLs where this finding applies")
+    is_suppressed: bool = Field(default=False, description="Whether this finding is suppressed via .armorscanignore")
+    suppression_reason: Optional[str] = Field(default=None, description="Reason why this finding was suppressed")
     remediation: Optional[str] = Field(default=None, description="General fix guidance")
     remediation_snippets: Dict[str, str] = Field(
         default_factory=dict,
@@ -94,6 +115,40 @@ class Finding(BaseModel):
     references: List[str] = Field(default_factory=list, description="Useful links to OWASP, MDN, CWE")
     cwe_id: Optional[str] = Field(default=None, description="CWE identifier (e.g. 'CWE-693')")
     owasp_category: Optional[str] = Field(default=None, description="OWASP Top 10 category")
+
+    @staticmethod
+    def build_curl(
+        method: str,
+        url: str,
+        headers: Optional[Dict[str, str]] = None,
+        data: Optional[str] = None,
+    ) -> str:
+        """Construct a standardized, copy-pasteable curl reproduction command."""
+        cmd_parts = [f"curl -i -s -k -X {method.upper()} '{url}'"]
+        if headers:
+            for k, v in headers.items():
+                if k.lower() in ("host", "user-agent", "origin", "cookie", "referer", "content-type", "authorization"):
+                    cmd_parts.append(f"-H '{k}: {v}'")
+        if data:
+            cmd_parts.append(f"--data '{data}'")
+        return " \\\n  ".join(cmd_parts)
+
+    @staticmethod
+    def extract_context_snippet(full_text: str, match_str: str, context_lines: int = 2) -> str:
+        """Extract matching lines with ±context_lines around match_str."""
+        if not full_text or not match_str:
+            return ""
+        lines = full_text.splitlines()
+        for idx, line in enumerate(lines):
+            if match_str in line:
+                start = max(0, idx - context_lines)
+                end = min(len(lines), idx + context_lines + 1)
+                snippet_lines = []
+                for i in range(start, end):
+                    prefix = ">> " if i == idx else "   "
+                    snippet_lines.append(f"{prefix}{lines[i]}")
+                return "\n".join(snippet_lines)
+        return match_str[:250]
 
 
 class ModuleResult(BaseModel):
@@ -176,6 +231,7 @@ class ScanSummary(BaseModel):
     medium_count: int = 0
     low_count: int = 0
     info_count: int = 0
+    suppressed_count: int = 0
     score: int = 100
     grade: Grade = Grade.A_PLUS
 

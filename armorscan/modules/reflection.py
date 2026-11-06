@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 import uuid
 
 from armorscan.core.client import HttpClient, HttpResponse
-from armorscan.core.models import Finding, ModuleResult, ScanTarget, Severity
+from armorscan.core.models import Confidence, Finding, ModuleResult, ScanTarget, Severity
 from armorscan.modules.base import BaseModule
 from armorscan.remediations.templates import get_reflection_remediations
 
@@ -96,6 +96,27 @@ class InputReflectionModule(BaseModule):
         )
 
         if has_unescaped:
+            # Double Verification: Send a second probe with distinct canary
+            canary2_id = uuid.uuid4().hex[:6]
+            canary2_token = f"armorscan{canary2_id}"
+            canary2_payload = f"{canary2_token}\"<'probe2>"
+            test_url2 = self._build_probe_url(target.raw_url, param_name, canary2_payload)
+            resp2 = await client.get(test_url2)
+
+            double_verified = False
+            if resp2.ok and resp2.text:
+                double_verified = (
+                    f"{canary2_token}\"<'probe2>" in resp2.text
+                    or f"{canary2_token}<'probe2>" in resp2.text
+                    or f"{canary2_token}<" in resp2.text
+                    or f"{canary2_token}\"" in resp2.text
+                )
+
+            confidence = Confidence.CONFIRMED if double_verified else Confidence.FIRM
+            curl_cmd = Finding.build_curl("GET", test_url)
+            context_snippet = Finding.extract_context_snippet(text, canary_token)
+            req_snippet = f"GET {test_url} HTTP/1.1\nHost: {target.host}\nUser-Agent: {client.user_agent}"
+
             contexts = self._find_all_reflection_contexts(text, canary_token)
 
             if "script" in contexts:
@@ -108,9 +129,14 @@ class InputReflectionModule(BaseModule):
                             "<script> block. Attackers can execute arbitrary JavaScript in the user's browser."
                         ),
                         severity=Severity.HIGH,
+                        confidence=confidence,
                         module=self.name,
                         impact="Direct XSS execution: Bypasses standard HTML tag filtering and executes in script context.",
                         evidence=f"Reflected in <script> tag: ...{canary_payload}...",
+                        curl_command=curl_cmd,
+                        request_snippet=req_snippet,
+                        response_snippet=context_snippet,
+                        affected_urls=[target.raw_url],
                         remediation="Never reflect untrusted inputs directly inside script tags. Use JSON serialization with unicode escapes.",
                         remediation_snippets=get_reflection_remediations(),
                         cwe_id="CWE-79",
@@ -128,9 +154,14 @@ class InputReflectionModule(BaseModule):
                             "Attackers can break out of the attribute and inject event handlers (e.g., onload, onmouseover)."
                         ),
                         severity=Severity.MEDIUM,
+                        confidence=confidence,
                         module=self.name,
                         impact="Attribute breakout XSS: Enables event handler injection or javascript: URI execution.",
                         evidence=f"Reflected in attribute context: ...{canary_payload}...",
+                        curl_command=curl_cmd,
+                        request_snippet=req_snippet,
+                        response_snippet=context_snippet,
+                        affected_urls=[target.raw_url],
                         remediation="HTML-attribute-encode untrusted inputs (encode quotes, ampersands, angle brackets).",
                         remediation_snippets=get_reflection_remediations(),
                         cwe_id="CWE-79",
@@ -148,9 +179,14 @@ class InputReflectionModule(BaseModule):
                             "angle brackets (< >) and quotation marks (\")."
                         ),
                         severity=Severity.HIGH,
+                        confidence=confidence,
                         module=self.name,
                         impact="Cross-Site Scripting (XSS): Enables attackers to inject arbitrary HTML tags and scripts.",
                         evidence=f"Unencoded reflection found for '{param_name}': {canary_payload}",
+                        curl_command=curl_cmd,
+                        request_snippet=req_snippet,
+                        response_snippet=context_snippet,
+                        affected_urls=[target.raw_url],
                         remediation="Apply context-aware HTML entity encoding on all user-supplied outputs.",
                         remediation_snippets=get_reflection_remediations(),
                         cwe_id="CWE-79",
