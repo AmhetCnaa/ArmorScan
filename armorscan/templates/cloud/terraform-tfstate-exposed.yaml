@@ -1,0 +1,21 @@
+id: terraform-tfstate-exposed
+info:
+  name: Exposed Terraform State File (.tfstate)
+  severity: CRITICAL
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Publicly accessible terraform.tfstate file discloses entire cloud infrastructure map, resource IDs, and plain text secrets.
+  remediation: Move Terraform state to a remote backend (AWS S3 with KMS, Terraform Cloud) and remove tfstate from public web servers.
+
+requests:
+  - method: GET
+    path:
+      - "/terraform.tfstate"
+      - "/.terraform/terraform.tfstate"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - '"terraform_version"'
+        - '"resources"'

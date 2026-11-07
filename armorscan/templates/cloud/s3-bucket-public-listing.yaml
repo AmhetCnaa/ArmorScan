@@ -1,0 +1,22 @@
+id: s3-bucket-public-listing
+info:
+  name: Public AWS S3 Bucket File Listing Exposed
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The target or associated asset exposes an AWS S3 bucket with public ListBucket permission enabled.
+  remediation: Enable S3 Block Public Access at the bucket and account level.
+
+requests:
+  - method: GET
+    path:
+      - "/?list-type=2"
+      - "/"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "<ListBucketResult"
+        - "<Contents>"
+        - "<Key>"

@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urljoin
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from armorscan.core.client import HttpClient, HttpResponse
 from armorscan.core.models import (
@@ -60,6 +60,37 @@ class TemplateRequest(BaseModel):
     body: Optional[str] = None
     matchers_condition: str = Field(default="and", alias="matchers-condition")
     matchers: List[TemplateMatcher] = Field(default_factory=list)
+
+    @field_validator("matchers", mode="before")
+    @classmethod
+    def normalize_matchers(cls, v: Any) -> Any:
+        if isinstance(v, dict):
+            converted = []
+            if "status" in v:
+                statuses = v["status"] if isinstance(v["status"], list) else [v["status"]]
+                converted.append(TemplateMatcher(type="status", status=statuses))
+            if "words" in v:
+                words = v["words"] if isinstance(v["words"], list) else [v["words"]]
+                converted.append(
+                    TemplateMatcher(
+                        type="words",
+                        words=words,
+                        condition=v.get("condition", "and"),
+                        part=v.get("part", "body"),
+                    )
+                )
+            if "regex" in v:
+                regex = v["regex"] if isinstance(v["regex"], list) else [v["regex"]]
+                converted.append(
+                    TemplateMatcher(
+                        type="regex",
+                        regex=regex,
+                        condition=v.get("condition", "or"),
+                        part=v.get("part", "body"),
+                    )
+                )
+            return converted
+        return v
 
     model_config = {"populate_by_name": True}
 

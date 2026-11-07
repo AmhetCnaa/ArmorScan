@@ -12,9 +12,14 @@ from armorscan.core.templates import TemplateEngine
 def test_builtin_templates_load():
     engine = TemplateEngine()
     template_ids = [t.id for t in engine.templates]
+    assert len(engine.templates) >= 25
     assert "exposed-prometheus-metrics" in template_ids
     assert "actuator-health" in template_ids
     assert "cve-admin-exposed" in template_ids
+    assert "docker-api-exposed" in template_ids
+    assert "cve-2021-41773" in template_ids
+    assert "s3-bucket-public-listing" in template_ids
+    assert "env-file-exposed" in template_ids
 
 
 @pytest.mark.asyncio

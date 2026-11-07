@@ -1,0 +1,21 @@
+id: phpinfo-exposed
+info:
+  name: Exposed phpinfo() Diagnostic Page
+  severity: MEDIUM
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: A phpinfo() page is accessible over HTTP, disclosing PHP extensions, operating system details, and server environment variables.
+  remediation: Delete test phpinfo scripts from production servers or restrict to localhost.
+
+requests:
+  - method: GET
+    path:
+      - "/phpinfo.php"
+      - "/info.php"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "PHP Version"
+        - "Configuration File (php.ini) Path"

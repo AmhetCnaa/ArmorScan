@@ -177,6 +177,7 @@ class ScanTarget(BaseModel):
     path: str
     is_https: bool
     is_localhost: bool
+    discovered_paths: List[str] = Field(default_factory=list)
 
     @classmethod
     def from_url(cls, url: str) -> ScanTarget:

@@ -164,3 +164,57 @@ async def test_cli_benchmark_command_dispatch():
         assert code == 0
         mock_bench.assert_called_once()
 
+
+def test_cli_parser_ai_and_sentinel_options():
+    parser = build_parser()
+    args = parser.parse_args([
+        "watch", "http://localhost:3000",
+        "--interval", "30m",
+        "--webhook", "https://discord.com/webhook",
+        "--slack-webhook", "https://slack.com/webhook",
+        "--telegram-token", "tok123",
+        "--telegram-chat", "chat456",
+        "--baseline", "custom-baseline.json",
+        "--once",
+        "--ai-explain",
+        "--ai-patch",
+        "--repo-path", "./src",
+    ])
+    assert args.target == "watch"
+    assert args.host_or_target == "http://localhost:3000"
+    assert args.interval == "30m"
+    assert args.webhook == "https://discord.com/webhook"
+    assert args.slack_webhook == "https://slack.com/webhook"
+    assert args.telegram_token == "tok123"
+    assert args.telegram_chat == "chat456"
+    assert args.baseline == "custom-baseline.json"
+    assert args.once is True
+    assert args.ai_explain is True
+    assert args.ai_patch is True
+    assert args.repo_path == "./src"
+
+
+@pytest.mark.asyncio
+async def test_cli_sentinel_watch_once_execution(tmp_path):
+    parser = build_parser()
+    baseline_path = str(tmp_path / "sentinel-baseline.json")
+    args = parser.parse_args([
+        "watch", "http://localhost:3000",
+        "--baseline", baseline_path,
+        "--once",
+        "-q",
+    ])
+    console = Console(quiet=True)
+
+    passing_result = ScanResult(
+        target=ScanTarget.from_url("http://localhost:3000"),
+        summary=ScanSummary(score=95, grade=Grade.A_PLUS),
+    )
+
+    with patch("armorscan.core.runner.ScanRunner.scan", new_callable=AsyncMock) as mock_scan:
+        mock_scan.return_value = passing_result
+        exit_code = await run_scan_async(args, console)
+        assert exit_code == 0
+        assert Path(baseline_path).exists()
+
+

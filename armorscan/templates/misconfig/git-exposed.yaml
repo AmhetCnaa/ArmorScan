@@ -1,0 +1,21 @@
+id: git-exposed
+info:
+  name: Exposed Git Version Control Repository (/.git/config)
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The .git folder is exposed over HTTP, allowing attackers to download repository history, commits, and secrets.
+  remediation: Configure web server reverse proxy (Nginx/Apache) to deny access to all hidden directories starting with a dot (.git).
+
+requests:
+  - method: GET
+    path:
+      - "/.git/config"
+      - "/.git/HEAD"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "[core]"
+        - "repositoryformatversion"

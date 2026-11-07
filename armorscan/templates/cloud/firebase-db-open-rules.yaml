@@ -1,0 +1,20 @@
+id: firebase-db-open-rules
+info:
+  name: Firebase Realtime Database Public Read Rules Exposed
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-276
+  owasp_category: A01:2021-Broken Access Control
+  description: The Firebase Realtime Database allows unrestricted unauthenticated reading of all records via /.json.
+  remediation: Configure Firebase security rules to require auth != null for read access.
+
+requests:
+  - method: GET
+    path:
+      - "/.json"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "users"
+        - "email"

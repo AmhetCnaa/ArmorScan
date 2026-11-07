@@ -1,0 +1,23 @@
+id: env-file-exposed
+info:
+  name: Exposed Environment Configuration File (/.env)
+  severity: CRITICAL
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Publicly accessible .env file leaks production database credentials, API secret keys, and JWT signing secrets.
+  remediation: Block HTTP access to .env files in web server configuration and never store .env inside document root.
+
+requests:
+  - method: GET
+    path:
+      - "/.env"
+      - "/.env.local"
+    matchers:
+      condition: or
+      status: [200]
+      words:
+        - "DB_PASSWORD"
+        - "APP_KEY"
+        - "SECRET_KEY"
+        - "DATABASE_URL"

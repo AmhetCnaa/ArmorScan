@@ -1,0 +1,22 @@
+id: swagger-ui-exposed
+info:
+  name: Public Swagger UI API Documentation Console
+  severity: LOW
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The Swagger UI interactive documentation explorer is accessible without authentication, mapping all internal API operations.
+  remediation: Restrict Swagger UI to internal development environments or enforce authentication.
+
+requests:
+  - method: GET
+    path:
+      - "/swagger-ui.html"
+      - "/docs"
+      - "/api/docs"
+    matchers:
+      condition: or
+      status: [200]
+      words:
+        - "swagger-ui"
+        - "Swagger UI"

@@ -14,6 +14,7 @@ from typing import Union
 
 from armorscan import __version__
 from armorscan.core.models import Grade, ScanResult, Severity
+from armorscan.reporters.graph import AttackSurfaceGraphBuilder
 
 
 class HtmlReporter:
@@ -160,7 +161,7 @@ class HtmlReporter:
             supp_data = "true" if f.is_suppressed else "false"
 
             card_html = f"""
-            <div class="finding-card sev-{sev_class}" data-severity="{f.severity.value}" data-suppressed="{supp_data}" data-text="{safe_title} {safe_id} {safe_desc} {cwe}">
+            <div class="finding-card sev-{sev_class}" id="finding-card-{safe_id}" data-severity="{f.severity.value}" data-suppressed="{supp_data}" data-text="{safe_title} {safe_id} {safe_desc} {cwe}">
               <div class="finding-header" onclick="toggleAccordion(this)">
                 <div class="finding-header-left">
                   <span class="badge badge-{sev_class}">{f.severity.value}</span>
@@ -212,6 +213,8 @@ class HtmlReporter:
             suppressed_filter_pill = f"""
             <button class="filter-btn" onclick="filterSeverity('SUPPRESSED', this)">Suppressed ({summary.suppressed_count})</button>
             """
+
+        attack_graph_html = AttackSurfaceGraphBuilder.render_svg_component(result)
 
         # Generate Full HTML
         return f"""<!DOCTYPE html>
@@ -779,6 +782,99 @@ class HtmlReporter:
       .score-circle-wrapper {{ border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 20px; }}
       .metrics-grid {{ grid-template-columns: repeat(2, 1fr); }}
     }}
+
+    /* Attack Surface Graph Styles */
+    .attack-graph-container {{
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }}
+    .graph-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }}
+    .graph-title {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+    }}
+    .graph-badge {{
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      font-family: var(--font-mono);
+    }}
+    .graph-legend {{
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-muted);
+    }}
+    .legend-item {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }}
+    .legend-dot {{
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }}
+    .legend-hint {{
+      font-size: 11px;
+      color: #38bdf8;
+      font-style: italic;
+      margin-left: 6px;
+    }}
+    .svg-viewport-wrapper {{
+      width: 100%;
+      background: #070a12;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }}
+    .graph-node-group {{
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }}
+    .graph-node-group:hover circle {{
+      stroke-width: 4px;
+      filter: drop-shadow(0 0 8px currentColor);
+    }}
+    .graph-node-group:hover text {{
+      fill: #ffffff;
+      font-weight: 800;
+    }}
+    @keyframes cardPulse {{
+      0% {{ box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }}
+      50% {{ box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); border-color: #ef4444; }}
+      100% {{ box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }}
+    }}
+    .highlight-pulse {{
+      animation: cardPulse 1.2s ease-out 2;
+      border-color: #ef4444 !important;
+    }}
   </style>
 </head>
 <body>
@@ -832,6 +928,9 @@ class HtmlReporter:
         </div>
       </div>
     </section>
+
+    <!-- Attack Surface & Risk Topology Graph -->
+    {attack_graph_html}
 
     <!-- Controls -->
     <div class="controls">
@@ -933,6 +1032,24 @@ class HtmlReporter:
       }}).catch(err => {{
         console.error('Failed to copy: ', err);
       }});
+    }}
+
+    // Focus and scroll to finding card from graph node click
+    function focusFindingCard(findingId) {{
+      if (!findingId) return;
+      currentSeverity = 'ALL';
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      const allBtn = document.querySelector('.filter-btn');
+      if (allBtn) allBtn.classList.add('active');
+      applyFilters();
+
+      const card = document.getElementById('finding-card-' + findingId);
+      if (card) {{
+        card.classList.add('open');
+        card.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+        card.classList.add('highlight-pulse');
+        setTimeout(() => card.classList.remove('highlight-pulse'), 3000);
+      }}
     }}
 
     // Open top critical card by default

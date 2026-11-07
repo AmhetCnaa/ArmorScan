@@ -1,0 +1,20 @@
+id: azure-blob-listing
+info:
+  name: Public Azure Blob Storage Container Listing
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Public access level on Azure Blob storage container allows listing all stored blobs.
+  remediation: Set container public access level to Private (no anonymous access) in Azure Portal.
+
+requests:
+  - method: GET
+    path:
+      - "/?restype=container&comp=list"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "<EnumerationResults"
+        - "<Blobs>"

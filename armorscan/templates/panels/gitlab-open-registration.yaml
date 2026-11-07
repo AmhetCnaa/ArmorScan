@@ -1,0 +1,21 @@
+id: gitlab-open-registration
+info:
+  name: GitLab Public Open User Registration
+  severity: MEDIUM
+  confidence: firm
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The GitLab instance allows arbitrary public signups without admin approval or invitation.
+  remediation: Disable sign-up enabled setting in GitLab Admin -> Settings -> General -> Sign-up restrictions.
+
+requests:
+  - method: GET
+    path:
+      - "/users/sign_in"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "GitLab"
+        - "new_user"
+        - "Register"

@@ -1,0 +1,20 @@
+id: jenkins-unauth-api
+info:
+  name: Exposed Unauthenticated Jenkins Dashboard / API
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-306
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Jenkins automation server dashboard or JSON API is publicly accessible without authentication.
+  remediation: Enable Jenkins matrix-based security or role-based authorization strategy.
+
+requests:
+  - method: GET
+    path:
+      - "/api/json"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "hudson.model.Hudson"
+        - "_class"

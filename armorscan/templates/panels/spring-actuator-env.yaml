@@ -1,0 +1,21 @@
+id: spring-actuator-env
+info:
+  name: Exposed Spring Boot Actuator Environment
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The Spring Boot Actuator /env endpoint is publicly exposed, leaking configuration properties and environment variables.
+  remediation: Restrict access to actuator endpoints via management.endpoints.web.exposure.exclude=env or require authentication.
+
+requests:
+  - method: GET
+    path:
+      - "/actuator/env"
+      - "/env"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "propertySources"
+        - "activeProfiles"

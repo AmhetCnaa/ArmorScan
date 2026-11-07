@@ -1,0 +1,20 @@
+id: grafana-unauth-health
+info:
+  name: Exposed Unauthenticated Grafana Health API
+  severity: MEDIUM
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Grafana /api/health endpoint is exposed without authentication, disclosing internal build details and database status.
+  remediation: Restrict public access to Grafana instance via firewall or reverse proxy.
+
+requests:
+  - method: GET
+    path:
+      - "/api/health"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - '"database": "ok"'
+        - '"version"'

@@ -1,0 +1,20 @@
+id: kubernetes-etcd-exposed
+info:
+  name: Exposed Unauthenticated etcd Key-Value API
+  severity: CRITICAL
+  confidence: confirmed
+  cwe_id: CWE-306
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Kubernetes etcd cluster key-value API is accessible without client certificates, allowing dump of cluster secrets and tokens.
+  remediation: Enforce --client-cert-auth=true and restrict port 2379 to internal control plane components.
+
+requests:
+  - method: GET
+    path:
+      - "/version"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "etcdserver"
+        - "etcdcluster"

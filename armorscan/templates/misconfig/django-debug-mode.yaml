@@ -1,0 +1,20 @@
+id: django-debug-mode
+info:
+  name: Django Production DEBUG Mode Enabled
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Django framework returns technical debug diagnostics and URLconf routing maps on 404 requests.
+  remediation: Set DEBUG = False in Django settings.py and configure ALLOWED_HOSTS for production.
+
+requests:
+  - method: GET
+    path:
+      - "/armorscan-404-debug-trigger-path"
+    matchers:
+      condition: and
+      status: [404]
+      words:
+        - "Using the URLconf defined in"
+        - "You're seeing this error because you have DEBUG = True"

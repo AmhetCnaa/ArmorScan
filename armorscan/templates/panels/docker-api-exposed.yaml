@@ -1,0 +1,21 @@
+id: docker-api-exposed
+info:
+  name: Exposed Unauthenticated Docker Remote Daemon API
+  severity: CRITICAL
+  confidence: confirmed
+  cwe_id: CWE-306
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Docker daemon REST API is exposed publicly without TLS client authentication, allowing arbitrary container execution and host takeover.
+  remediation: Bind Docker daemon strictly to a local unix socket or enable mutual TLS authentication.
+
+requests:
+  - method: GET
+    path:
+      - "/version"
+      - "/containers/json"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "ApiVersion"
+        - "MinAPIVersion"

@@ -1,0 +1,21 @@
+id: phpmyadmin-exposed
+info:
+  name: Exposed phpMyAdmin Database Administration Panel
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: phpMyAdmin web database management console is accessible over the public internet, exposing MySQL/MariaDB to brute force.
+  remediation: Restrict phpMyAdmin access to authorized IP ranges or internal VPN via web server allowlist directives.
+
+requests:
+  - method: GET
+    path:
+      - "/phpmyadmin/"
+      - "/pma/"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "phpMyAdmin"
+        - "pma_username"

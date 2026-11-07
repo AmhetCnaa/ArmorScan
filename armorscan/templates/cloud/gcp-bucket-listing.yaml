@@ -1,0 +1,20 @@
+id: gcp-bucket-listing
+info:
+  name: Public Google Cloud Storage (GCS) Bucket Listing
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: Public access to Google Cloud Storage bucket allows anonymous visitors to list all stored objects.
+  remediation: Enforce Uniform bucket-level access in GCP and remove allUsers / allAuthenticatedUsers from storage.objectViewer role.
+
+requests:
+  - method: GET
+    path:
+      - "/?prefix="
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "<ListAllMyBucketsResult>"
+        - "storage.googleapis.com"

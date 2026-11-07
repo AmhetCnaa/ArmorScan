@@ -1,0 +1,20 @@
+id: spring-actuator-heapdump
+info:
+  name: Exposed Spring Boot Actuator Heapdump Endpoint
+  severity: HIGH
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The Spring Boot Actuator heapdump endpoint is exposed, allowing attackers to download JVM memory dumps containing credentials.
+  remediation: Disable heapdump in production by setting management.endpoint.heapdump.enabled=false.
+
+requests:
+  - method: GET
+    path:
+      - "/actuator/heapdump"
+      - "/heapdump"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "JAVA PROFILE"

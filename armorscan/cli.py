@@ -268,6 +268,65 @@ def build_parser() -> argparse.ArgumentParser:
         help="Launch interactive split-screen Terminal UI (TUI) dashboard after scan completion.",
     )
     parser.add_argument(
+        "--ai-explain",
+        action="store_true",
+        help="Generate AI/rule-based executive narrative and business impact analysis for findings.",
+    )
+    parser.add_argument(
+        "--ai-patch",
+        action="store_true",
+        help="Generate ready-to-apply unified git diff patches for detected vulnerabilities.",
+    )
+    parser.add_argument(
+        "--repo-path",
+        default=None,
+        metavar="PATH",
+        help="Path to source code repository (used for contextual git patch synthesis).",
+    )
+    parser.add_argument(
+        "--interval",
+        default="1h",
+        metavar="TIME",
+        help="Monitoring interval for 'armorscan watch' mode (e.g. 30s, 15m, 1h, 24h; default: 1h).",
+    )
+    parser.add_argument(
+        "--webhook",
+        "--discord-webhook",
+        dest="webhook",
+        default=None,
+        metavar="URL",
+        help="Discord webhook URL for sentinel alert dispatch.",
+    )
+    parser.add_argument(
+        "--slack-webhook",
+        default=None,
+        metavar="URL",
+        help="Slack incoming webhook URL for sentinel alert dispatch.",
+    )
+    parser.add_argument(
+        "--telegram-token",
+        default=None,
+        metavar="TOKEN",
+        help="Telegram bot authentication token for sentinel alert dispatch.",
+    )
+    parser.add_argument(
+        "--telegram-chat",
+        default=None,
+        metavar="CHAT_ID",
+        help="Telegram target chat/channel ID for sentinel alert dispatch.",
+    )
+    parser.add_argument(
+        "--baseline",
+        default="armorscan-baseline.json",
+        metavar="PATH",
+        help="Path to baseline findings JSON file (default: armorscan-baseline.json).",
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Run sentinel checks once without sleeping (for cron / testing).",
+    )
+    parser.add_argument(
         "-q",
         "--quiet",
         action="store_true",
@@ -332,6 +391,73 @@ async def run_discover_async(host: str, console: Console) -> int:
     return 0
 
 
+async def run_sentinel_watch_async(target_url: str, args: argparse.Namespace, console: Console) -> int:
+    """Execute continuous autonomous monitoring daemon against target."""
+    from datetime import datetime, timezone
+    from armorscan.core.sentinel import SentinelEngine, parse_interval_seconds
+
+    try:
+        interval_sec = parse_interval_seconds(getattr(args, "interval", "1h") or "1h")
+    except ValueError as e:
+        console.print(f"[bold red]Configuration Error:[/bold red] {e}")
+        return 2
+
+    baseline_path = Path(getattr(args, "baseline", "armorscan-baseline.json") or "armorscan-baseline.json")
+
+    discord_wh = getattr(args, "webhook", None)
+    slack_wh = getattr(args, "slack_webhook", None)
+    tg_token = getattr(args, "telegram_token", None)
+    tg_chat = getattr(args, "telegram_chat", None)
+
+    sentinel = SentinelEngine(
+        target_url=target_url,
+        baseline_file=baseline_path,
+        discord_webhook=discord_wh,
+        slack_webhook=slack_wh,
+        telegram_token=tg_token,
+        telegram_chat_id=tg_chat,
+    )
+
+    console.print(
+        Panel(
+            f"🛡️ [bold white]ArmorScan Autonomous Sentinel Active[/bold white]\n"
+            f"Target: [bold cyan]{target_url}[/bold cyan]  •  Interval: [bold yellow]{interval_sec}s[/bold yellow]  •  Baseline: [dim]{baseline_path}[/dim]\n"
+            f"Alert Channels: Discord={'Yes' if discord_wh else 'No'}, Slack={'Yes' if slack_wh else 'No'}, Telegram={'Yes' if tg_token else 'No'}",
+            border_style="cyan",
+            box=ROUNDED,
+        )
+    )
+
+    target = ScanTarget.from_url(target_url)
+    verify_ssl = False if args.insecure else (not target.is_localhost)
+    modules = get_default_modules(template_paths=getattr(args, "templates", None))
+    runner = ScanRunner(modules=modules, verify_ssl=verify_ssl)
+
+    cycle = 0
+    while True:
+        cycle += 1
+        now_str = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
+        console.print(f"[{now_str}] 🔍 [cyan]Sentinel Check #{cycle}:[/cyan] Auditing {target_url}...")
+
+        scan_result = await runner.scan(target)
+        diff, baseline = sentinel.evaluate_scan(scan_result)
+
+        if diff.has_alert:
+            console.print(f"[{now_str}] 🚨 [bold red]Sentinel Alert:[/bold red] {diff.alert_summary}")
+            dispatched = await sentinel.dispatch_notifications(diff)
+            if dispatched:
+                console.print(f"[{now_str}] 📢 [bold green]Alert notification dispatched to:[/bold green] {', '.join(dispatched)}")
+        else:
+            console.print(f"[{now_str}] ✅ [bold green]Clean:[/bold green] Score {diff.score_now}/100. No regressions detected.")
+
+        if getattr(args, "once", False):
+            break
+
+        await asyncio.sleep(interval_sec)
+
+    return 0
+
+
 async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     """Asynchronous controller for the scan workflow."""
     # 1. Handle Patch Export
@@ -347,6 +473,14 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     if raw_target and raw_target.lower() == "discover":
         host = args.host_or_target or "127.0.0.1"
         return await run_discover_async(host, console)
+
+    # 2b. Handle 'watch' command (Autonomous Sentinel)
+    if raw_target and raw_target.lower() == "watch":
+        target_url = args.host_or_target
+        if not target_url:
+            console.print("[bold red]Error:[/bold red] Missing target URL for watch mode. Usage: [cyan]armorscan watch http://localhost:3000 --interval 1h --webhook <url>[/cyan]")
+            return 2
+        return await run_sentinel_watch_async(target_url, args, console)
 
     # 3. Handle 'benchmark' command
     if raw_target and raw_target.lower() == "benchmark":
@@ -425,6 +559,7 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
                 await auth_config.perform_login(client, target.base_url)
             crawler = WebCrawler(max_depth=args.depth, max_pages=args.max_pages)
             crawl_res = await crawler.crawl(target, client, custom_schema_path=args.schema)
+            target.discovered_paths = list(crawl_res.discovered_paths)
             if not args.quiet:
                 console.print(
                     f"   Discovered [bold green]{len(crawl_res.discovered_paths)}[/bold green] paths across "
@@ -504,6 +639,23 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         sarif_path = SarifReporter.export(scan_result, args.sarif)
         if not args.quiet:
             console.print(f"🛡️ [bold green]SARIF 2.1.0 Report saved:[/bold green] [cyan]{sarif_path}[/cyan]")
+
+    # 7c. AI Vulnerability Storyteller & Auto-Patch Generation
+    if getattr(args, "ai_explain", False) or getattr(args, "ai_patch", False):
+        from armorscan.core.ai_patch import AiPatchEngine
+        ai_engine = AiPatchEngine()
+        if not args.quiet:
+            console.print("\n🤖 [bold cyan]AI Vulnerability Storyteller & Auto-Patch Engine[/bold cyan]")
+        for f in scan_result.all_findings:
+            if getattr(args, "ai_explain", False):
+                expl = await ai_engine.explain(f)
+                console.print(f"\n[bold white]📋 {f.title} ({f.severity.value})[/bold white] [dim]via {expl.provider}[/dim]")
+                console.print(f"[bold yellow]Executive Summary:[/bold yellow] {expl.executive_summary}")
+                console.print(f"[bold red]Business Impact:[/bold red] {expl.business_impact}")
+            if getattr(args, "ai_patch", False):
+                patch_res = await ai_engine.generate_patch(f, repo_path=getattr(args, "repo_path", None))
+                console.print(f"\n[bold green]🛠️ Unified Git Diff Patch ({patch_res.framework} -> {patch_res.target_file}):[/bold green]")
+                console.print(Panel(patch_res.unified_diff, title=f"git apply patch for {f.id}", border_style="green", box=ROUNDED))
 
     # 8. CI/CD Quality Gate
     if args.fail_under is not None:

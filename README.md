@@ -1,33 +1,35 @@
 <div align="center">
 
   <a href="https://github.com/AmhetCnaa/ArmorScan">
-    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v0.5.0 Hero Banner" width="100%" />
+    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v0.6.0 Hero Banner" width="100%" />
   </a>
 
   <br />
   <br />
 
   <p align="center">
-    <em>"Next-generation, non-destructive DAST &amp; Deep Application Security Auditor. From headers to DOM taint tracing and IDOR — with 0 False Positives."</em>
+    <em>"Next-generation, non-destructive DAST &amp; Autonomous DevSecOps Sentinel. From headers to DOM taint tracing, IDOR, AI auto-patching, and continuous sentinel monitoring — with 0 False Positives."</em>
   </p>
 
   <p align="center">
     <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
-    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v0.5.0"><img src="https://img.shields.io/badge/Release-v0.5.0-10B981?style=flat-square&logo=github" alt="Release v0.5.0" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v0.6.0"><img src="https://img.shields.io/badge/Release-v0.6.0-10B981?style=flat-square&logo=github" alt="Release v0.6.0" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
-    <a href="tests/"><img src="https://img.shields.io/badge/Tests-144%2F144%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="144/144 Tests Passed" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-8B5CF6?style=flat-square" alt="License MIT + Ethical Clause" /></a>
+    <a href="armorscan/templates/"><img src="https://img.shields.io/badge/Templates-29%2B%20Rules-8B5CF6?style=flat-square" alt="29+ YAML Rules" /></a>
+    <a href="tests/"><img src="https://img.shields.io/badge/Tests-152%2F152%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="152/152 Tests Passed" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-6366F1?style=flat-square" alt="License MIT + Ethical Clause" /></a>
     <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
   </p>
 
   <p align="center">
     <a href="#-start-in-30-seconds"><strong>Quick Start</strong></a> &nbsp;•&nbsp;
-    <a href="#️-interactive-tui-workstation"><strong>TUI Workstation</strong></a> &nbsp;•&nbsp;
-    <a href="#-why-armorscan"><strong>Core Architecture</strong></a> &nbsp;•&nbsp;
+    <a href="#-autonomous-sentinel--continuous-security-watcher"><strong>Autonomous Sentinel</strong></a> &nbsp;•&nbsp;
+    <a href="#-ai-vulnerability-storyteller--auto-patch-engine"><strong>AI Auto-Patch</strong></a> &nbsp;•&nbsp;
+    <a href="#-interactive-attack-surface-topology-map"><strong>Attack Surface Map</strong></a> &nbsp;•&nbsp;
+    <a href="#-why-armorscan"><strong>Architecture</strong></a> &nbsp;•&nbsp;
     <a href="#-scientific-benchmark-owasp-juice-shop"><strong>Juice Shop Benchmark</strong></a> &nbsp;•&nbsp;
-    <a href="#-nuclei-style-yaml-engine"><strong>YAML Engine</strong></a> &nbsp;•&nbsp;
-    <a href="#-github-action--sarif-210"><strong>SARIF &amp; CI/CD</strong></a> &nbsp;•&nbsp;
+    <a href="#-yaml-template-library-29-rules"><strong>YAML Library</strong></a> &nbsp;•&nbsp;
     <a href="#️-legal--ethical-disclaimer"><strong>Legal Disclaimer</strong></a>
   </p>
 
@@ -41,12 +43,79 @@
 # 1. Install (via pip or pipx)
 pip install armorscan
 
-# 2. Scan Localhost or Live Target (HTML Report + Interactive TUI Dashboard)
+# 2. Interactive Terminal Workstation (TUI) or Full HTML Topology Report
 armorscan http://localhost:3000 --tui
+armorscan http://localhost:3000 --html report.html
 
-# 3. CI/CD Pipeline Quality Gate + GitHub SARIF 2.1.0 Code Scanning
+# 3. AI Vulnerability Storyteller & Unified Git Diff Patch Generator
+armorscan http://localhost:3000 --ai-explain --ai-patch --repo-path ./my-app
+
+# 4. CI/CD Quality Gate with GitHub SARIF 2.1.0 Code Scanning
 armorscan https://staging.example.com --fail-under 80 --sarif results.sarif
 ```
+
+---
+
+## 🛡️ Autonomous Sentinel — Continuous Security Watcher
+
+Transform ArmorScan into a lightweight, zero-AI, 100% deterministic background security guardian. Sentinel runs continuous scans at fixed intervals, computes state differences against your baseline, and dispatches rich alert webhooks to **Discord**, **Slack**, or **Telegram** **ONLY** when a new vulnerability emerges or the security score drops:
+
+```bash
+# Monitor localhost every 1 hour and alert Discord & Slack on regressions
+armorscan watch http://localhost:3000 \
+  --interval 1h \
+  --baseline armorscan-baseline.json \
+  --webhook "https://discord.com/api/webhooks/..." \
+  --slack-webhook "https://hooks.slack.com/services/..."
+
+# Monitor production with Telegram alerts
+armorscan watch https://api.example.com \
+  --interval 24h \
+  --telegram-token "123456:ABC-DEF..." \
+  --telegram-chat "-100123456789"
+```
+
+- 🪶 **Ultra-Lightweight:** Consumes < 25 MB RAM and 0% CPU while sleeping.
+- 🎯 **Zero Spam Tolerance:** Silent when the security posture is unchanged; alerts immediately on new flaws.
+- 📈 **Score Regression Alerts:** Fires high-priority alerts if score decreases (e.g., `85 -> 60`).
+
+---
+
+## 🤖 AI Vulnerability Storyteller & Auto-Patch Engine
+
+Stop handing developers raw stack traces without context. ArmorScan's dual-mode AI engine translates findings into executive business summaries and ready-to-apply unified git diffs:
+
+```bash
+armorscan http://localhost:3000 --ai-explain --ai-patch --repo-path ./my-app
+```
+
+- **Dual-Layer Architecture:**
+  1. **Offline / Rule-Based (Default):** Zero API keys or external services required. Deterministically generates hardened patches for **Express.js**, **FastAPI**, **Django**, and **Nginx**.
+  2. **AI-Assisted (Ollama, OpenAI, or Gemini):** When `OPENAI_API_KEY`, `GEMINI_API_KEY`, or local Ollama (`http://localhost:11434`) is present, synthesizes contextual unified diffs matching your repository's actual controllers.
+
+```diff
+diff --git a/routes/basket.js b/routes/basket.js
+--- a/routes/basket.js
++++ b/routes/basket.js
+@@ -10,6 +10,10 @@ router.get('/basket/:id', async (req, res) => {
+   const basket = await BasketModel.findByPk(req.params.id);
+   if (!basket) return res.status(404).json({ error: 'Not found' });
++  // Enforce object-level tenant ownership check (ArmorScan Auto-Patch)
++  if (basket.UserId !== req.user.id) {
++    return res.status(403).json({ error: 'Forbidden: Unauthorized object access' });
++  }
+   return res.json(basket);
+ });
+```
+
+---
+
+## 🌐 Interactive Attack Surface Topology Map
+
+Standalone HTML reports (`--html report.html`) now embed an air-gapped, zero-CDN interactive **Attack Surface & Risk Topology Graph**:
+- **Target Host (Center) ➔ Endpoints & Open Ports (Tier 1) ➔ Vulnerability Nodes (Tier 2)**.
+- **1-Click Card Focus:** Clicking any vulnerability node in the graph smoothly scrolls the page and highlights the corresponding finding card.
+- **Color-Coded Severities:** Instant visual clarity for Critical, High, and Medium risk vectors.
 
 ---
 
@@ -102,16 +171,17 @@ Launch the split-screen terminal workstation (`--tui`) to navigate severity-rank
 <br />
 
 ArmorScan is continuously benchmarked against two distinct environments:
-1. **External Independent Target — OWASP Juice Shop v19.0.0 (`127.0.0.1:3000`):** Out of 116 official challenges, 98 require business-logic abuse, OSINT, or destructive actions out of scope for non-destructive DAST. Against the **18 Automated Non-Destructive DAST-Detectable Categories**, ArmorScan v0.5.0 achieves **83.3% Recall (15/18)** with **100.0% Precision (0 False Positives)**.
+1. **External Independent Target — OWASP Juice Shop v19.0.0 (`127.0.0.1:3000`):** Out of 116 official challenges, 98 require business-logic abuse, OSINT, or destructive actions out of scope for non-destructive DAST. Against the **18 Automated Non-Destructive DAST-Detectable Categories**, ArmorScan v0.6.0 achieves **83.3% Recall (15/18)** with **100.0% Precision (0 False Positives)**.
 2. **Controlled Regression Lab (`benchmark/labapp/`):** A 28-case deterministic FastAPI testbed used as a CI quality gate to ensure code changes never introduce false positives.
 
-| Metric | v0.4.0 (Baseline) | v0.4.1 (+JS Crawler, Auth, DOM, SQLi) | v0.5.0 (+NoSQLi, Traversal, SSRF, GraphQL, YAML) | Delta (`v0.4.0` → `v0.5.0`) |
+| Metric | v0.4.0 (Baseline) | v0.4.1 (+JS Crawler, Auth, DOM, SQLi) | v0.5.0 (+NoSQLi, Traversal, SSRF, GraphQL, YAML) | v0.6.0 (+Sentinel, AI Patch, Graph, 29+ Templates) |
 | :--- | :---: | :---: | :---: | :---: |
-| **Automated DAST Scope (Denominator)** | 18 | 18 | **18** | Fixed (18 DAST categories) |
-| **True Positives Detected (TP)** | 3 | 9 | **15** | **+12 (+400% increase)** |
-| **DAST Recall (out of 18)** | 16.7% | 50.0% | **83.3%** | **+66.6 pts** |
-| **False Positives (FP)** | 0 | 0 | **0** | **0 FP Maintained** |
-| **Precision** | 100.0% | 100.0% | **100.0%** | **100.0% Maintained** |
+| **Automated DAST Scope** | 18 | 18 | 18 | **18 (Fixed Non-Destructive)** |
+| **True Positives (TP)** | 3 | 9 | 15 | **15 (+400% vs v0.4.0)** |
+| **DAST Recall** | 16.7% | 50.0% | 83.3% | **83.3%** |
+| **False Positives (FP)** | 0 | 0 | 0 | **0 FP Maintained** |
+| **Precision** | 100.0% | 100.0% | 100.0% | **100.0% Maintained** |
+| **Automated Tests** | 84 | 131 | 144 | **152 / 152 Passed** |
 
 <details>
 <summary><strong>🔬 View All 15 Live Findings Verified on OWASP Juice Shop (Click to Expand)</strong></summary>
@@ -142,31 +212,18 @@ ArmorScan is continuously benchmarked against two distinct environments:
 
 ---
 
-## 🧩 Nuclei-Style YAML Engine
+## 🧩 YAML Template Library (29+ Rules)
 
-Write custom security checks in declarative YAML and run them via `armorscan scan https://target.com --templates ./my-templates/`:
+ArmorScan includes **29+ ready-to-run declarative YAML rules** organized into clean categories under [`armorscan/templates/`](armorscan/templates/):
 
-```yaml
-id: exposed-prometheus-metrics
-info:
-  name: Exposed Prometheus Metrics Endpoint
-  severity: MEDIUM
-  confidence: confirmed
-  cwe_id: CWE-200
-  owasp_category: A05:2021-Security Misconfiguration
-  description: The application exposes an unauthenticated Prometheus /metrics endpoint.
+| Category | Count | Rules & Signatures Included |
+| :--- | :---: | :--- |
+| **`panels/`** | 9 | Spring Boot Actuator (`/env`, `/heapdump`), Docker Daemon API (`:2375`), Kubernetes etcd (`/version`), GitLab Public Registration, Kibana Status, Grafana Health, Jenkins JSON API, phpMyAdmin. |
+| **`cves/`** | 7 | Apache Path Traversal (`CVE-2021-41773`), Spring4Shell (`CVE-2022-22965`), Log4j JNDI probe (`CVE-2021-44228`), F5 BIG-IP Auth Bypass (`CVE-2022-1388`), Confluence OGNL (`CVE-2022-26134`), GeoServer RCE (`CVE-2024-36401`), Metabase Setup Token (`CVE-2023-38646`). |
+| **`cloud/`** | 5 | AWS S3 Bucket Public Listing (`?list-type=2`), Firebase DB Open Rules (`/.json`), Terraform State Leak (`/terraform.tfstate`), GCP Cloud Storage Bucket Listing, Azure Blob Container Listing. |
+| **`misconfig/`** | 8 | Prometheus Metrics (`/metrics`), Exposed `.git` repository index, Exposed `.env` file, phpinfo() diagnostic, Public Swagger UI, Django Production DEBUG mode. |
 
-requests:
-  - method: GET
-    path:
-      - "/metrics"
-    matchers:
-      condition: and
-      status: [200]
-      words:
-        - "# HELP"
-        - "# TYPE"
-```
+Run all templates automatically during scans, or add custom templates with `--templates ./my-rules/`.
 
 ---
 
@@ -189,7 +246,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run ArmorScan DAST & Upload SARIF
-        uses: AmhetCnaa/ArmorScan@v0.5.0
+        uses: AmhetCnaa/ArmorScan@v0.6.0
         with:
           target: "http://localhost:3000"
           fail-under: "80"

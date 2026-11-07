@@ -1,0 +1,21 @@
+id: kibana-unauth-status
+info:
+  name: Exposed Unauthenticated Kibana Status API
+  severity: MEDIUM
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The Kibana status API is exposed without authentication, leaking plugin versions and cluster metrics.
+  remediation: Restrict public access to Kibana dashboard behind an authenticating reverse proxy or enable Elastic Stack security.
+
+requests:
+  - method: GET
+    path:
+      - "/api/status"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "kibana"
+        - "version"
+        - "metrics"

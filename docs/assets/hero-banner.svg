@@ -59,10 +59,10 @@
   <!-- Main Typography -->
   <g transform="translate(320, 108)">
     <!-- Pill Tag -->
-    <rect x="0" y="-36" width="335" height="28" rx="14" fill="#0F172A" stroke="#10B981" stroke-width="1.2" stroke-opacity="0.6" />
+    <rect x="0" y="-36" width="375" height="28" rx="14" fill="#0F172A" stroke="#10B981" stroke-width="1.2" stroke-opacity="0.6" />
     <circle cx="16" cy="-22" r="4.5" fill="#10B981" />
     <text x="30" y="-17" fill="#A7F3D0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="600" letter-spacing="1.2">
-      v0.5.0 ENTERPRISE &amp; COMMUNITY ENGINE
+      v0.6.0 NEXT-GEN DEVSECOPS &amp; SENTINEL
     </text>
 
     <!-- Title -->
@@ -72,7 +72,7 @@
 
     <!-- Subtitle -->
     <text x="2" y="76" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Helvetica, sans-serif" font-size="19.5" font-weight="400">
-      Next-Generation Non-Destructive DAST &amp; Deep Application Logic Auditor
+      Next-Generation Non-Destructive DAST &amp; Autonomous DevSecOps Sentinel
     </text>
 
     <!-- Feature Metric Pills -->
@@ -89,8 +89,8 @@
 
       <!-- Card 3 -->
       <rect x="410" y="0" width="185" height="68" rx="10" fill="#0B1120" fill-opacity="0.85" stroke="#1E293B" stroke-width="1.5" />
-      <text x="428" y="28" fill="#A855F7" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" font-weight="700">20 MODULES</text>
-      <text x="428" y="50" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.5" font-weight="600" letter-spacing="0.5">+ YAML RULE ENGINE</text>
+      <text x="428" y="28" fill="#A855F7" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" font-weight="700">29+ RULES</text>
+      <text x="428" y="50" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.5" font-weight="600" letter-spacing="0.5">YAML TEMPLATE LIB</text>
 
       <!-- Card 4 -->
       <rect x="610" y="0" width="195" height="68" rx="10" fill="#0B1120" fill-opacity="0.85" stroke="#1E293B" stroke-width="1.5" />
