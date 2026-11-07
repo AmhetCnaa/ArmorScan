@@ -13,6 +13,7 @@ import ssl
 from typing import Any, Dict, List, Optional
 
 from armorscan.core.client import HttpClient
+from armorscan.core.fast_probe import FastProbe
 from armorscan.core.models import Finding, ModuleResult, ScanTarget, Severity
 from armorscan.modules.base import BaseModule
 
@@ -37,9 +38,29 @@ class TlsSslModule(BaseModule):
         if target.is_https:
             await self._check_tls_certificate(target, findings, passed_checks)
         elif not target.is_localhost:
-            # Check if HTTPS is available on port 443
-            https_target = ScanTarget.from_url(f"https://{target.host}")
-            await self._check_tls_certificate(https_target, findings, passed_checks)
+            # Pre-flight TCP Syn check on port 443 with fast-bailout (<800ms)
+            port_443_open = await FastProbe.is_port_open(target.host, 443, timeout=0.8)
+            if port_443_open:
+                https_target = ScanTarget.from_url(f"https://{target.host}")
+                await self._check_tls_certificate(https_target, findings, passed_checks)
+            else:
+                passed_checks.append("https-port-443-inactive-fast-bailout")
+                findings.append(
+                    Finding(
+                        id="CLEARTEXT_HTTP_TARGET_CONTEXT",
+                        title="Cleartext HTTP-Only Target Architecture (Port 443 Inactive)",
+                        description=(
+                            f"Target '{target.host}' is configured exclusively as cleartext HTTP. "
+                            "Port 443 (HTTPS) did not respond to pre-flight TCP probes (<800ms)."
+                        ),
+                        severity=Severity.INFO,
+                        module=self.name,
+                        impact="All network communications over cleartext HTTP can be intercepted in transit.",
+                        evidence=f"Pre-flight probe to {target.host}:443 timed out/refused. Target operates in HTTP-only context.",
+                        remediation="Deploy a trusted TLS certificate and open HTTPS port 443 on the web server.",
+                        cwe_id="CWE-319",
+                    )
+                )
         else:
             passed_checks.append("localhost-tls-cert-skipped")
 
@@ -132,7 +153,10 @@ class TlsSslModule(BaseModule):
 
         loop = asyncio.get_running_loop()
         try:
-            cert_info = await loop.run_in_executor(None, self._fetch_peer_cert, target.host, target.port)
+            cert_info = await asyncio.wait_for(
+                loop.run_in_executor(None, self._fetch_peer_cert, target.host, target.port),
+                timeout=2.0,
+            )
         except Exception as e:
             # If TLS handshake fails, record finding
             findings.append(
@@ -225,7 +249,7 @@ class TlsSslModule(BaseModule):
     def _fetch_peer_cert(self, host: str, port: int) -> Dict[str, Any]:
         """Synchronous helper to retrieve peer SSL certificate and TLS version."""
         context = ssl.create_default_context()
-        with socket.create_connection((host, port), timeout=4.0) as sock:
+        with socket.create_connection((host, port), timeout=1.5) as sock:
             with context.wrap_socket(sock, server_hostname=host) as ssock:
                 cert = ssock.getpeercert()
                 cert["tls_version"] = ssock.version()

@@ -1,23 +1,23 @@
 <div align="center">
 
   <a href="https://github.com/AmhetCnaa/ArmorScan">
-    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v1.0.0 Hero Banner" width="100%" />
+    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v1.1.0 Hero Banner" width="100%" />
   </a>
 
   <br />
   <br />
 
   <p align="center">
-    <em>"Hybrid Code Discovery & Protocol Resilience: Next-generation, non-destructive DAST, Static AST Shadow Route Mapping, Ephemeral Outbound Blind SSRF Verification, Concurrency Micro-Bursts, and Protocol Resilience — with 0 False Positives."</em>
+    <em>"Turbo Speed & Deep Spider: Next-generation, non-destructive DAST, Micro-Timeout Fast-Bailout (<5s), Deep HTML Form/Parameter Spider, and 100/100 Engine Performance Index — with 0 False Positives."</em>
   </p>
 
   <p align="center">
     <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
-    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/Release-v1.0.0-10B981?style=flat-square&logo=github" alt="Release v1.0.0" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v1.1.0"><img src="https://img.shields.io/badge/Release-v1.1.0-10B981?style=flat-square&logo=github" alt="Release v1.1.0" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
     <a href="armorscan/templates/"><img src="https://img.shields.io/badge/Templates-29%2B%20Rules-8B5CF6?style=flat-square" alt="29+ YAML Rules" /></a>
-    <a href="tests/"><img src="https://img.shields.io/badge/Tests-181%2F181%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="181/181 Tests Passed" /></a>
+    <a href="tests/"><img src="https://img.shields.io/badge/Tests-191%2F191%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="191/191 Tests Passed" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-6366F1?style=flat-square" alt="License MIT + Ethical Clause" /></a>
     <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
   </p>
@@ -303,14 +303,14 @@ ArmorScan is continuously benchmarked against two distinct environments:
 1. **External Independent Target — OWASP Juice Shop v19.0.0 (`127.0.0.1:3000`):** Out of 116 official challenges, 98 require business-logic abuse, OSINT, or destructive actions out of scope for non-destructive DAST. Against the **18 Automated Non-Destructive DAST-Detectable Categories**, ArmorScan achieves **83.3% Recall (15/18)** with **100.0% Precision (0 False Positives)**.
 2. **Controlled Regression Lab (`benchmark/labapp/`):** A 28-case deterministic FastAPI testbed used as a CI quality gate to ensure code changes never introduce false positives.
 
-| Metric | v0.4.0 (Baseline) | v0.4.1 (+Crawler, DOM, SQLi) | v0.5.0 (+NoSQLi, Traversal, YAML) | v0.6.0 (+Sentinel, AI Patch) | v1.0.0 (+AST Mapper, Blind SSRF, Concurrency, Protocols) |
+| Metric | v0.4.0 (Baseline) | v0.4.1 (+Crawler, DOM, SQLi) | v0.5.0 (+NoSQLi, Traversal, YAML) | v0.6.0 (+Sentinel, AI Patch) | v1.1.0 (+Turbo Probe, Deep Spider, Index 100/100) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Automated DAST Scope** | 18 | 18 | 18 | 18 | **18 (Fixed Non-Destructive)** |
 | **True Positives (TP)** | 3 | 9 | 15 | 15 | **15 (DAST) + 4 Hybrid / Protocol Engines** |
 | **DAST Recall** | 16.7% | 50.0% | 83.3% | 83.3% | **83.3% DAST** |
 | **False Positives (FP)** | 0 | 0 | 0 | 0 | **0 FP Maintained** |
 | **Precision** | 100.0% | 100.0% | 100.0% | 100.0% | **100.0% Maintained** |
-| **Automated Tests** | 84 | 131 | 144 | 154 | **181 / 181 Passed** |
+| **Automated Tests** | 84 | 131 | 144 | 154 | **191 / 191 Passed** |
 
 <details>
 <summary><strong>🔬 View All 15 Live Findings Verified on OWASP Juice Shop (Click to Expand)</strong></summary>

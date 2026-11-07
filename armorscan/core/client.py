@@ -11,6 +11,12 @@ import os
 import ssl
 import time
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+# Sanitize NO_PROXY / no_proxy environment variables for httpx compatibility (prevent InvalidURL on [::1])
+for _env_var in ("NO_PROXY", "no_proxy"):
+    _val = os.environ.get(_env_var)
+    if _val and "[::1]" in _val:
+        os.environ[_env_var] = _val.replace("[::1]", "::1")
+
 import httpx
 
 from armorscan import __version__
@@ -20,7 +26,8 @@ from armorscan.core.models import ScanTarget
 DEFAULT_USER_AGENT = (
     f"ArmorScan/{__version__} (+https://github.com/AmhetCnaa/ArmorScan; Security Scanner)"
 )
-DEFAULT_TIMEOUT = httpx.Timeout(connect=5.0, read=10.0, write=5.0, pool=5.0)
+DEFAULT_TIMEOUT = httpx.Timeout(connect=3.0, read=6.0, write=3.0, pool=3.0)
+TURBO_TIMEOUT = httpx.Timeout(connect=1.5, read=3.0, write=1.5, pool=2.0)
 
 
 class HttpResponse:

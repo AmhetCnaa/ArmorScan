@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import urljoin, urlparse
+from urllib.parse import parse_qs, urljoin, urlparse
 
 from pydantic import BaseModel, Field
 
@@ -188,6 +188,11 @@ class WebCrawler:
 
                 discovered_urls.add(normalized)
                 discovered_paths.add(path)
+                if parsed.query:
+                    discovered_paths.add(f"{path}?{parsed.query}")
+                    for q_param in parse_qs(parsed.query):
+                        if q_param.lower() not in CSRF_PARAMETER_NAMES:
+                            discovered_parameters.add(q_param)
 
                 if normalized not in visited and (depth + 1) <= self.max_depth:
                     if len(visited) + len(queue) < self.max_pages * 2:

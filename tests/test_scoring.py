@@ -62,3 +62,30 @@ def test_penalties_and_grades():
     assert summary.high_count == 1
     assert summary.medium_count == 1
     assert summary.total_checks == 4
+
+
+def test_engine_performance_index_turbo():
+    perf = ScoringEngine.calculate_performance_index(
+        duration_seconds=3.42,
+        discovered_paths_count=18,
+        forms_count=4,
+        unhandled_errors_count=0,
+    )
+    assert perf.overall_index == 100
+    assert perf.speed_score == 100
+    assert "Turbo" in perf.speed_label
+    assert perf.accuracy_score == 100
+    assert perf.surface_discovery_score == 100
+    assert "Apex Engine" in perf.grade
+
+
+def test_engine_performance_index_degraded():
+    perf = ScoringEngine.calculate_performance_index(
+        duration_seconds=150.0,
+        discovered_paths_count=1,
+        forms_count=0,
+        unhandled_errors_count=2,
+    )
+    assert perf.overall_index < 100
+    assert perf.speed_score <= 95
+    assert perf.accuracy_score < 100

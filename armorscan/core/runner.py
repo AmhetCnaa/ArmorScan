@@ -118,6 +118,14 @@ class ScanRunner:
         # 3. Calculate score & summary (ignoring suppressed findings)
         summary = ScoringEngine.calculate_summary(module_results)
 
+        # 4. Calculate Engine Performance & Health Index
+        engine_perf = ScoringEngine.calculate_performance_index(
+            duration_seconds=duration,
+            discovered_paths_count=len(target.discovered_paths) if target.discovered_paths else 1,
+            forms_count=meta.get("forms_count", 0),
+            unhandled_errors_count=sum(1 for m in module_results if m.error),
+        )
+
         return ScanResult(
             target=target,
             started_at=started_at,
@@ -125,5 +133,6 @@ class ScanRunner:
             duration_seconds=duration,
             summary=summary,
             modules=module_results,
+            engine_performance=engine_perf,
             meta=meta,
         )

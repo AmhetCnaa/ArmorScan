@@ -169,11 +169,41 @@ class ConsoleReporter:
 
         score_panel = Panel(
             card_table,
-            title="[bold white]🛡️ ArmorScan Security Scorecard[/bold white]",
+            title="[bold white]🛡️ ArmorScan Target Security Scorecard[/bold white]",
             border_style=grade.color.split()[0] if " " in grade.color else grade.color,
             box=ROUNDED,
         )
         self.console.print(score_panel)
+        self.console.print()
+
+        # 2b. Engine Performance & Health Index Card
+        perf = result.engine_performance
+        perf_grade_text = Text()
+        perf_grade_text.append(f"\n   ENGINE: {perf.grade}   \n", style="bold green")
+
+        perf_metrics_text = Text()
+        perf_metrics_text.append("⚡ Performance Index: ", style="bold white")
+        perf_metrics_text.append(f"{perf.overall_index}/100\n", style="bold green")
+        perf_metrics_text.append("🚀 Scan Velocity:     ", style="bold white")
+        perf_metrics_text.append(f"{perf.speed_score}/100 ({perf.speed_label})\n", style="cyan")
+        perf_metrics_text.append("🌐 Discovery Depth:   ", style="bold white")
+        perf_metrics_text.append(f"{perf.surface_discovery_score}/100 ({perf.surface_label})\n", style="yellow")
+        perf_metrics_text.append("🎯 Heuristic Precision:", style="bold white")
+        perf_metrics_text.append(f"{perf.accuracy_score}/100 ({perf.accuracy_label})\n", style="green")
+
+        perf_table = Table(box=SIMPLE, show_header=False, expand=True)
+        perf_table.add_column("Engine Grade", justify="center", width=22)
+        perf_table.add_column("Performance Metrics", ratio=2)
+
+        perf_table.add_row(perf_grade_text, perf_metrics_text)
+
+        perf_panel = Panel(
+            perf_table,
+            title="[bold green]⚡ ArmorScan Engine Performance & Health Index[/bold green]",
+            border_style="green",
+            box=ROUNDED,
+        )
+        self.console.print(perf_panel)
         self.console.print()
 
     def _render_top_remediations(self, result: ScanResult) -> None:

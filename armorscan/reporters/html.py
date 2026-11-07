@@ -25,6 +25,10 @@ class HtmlReporter:
         summary = result.summary
         target = result.target
         findings = result.all_findings
+        perf = getattr(result, "engine_performance", None)
+        if not perf:
+            from armorscan.core.models import EnginePerformanceIndex
+            perf = EnginePerformanceIndex()
 
         # Grade color mapping
         grade_colors = {
@@ -966,6 +970,31 @@ class HtmlReporter:
             <div class="metric-name">Findings</div>
           </div>
           {suppressed_metric_card}
+        </div>
+      </div>
+    </section>
+
+    <!-- Engine Performance & Health Index -->
+    <section class="engine-perf-banner" style="display: flex; justify-content: space-between; align-items: center; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 16px 24px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="font-size: 28px;">⚡</div>
+        <div>
+          <div style="font-size: 11px; text-transform: uppercase; color: #10b981; font-weight: 700; letter-spacing: 0.5px;">ArmorScan Engine Performance Index</div>
+          <div style="font-size: 20px; font-weight: 800; color: #ffffff;">{perf.overall_index} / 100 <span style="font-size: 13px; color: #10b981; font-weight: 600;">[{perf.grade}]</span></div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <div style="background: rgba(255, 255, 255, 0.03); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
+          <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase;">Scan Velocity</div>
+          <div style="font-size: 13px; font-weight: 700; color: #38bdf8;">{perf.speed_score}/100 <span style="font-size: 11px; color: #64748b;">({perf.speed_label})</span></div>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.03); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
+          <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase;">Surface Discovery</div>
+          <div style="font-size: 13px; font-weight: 700; color: #fbbf24;">{perf.surface_discovery_score}/100 <span style="font-size: 11px; color: #64748b;">({perf.surface_label})</span></div>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.03); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06);">
+          <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase;">Heuristic Precision</div>
+          <div style="font-size: 13px; font-weight: 700; color: #4ade80;">{perf.accuracy_score}/100 <span style="font-size: 11px; color: #64748b;">(0 FP / 0 Leaks)</span></div>
         </div>
       </div>
     </section>

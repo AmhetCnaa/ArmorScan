@@ -25,6 +25,7 @@ from armorscan.core.client import HttpClient
 from armorscan.core.crawler import WebCrawler
 from armorscan.core.models import ScanResult, ScanTarget
 from armorscan.core.runner import ScanRunner
+from armorscan.core.scoring import ScoringEngine
 from armorscan.core.suppression import SuppressionEngine
 from armorscan.core.templates import TemplateEngine
 from armorscan.modules.async_ssrf import AsyncSsrfModule
@@ -661,27 +662,37 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     if auth_config.has_auth and not args.quiet:
         console.print("🔐 [bold cyan]Authenticated scanning enabled[/bold cyan] (custom credentials / macro configured)\n")
 
-    # 5. Optional Web Crawling
+    # 5. Optional Web Crawling & Deep Spidering
+    discovered_forms_count = 0
     if args.crawl:
         if not args.quiet:
-            console.print(f"🕷️ [bold cyan]Crawling endpoints (depth={args.depth}, max_pages={args.max_pages})...[/bold cyan]")
+            console.print(f"🕷️ [bold cyan]Deep Spider & Endpoint Crawl (depth={args.depth}, max_pages={args.max_pages})...[/bold cyan]")
         async with HttpClient.for_target(target, verify_ssl=verify_ssl, auth_config=auth_config) as client:
             if auth_config.login_url:
                 await auth_config.perform_login(client, target.base_url)
             crawler = WebCrawler(max_depth=args.depth, max_pages=args.max_pages)
             crawl_res = await crawler.crawl(target, client, custom_schema_path=args.schema)
-            target.discovered_paths = list(crawl_res.discovered_paths)
+
+            from armorscan.core.spider import DeepSpider
+            spider = DeepSpider(max_depth=args.depth, max_pages=args.max_pages)
+            spider_res = await spider.crawl(target, client)
+
+            combined_paths = set(crawl_res.discovered_paths).union(set(spider_res.discovered_paths))
+            target.discovered_paths = sorted(list(combined_paths))
+            discovered_forms_count = len(crawl_res.forms) + len(spider_res.forms)
+            fuzzable_params_count = len(crawl_res.discovered_parameters.union(spider_res.fuzzable_parameters))
+
             if not args.quiet:
                 console.print(
-                    f"   Discovered [bold green]{len(crawl_res.discovered_paths)}[/bold green] paths across "
-                    f"[bold green]{crawl_res.pages_crawled}[/bold green] crawled pages. "
-                    f"Found {len(crawl_res.forms)} HTML forms ({len(crawl_res.discovered_parameters)} fuzzable params)."
+                    f"   Discovered [bold green]{len(target.discovered_paths)}[/bold green] paths across "
+                    f"[bold green]{max(crawl_res.pages_crawled, spider_res.pages_crawled)}[/bold green] crawled pages. "
+                    f"Found [bold green]{discovered_forms_count}[/bold green] HTML forms ({fuzzable_params_count} fuzzable params)."
                 )
                 if crawl_res.api_endpoints:
                     console.print(f"   Parsed [bold green]{len(crawl_res.api_endpoints)}[/bold green] schema API operations from OpenAPI/Swagger/GraphQL.")
                 if crawl_res.graphql_introspection_active:
                     console.print(f"   ⚡ [bold yellow]GraphQL Introspection active on:[/bold yellow] [cyan]{crawl_res.graphql_url}[/cyan]")
-                console.print(f"   [dim]Sample routes: {', '.join(crawl_res.discovered_paths[:6])}[/dim]\n")
+                console.print(f"   [dim]Sample routes: {', '.join(target.discovered_paths[:8])}[/dim]\n")
 
     # 5b. Static AST Source Code Route Mapping & Shadow API Discovery
     shadow_api_findings = []
@@ -759,7 +770,6 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     # Append Shadow API findings if discovered from AST source analysis
     if shadow_api_findings:
         from armorscan.core.models import ModuleResult
-        from armorscan.core.scoring import ScoringEngine
         ast_mod_res = ModuleResult(
             module_name="ast_mapper",
             display_name="Static AST Route & Shadow API Auditor",
@@ -768,6 +778,14 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         )
         scan_result.modules.append(ast_mod_res)
         scan_result.summary = ScoringEngine.calculate_summary(scan_result.modules)
+
+    # Refresh engine_performance with final discovery metrics
+    scan_result.engine_performance = ScoringEngine.calculate_performance_index(
+        duration_seconds=scan_result.duration_seconds,
+        discovered_paths_count=len(target.discovered_paths) if target.discovered_paths else 1,
+        forms_count=discovered_forms_count,
+        unhandled_errors_count=sum(1 for m in scan_result.modules if m.error),
+    )
 
     # 7. Render Console Output or Interactive TUI
     if getattr(args, "tui", False):
