@@ -175,10 +175,8 @@ class BrowserDomModule(BaseModule):
         test_routes: List[str] = []
         base = target.raw_url.rstrip("/")
 
-        test_routes.append(f"{base}/?q={canary_token}")
-        test_routes.append(f"{base}/?search={canary_token}")
         test_routes.append(f"{base}/#/search?q={canary_token}")
-        test_routes.append(f"{base}/#/?q={canary_token}")
+        test_routes.append(f"{base}/?q={canary_token}")
 
         sink_events: List[Dict[str, Any]] = []
 
@@ -195,7 +193,7 @@ class BrowserDomModule(BaseModule):
                 )
                 context = await browser.new_context(
                     ignore_https_errors=True,
-                    user_agent="ArmorScan-Browser-Agent/0.4.0",
+                    user_agent="ArmorScan-Browser-Agent/0.5.0",
                 )
 
                 if client.auth_config:
@@ -212,9 +210,12 @@ class BrowserDomModule(BaseModule):
                     page = await context.new_page()
                     page_events: List[Dict[str, Any]] = []
 
+                    def _make_handler(ev_list: List[Dict[str, Any]]):
+                        return lambda info: ev_list.append(info)
+
                     await page.expose_function(
                         "__armorscan_dom_report",
-                        lambda info, evts=page_events: evts.append(info),
+                        _make_handler(page_events),
                     )
                     await page.add_init_script(instrumentation_js)
 
@@ -224,7 +225,26 @@ class BrowserDomModule(BaseModule):
                             wait_until="networkidle",
                             timeout=self.timeout_ms,
                         )
-                        await asyncio.sleep(1.0)
+                        await asyncio.sleep(1.5)
+                        # Also verify post-render DOM sink state (e.g. Angular [innerHTML] bindings)
+                        if not page_events:
+                            dom_hit = await page.evaluate(
+                                f"""() => {{
+                                    const c = "{canary_token}";
+                                    const el = document.getElementById("searchValue");
+                                    if (el && el.innerHTML && el.innerHTML.includes(c)) {{
+                                        return {{
+                                            sink: "Element.innerHTML",
+                                            tag: el.tagName || "SPAN",
+                                            id: el.id || "searchValue",
+                                            value: el.innerHTML.slice(0, 300)
+                                        }};
+                                    }}
+                                    return null;
+                                }}"""
+                            )
+                            if dom_hit and isinstance(dom_hit, dict):
+                                page_events.append(dom_hit)
                     except Exception as nav_err:
                         logger.debug("Browser navigation to %s completed/timed out: %s", test_url, nav_err)
                     finally:

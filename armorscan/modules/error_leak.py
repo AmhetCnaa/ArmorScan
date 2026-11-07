@@ -23,6 +23,7 @@ DB_ERROR_PATTERNS = [
     (r"PostgreSQL query failed", "PostgreSQL"),
     (r"psycopg2\.errors\.", "PostgreSQL / psycopg2"),
     (r"sqlite3\.OperationalError", "SQLite"),
+    (r"SQLITE_ERROR:", "SQLite"),
     (r"Mongo(?:Server)?Error", "MongoDB"),
     (r"com\.mysql\.jdbc\.exceptions", "MySQL JDBC"),
 ]
@@ -36,7 +37,7 @@ STACK_TRACE_PATTERNS = [
     (r"Fatal error: Uncaught [A-Za-z]+Exception in /[^:]+:[0-9]+", "PHP Fatal Error"),
 ]
 
-ERROR_PROBES = ["'", "\"", "[]", "9999999999"]
+ERROR_PROBES = ["'", "\"", "apple'))", "[]", "9999999999"]
 
 
 class ErrorLeakModule(BaseModule):
@@ -92,6 +93,26 @@ class ErrorLeakModule(BaseModule):
                         is_baseline=False,
                     ):
                         break  # Found leak for this param, proceed to next param
+
+        # Also check common API search route (/rest/products/search?q=) if scanning root
+        if parsed_url.path in ("/", "") and not findings:
+            search_url = f"{target.base_url}/rest/products/search"
+            for probe in ("'", "apple'))"):
+                probe_url = self._build_probe_url(search_url, "q", probe)
+                resp = await client.get(probe_url)
+                if resp.ok and resp.text:
+                    if self._scan_text_for_leaks(
+                        resp.text,
+                        target,
+                        client,
+                        f"Param 'q' on /rest/products/search with probe '{probe}'",
+                        probe_url,
+                        findings,
+                        passed_checks,
+                        baseline_leaks=baseline_leaks,
+                        is_baseline=False,
+                    ):
+                        break
 
         if not findings and passed_checks:
             passed_checks.append("no-stack-traces-or-db-errors-disclosed")

@@ -1,0 +1,33 @@
+id: actuator-health
+info:
+  name: Exposed Spring Boot Actuator Health & Env Endpoint
+  severity: MEDIUM
+  confidence: confirmed
+  cwe: CWE-200
+  owasp: A05:2021-Security Misconfiguration
+  description: >
+    Spring Boot Actuator diagnostics endpoint (/actuator/health or /actuator/env)
+    is publicly accessible without authentication, revealing service dependencies,
+    database status, and runtime configuration properties.
+  remediation: >
+    Disable public exposure of sensitive Actuator endpoints in application.properties
+    (management.endpoints.web.exposure.include=info) and secure management ports behind Spring Security.
+  references:
+    - https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}/actuator/env"
+      - "{{BaseURL}}/actuator/health"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: words
+        part: body
+        condition: and
+        words:
+          - '"status":"UP"'
+          - '"components":'

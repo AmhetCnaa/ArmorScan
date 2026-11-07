@@ -141,6 +141,27 @@ async def test_juice_shop_spa_benchmark_simulation():
                 }
             )
 
+            # 5. Prometheus metrics, FTP Null-byte traversal, and Open Redirect
+            respx_mock.get("/metrics").respond(
+                status_code=200,
+                text="# HELP nodejs_version_info Node.js version info\n# TYPE process_cpu_user_seconds_total counter\nprocess_cpu_user_seconds_total 1.23\n",
+                headers={"Content-Type": "text/plain"},
+            )
+            respx_mock.get("/ftp/package.json.bak").respond(
+                status_code=403,
+                text="Only .md and .pdf files are allowed!",
+            )
+            respx_mock.get(url__regex=r".*/ftp/package\.json\.bak.*").respond(
+                status_code=200,
+                text='{"name": "juice-shop", "version": "19.0.0", "dependencies": {"express": "^4.18.0"}}',
+                headers={"Content-Type": "application/json"},
+            )
+            respx_mock.get("/rest/admin/application-configuration").respond(
+                status_code=200,
+                text='{"config": {"server": {"port": 3000}, "application": {"name": "OWASP Juice Shop"}}}',
+                headers={"Content-Type": "application/json"},
+            )
+
             # Execute real-world benchmark runner
             report: RealWorldBenchmarkReport = await runner.run_benchmark(
                 enable_crawler=False,
@@ -153,11 +174,14 @@ async def test_juice_shop_spa_benchmark_simulation():
             assert "EXPOSED_GIT_REPOSITORY" not in report.fp_findings, "False positive .git triggered on SPA HTML catch-all!"
             assert len(report.fp_findings) == 0
 
-            # True Positives: Missing CSP, Express banner disclosure, Swagger exposed, Cookie missing SameSite
+            # True Positives: Missing CSP, Express banner disclosure, Swagger exposed, Cookie missing SameSite, Metrics, Traversal, Authz
             assert "MISSING_CSP" in report.tp_findings
             assert "X_POWERED_BY_DISCLOSURE" in report.tp_findings
             assert "EXPOSED_OPENAPI_SPEC" in report.tp_findings
             assert "COOKIE_MISSING_SAMESITE" in report.tp_findings
+            assert "EXPOSED_PROMETHEUS_METRICS" in report.tp_findings
+            assert "PATH_TRAVERSAL_DETECTED" in report.tp_findings
+            assert "MISSING_AUTHENTICATION_GATE" in report.tp_findings
 
             assert report.precision == 1.0, f"Expected 100% precision, got {report.precision:.2%}"
             assert report.recall >= 0.50, f"Expected good recall, got {report.recall:.2%}"

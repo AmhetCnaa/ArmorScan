@@ -1,0 +1,127 @@
+name: "ArmorScan DAST & AppSec Gate"
+description: "Modern, zero-false-positive DAST security scanner with SARIF 2.1.0 upload and automated PR security summary comments."
+author: "ArmorScan Team"
+
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  target:
+    description: "Target URL to audit (e.g., http://localhost:3000 or https://staging.example.com)"
+    required: true
+  fail_under:
+    description: "Minimum security score (0-100) required to pass the CI gate"
+    required: false
+    default: "0"
+  crawl:
+    description: "Enable automated internal link & JS bundle crawler ('true' or 'false')"
+    required: false
+    default: "true"
+  sarif_file:
+    description: "Output path for SARIF 2.1.0 report"
+    required: false
+    default: "armorscan-results.sarif"
+  upload_sarif:
+    description: "Automatically upload SARIF report to GitHub Code Scanning ('true' or 'false')"
+    required: false
+    default: "true"
+  comment_pr:
+    description: "Post a Markdown security summary comment on Pull Requests ('true' or 'false')"
+    required: false
+    default: "true"
+  extra_args:
+    description: "Additional CLI flags to pass to armorscan (e.g., --templates ./custom-templates)"
+    required: false
+    default: ""
+
+outputs:
+  score:
+    description: "Calculated ArmorScan security score (0-100)"
+    value: ${{ steps.run_scan.outputs.score }}
+  grade:
+    description: "Calculated security grade (A+ to F)"
+    value: ${{ steps.run_scan.outputs.grade }}
+  sarif_path:
+    description: "Path to generated SARIF 2.1.0 file"
+    value: ${{ inputs.sarif_file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install ArmorScan
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install "${{ github.action_path }}"
+
+    - name: Run ArmorScan DAST Audit
+      id: run_scan
+      shell: bash
+      run: |
+        CRAWL_FLAG=""
+        if [ "${{ inputs.crawl }}" = "true" ]; then
+          CRAWL_FLAG="--crawl"
+        fi
+
+        set +e
+        armorscan "${{ inputs.target }}" \
+          $CRAWL_FLAG \
+          --sarif "${{ inputs.sarif_file }}" \
+          --json armorscan-ci-report.json \
+          --fail-under "${{ inputs.fail_under }}" \
+          ${{ inputs.extra_args }}
+        EXIT_CODE=$?
+        set -e
+
+        if [ -f armorscan-ci-report.json ]; then
+          SCORE=$(python -c "import json; d=json.load(open('armorscan-ci-report.json')); print(d['summary']['score'])")
+          GRADE=$(python -c "import json; d=json.load(open('armorscan-ci-report.json')); print(d['summary']['grade'])")
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "grade=$GRADE" >> $GITHUB_OUTPUT
+
+          python - << 'EOF' > armorscan-pr-comment.md
+        import json
+        d = json.load(open("armorscan-ci-report.json"))
+        s = d["summary"]
+        target = d["target"]["raw_url"]
+        findings = [f for m in d.get("modules", []) for f in m.get("findings", []) if not f.get("is_suppressed")]
+        print(f"## 🛡️ ArmorScan v0.5.0 DAST Security Report\n")
+        print(f"**Target:** `{target}` | **Score:** `{s['score']}/100` | **Grade:** `{s['grade']}` | **Total Findings:** `{len(findings)}`\n")
+        if findings:
+            print("| Severity | Rule ID | Confidence | CWE | Title |")
+            print("| :---: | :--- | :---: | :---: | :--- |")
+            for f in findings:
+                print(f"| **{f['severity']}** | `{f['id']}` | `{f.get('confidence', 'firm')}` | `{f.get('cwe_id') or '-'}` | {f['title']} |")
+        else:
+            print("✅ **Zero vulnerabilities detected!** All audited security controls passed.")
+        EOF
+        fi
+
+        exit $EXIT_CODE
+
+    - name: Upload SARIF 2.1.0 to GitHub Security Tab
+      if: always() && inputs.upload_sarif == 'true' && hashFiles(inputs.sarif_file) != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif_file }}
+        category: armorscan-dast
+
+    - name: Comment PR with Security Summary
+      if: always() && github.event_name == 'pull_request' && inputs.comment_pr == 'true' && hashFiles('armorscan-pr-comment.md') != ''
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const body = fs.readFileSync('armorscan-pr-comment.md', 'utf8');
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });

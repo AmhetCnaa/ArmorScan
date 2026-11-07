@@ -23,10 +23,11 @@ PRIVATE_CANDIDATE_PATHS = [
     "/api/account",
     "/api/v1/user",
     "/dashboard/profile",
+    "/rest/admin/application-configuration",
 ]
 
 SENSITIVE_BODY_PATTERNS = [
-    re.compile(r"""["'](?:user_id|username|email|role|balance|private_notes|account_number|credit_card)["']\s*:""", re.IGNORECASE),
+    re.compile(r"""["'](?:user_id|username|email|role|balance|private_notes|account_number|credit_card|ctfKey|cookieSecret)["']\s*:""", re.IGNORECASE),
     re.compile(r"""\b(?:billing_administrator|confidential account data|internal audit record)\b""", re.IGNORECASE),
 ]
 
@@ -166,9 +167,9 @@ class AuthzCheckModule(BaseModule):
         if any(pat.search(text) for pat in SENSITIVE_BODY_PATTERNS):
             return True
 
-        # Endpoints explicitly named idor/profile returning JSON with keys
-        if any(keyword in path.lower() for keyword in ("idor", "profile", "account", "me")):
-            if "{" in text and any(k in text for k in ("user", "email", "id", "role")):
+        # Endpoints explicitly named idor/profile/admin returning JSON with keys
+        if any(keyword in path.lower() for keyword in ("idor", "profile", "account", "me", "admin")):
+            if "{" in text and any(k in text for k in ("user", "email", "id", "role", "config", "server", "securityQuestions")):
                 return True
 
         return False

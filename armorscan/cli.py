@@ -26,6 +26,7 @@ from armorscan.core.crawler import WebCrawler
 from armorscan.core.models import ScanResult, ScanTarget
 from armorscan.core.runner import ScanRunner
 from armorscan.core.suppression import SuppressionEngine
+from armorscan.core.templates import TemplateEngine
 from armorscan.modules.authz_check import AuthzCheckModule
 from armorscan.modules.base import BaseModule
 from armorscan.modules.browser_dom import BrowserDomModule
@@ -33,24 +34,34 @@ from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
 from armorscan.modules.error_leak import ErrorLeakModule
 from armorscan.modules.exposure import ExposureAuditModule
+from armorscan.modules.graphql import GraphqlAuditModule
 from armorscan.modules.headers import SecurityHeadersModule
 from armorscan.modules.jwt_audit import JwtAuditModule
 from armorscan.modules.multi_step import MultiStepLogicModule
+from armorscan.modules.nosqli import NoSqliIndicationModule
 from armorscan.modules.ports import LocalPortSniffer
 from armorscan.modules.ratelimit import RateLimitModule
 from armorscan.modules.redirect import OpenRedirectModule
 from armorscan.modules.reflection import InputReflectionModule
 from armorscan.modules.secret_leak import SecretLeakModule
 from armorscan.modules.sqli import SqliIndicationModule
+from armorscan.modules.ssrf_check import SsrfCheckModule
 from armorscan.modules.tls_ssl import TlsSslModule
+from armorscan.modules.traversal import PathTraversalModule
 from armorscan.remediations.patch_exporter import PatchExporter
 from armorscan.reporters.console import ConsoleReporter
 from armorscan.reporters.html import HtmlReporter
 from armorscan.reporters.json_rep import JsonReporter
+from armorscan.reporters.sarif import SarifReporter
+from armorscan.reporters.tui import TuiDashboard
 
 
-def get_default_modules(burst_count: int = 18, include_browser: bool = False) -> List[BaseModule]:
-    """Instantiate standard suite of security auditing modules (14 core modules, plus optional browser module)."""
+def get_default_modules(
+    burst_count: int = 18,
+    include_browser: bool = False,
+    template_paths: Optional[List[str]] = None,
+) -> List[BaseModule]:
+    """Instantiate standard suite of security auditing modules (19 core modules, plus optional browser module)."""
     mods: List[BaseModule] = [
         SecurityHeadersModule(),
         TlsSslModule(),
@@ -66,6 +77,11 @@ def get_default_modules(burst_count: int = 18, include_browser: bool = False) ->
         AuthzCheckModule(),
         MultiStepLogicModule(),
         SqliIndicationModule(),
+        NoSqliIndicationModule(),
+        PathTraversalModule(),
+        SsrfCheckModule(),
+        GraphqlAuditModule(),
+        TemplateEngine(template_paths=template_paths),
     ]
     if include_browser:
         mods.append(BrowserDomModule())
@@ -230,6 +246,26 @@ def build_parser() -> argparse.ArgumentParser:
         "--browser",
         action="store_true",
         help="Enable headless Chromium browser-based DOM sink taint tracing (detects DOM XSS flows into innerHTML/document.write).",
+    )
+    parser.add_argument(
+        "--templates",
+        action="append",
+        default=None,
+        metavar="PATH",
+        help="Path to custom YAML security templates directory or file (can be specified multiple times).",
+    )
+    parser.add_argument(
+        "--sarif",
+        nargs="?",
+        const="armorscan-results.sarif",
+        default=None,
+        metavar="PATH",
+        help="Output path for OASIS SARIF 2.1.0 report (for GitHub Code Scanning / Security tab).",
+    )
+    parser.add_argument(
+        "--tui",
+        action="store_true",
+        help="Launch interactive split-screen Terminal UI (TUI) dashboard after scan completion.",
     )
     parser.add_argument(
         "-q",
@@ -405,6 +441,7 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     modules = get_default_modules(
         burst_count=args.burst,
         include_browser=getattr(args, "browser", False),
+        template_paths=getattr(args, "templates", None),
     )
     suppression_engine = SuppressionEngine.find_and_load(custom_path=args.ignore_file)
     runner = ScanRunner(
@@ -441,15 +478,18 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     else:
         scan_result = await runner.scan(target)
 
-    # 7. Render Console Output
-    if not args.quiet:
+    # 7. Render Console Output or Interactive TUI
+    if getattr(args, "tui", False):
+        dashboard = TuiDashboard(scan_result, console=console)
+        dashboard.run()
+    elif not args.quiet:
         if scan_result.meta.get("login_success") is False:
             console.print(f"⚠️ [bold yellow]Login Macro Warning:[/bold yellow] {scan_result.meta.get('login_message')}\n")
         if scan_result.meta.get("session_verified") is False:
             console.print(f"⚠️ [bold yellow]Session Verification Warning:[/bold yellow] {scan_result.meta.get('session_message')}\n")
         reporter.render_scan_results(scan_result)
 
-    # 7. Generate Reports
+    # 7b. Generate Reports
     if not args.no_html and args.html:
         html_path = HtmlReporter.save(scan_result, args.html)
         if not args.quiet:
@@ -459,6 +499,11 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         json_path = JsonReporter.save(scan_result, args.json)
         if not args.quiet:
             console.print(f"📊 [bold green]JSON Report saved:[/bold green] [cyan]{json_path}[/cyan]")
+
+    if getattr(args, "sarif", None):
+        sarif_path = SarifReporter.export(scan_result, args.sarif)
+        if not args.quiet:
+            console.print(f"🛡️ [bold green]SARIF 2.1.0 Report saved:[/bold green] [cyan]{sarif_path}[/cyan]")
 
     # 8. CI/CD Quality Gate
     if args.fail_under is not None:

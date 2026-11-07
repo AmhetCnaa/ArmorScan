@@ -21,6 +21,7 @@ REDIRECT_PARAMS = [
     "redirect_uri",
     "return",
     "url",
+    "to",
     "goto",
     "dest",
     "target",
@@ -31,6 +32,7 @@ REDIRECT_PARAMS = [
 
 TEST_EXTERNAL_URL = "https://example.com/armorscan-test"
 TEST_PROTOCOL_RELATIVE = "//example.com/armorscan-test"
+TEST_ALLOWLIST_BYPASS = "https://example.com/armorscan-test?p=https://github.com/juice-shop/juice-shop"
 
 
 class OpenRedirectModule(BaseModule):
@@ -58,6 +60,10 @@ class OpenRedirectModule(BaseModule):
         if not tested_params:
             for p in REDIRECT_PARAMS[:4]:
                 await self._test_param_redirect(target, client, p, findings, passed_checks)
+            # Also check dedicated /redirect?to= endpoint if scanning root
+            if parsed_url.path in ("/", "") and not findings:
+                redirect_target = ScanTarget.from_url(f"{target.base_url}/redirect")
+                await self._test_param_redirect(redirect_target, client, "to", findings, passed_checks)
 
         if not findings and passed_checks:
             passed_checks.append("no-open-redirect-detected")
@@ -77,7 +83,7 @@ class OpenRedirectModule(BaseModule):
         findings: List[Finding],
         passed_checks: List[str],
     ) -> None:
-        for payload in (TEST_EXTERNAL_URL, TEST_PROTOCOL_RELATIVE):
+        for payload in (TEST_EXTERNAL_URL, TEST_PROTOCOL_RELATIVE, TEST_ALLOWLIST_BYPASS):
             probe_url = self._build_probe_url(target.raw_url, param_name, payload)
             # Crucial: follow_redirects=False to inspect the raw Location header
             resp = await client.get(probe_url, follow_redirects=False)

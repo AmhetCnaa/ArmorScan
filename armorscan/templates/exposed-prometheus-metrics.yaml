@@ -1,0 +1,33 @@
+id: exposed-prometheus-metrics
+info:
+  name: Publicly Exposed Prometheus Metrics Endpoint
+  severity: MEDIUM
+  confidence: confirmed
+  cwe: CWE-200
+  owasp: A05:2021-Security Misconfiguration
+  description: >
+    The application exposes an unauthenticated Prometheus /metrics endpoint
+    leaking internal telemetry, Node/process memory metrics, HTTP route counters,
+    and runtime environment metadata.
+  remediation: >
+    Restrict access to /metrics to internal monitoring networks (Prometheus scraper IP allowlist)
+    or require HTTP Basic / Bearer authentication.
+  references:
+    - https://prometheus.io/docs/operating/security/
+    - https://cwe.mitre.org/data/definitions/200.html
+
+requests:
+  - method: GET
+    path:
+      - "{{BaseURL}}/metrics"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status:
+          - 200
+      - type: words
+        part: body
+        condition: and
+        words:
+          - "# HELP "
+          - "# TYPE "

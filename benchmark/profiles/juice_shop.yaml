@@ -38,6 +38,16 @@ expected_vulnerabilities:
     severity: "MEDIUM"
     description: "Burst test demonstrates lack of rate limiting defenses and HTTP 429 throttling"
 
+  - id: "OPEN_REDIRECT_UNVALIDATED"
+    module: "redirect"
+    severity: "HIGH"
+    description: "Unvalidated redirect allowlist bypass on /redirect?to= parameter"
+
+  - id: "DATABASE_ERROR_DISCLOSURE"
+    module: "error_leak"
+    severity: "HIGH"
+    description: "SQLite syntax error and stack trace disclosure on /rest/products/search?q="
+
   - id: "JWT_MISSING_EXPIRATION"
     module: "jwt_audit"
     severity: "MEDIUM"
@@ -48,6 +58,11 @@ expected_vulnerabilities:
     severity: "HIGH"
     description: "Authentication tokens leak user credentials / MD5 password hash in unencrypted payload data"
 
+  - id: "MISSING_AUTHENTICATION_GATE"
+    module: "authz_check"
+    severity: "CRITICAL"
+    description: "Unauthenticated access to /rest/admin/application-configuration exposing internal config"
+
   - id: "CROSS_TENANT_OBJECT_ACCESS"
     module: "multi_step"
     severity: "HIGH"
@@ -57,6 +72,21 @@ expected_vulnerabilities:
     module: "sqli"
     severity: "HIGH"
     description: "Safe non-destructive boolean differential indication on search query parameter 'q'"
+
+  - id: "NOSQLI_OPERATOR_INJECTION_SUSPECTED"
+    module: "nosqli"
+    severity: "HIGH"
+    description: "Safe NoSQL boolean differential indication on /rest/track-order/:id"
+
+  - id: "PATH_TRAVERSAL_DETECTED"
+    module: "traversal"
+    severity: "HIGH"
+    description: "Poison Null-Byte / Path Traversal file access on /ftp/package.json.bak%2500.md"
+
+  - id: "EXPOSED_PROMETHEUS_METRICS"
+    module: "templates"
+    severity: "MEDIUM"
+    description: "Publicly exposed Prometheus /metrics endpoint detected via YAML template engine"
 
   - id: "DOM_XSS_SINK_TAINT_FLOW"
     module: "browser_dom"
@@ -75,11 +105,3 @@ forbidden_false_positives:
   - id: "UNENCODED_HTML_INPUT_REFLECTION"
     module: "reflection"
     reason: "Client-side SPA reflects in DOM, not raw server response; reflection module must not produce FP"
-
-  - id: "OPEN_REDIRECT_UNVALIDATED"
-    module: "redirect"
-    reason: "SPA router handles navigation client-side without open server 302 redirect"
-
-  - id: "DATABASE_ERROR_DISCLOSURE"
-    module: "error_leak"
-    reason: "Normal application responses must not be flagged as database leaks"

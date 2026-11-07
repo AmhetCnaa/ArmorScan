@@ -20,21 +20,26 @@ from armorscan.core.client import HttpClient
 from armorscan.core.crawler import WebCrawler
 from armorscan.core.models import Finding, ModuleResult, ScanTarget
 from armorscan.core.runner import ScanRunner
+from armorscan.core.templates import TemplateEngine
 from armorscan.modules.base import BaseModule
 from armorscan.modules.authz_check import AuthzCheckModule
 from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
 from armorscan.modules.error_leak import ErrorLeakModule
 from armorscan.modules.exposure import ExposureAuditModule
+from armorscan.modules.graphql import GraphqlAuditModule
 from armorscan.modules.headers import SecurityHeadersModule
 from armorscan.modules.jwt_audit import JwtAuditModule
 from armorscan.modules.multi_step import MultiStepLogicModule
+from armorscan.modules.nosqli import NoSqliIndicationModule
 from armorscan.modules.ratelimit import RateLimitModule
 from armorscan.modules.redirect import OpenRedirectModule
 from armorscan.modules.reflection import InputReflectionModule
 from armorscan.modules.secret_leak import SecretLeakModule
 from armorscan.modules.sqli import SqliIndicationModule
+from armorscan.modules.ssrf_check import SsrfCheckModule
 from armorscan.modules.tls_ssl import TlsSslModule
+from armorscan.modules.traversal import PathTraversalModule
 
 MODULE_MAP: Dict[str, type[BaseModule]] = {
     "reflection": InputReflectionModule,
@@ -50,6 +55,11 @@ MODULE_MAP: Dict[str, type[BaseModule]] = {
     "authz_check": AuthzCheckModule,
     "multi_step": MultiStepLogicModule,
     "sqli": SqliIndicationModule,
+    "nosqli": NoSqliIndicationModule,
+    "traversal": PathTraversalModule,
+    "ssrf_check": SsrfCheckModule,
+    "graphql": GraphqlAuditModule,
+    "templates": TemplateEngine,
     "tls": TlsSslModule,
 }
 

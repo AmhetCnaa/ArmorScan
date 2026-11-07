@@ -1,6 +1,6 @@
 # 🛡️ ArmorScan Ground Truth Benchmark Report
 
-> **Execution Date:** 2026-11-07 11:48:48 UTC  
+> **Execution Date:** 2026-11-07 12:35:13 UTC  
 > **Target Base URL:** `http://127.0.0.1:8888`  
 > **Total Evaluated Endpoints:** 24  
 
@@ -13,15 +13,20 @@
 | `cors` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `error_leak` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `exposure` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `graphql` | 0 | 0 | 0 | - | - | - | N/A |
 | `headers` | 6 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `jwt_audit` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `multi_step` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `nosqli` | 0 | 0 | 0 | - | - | - | N/A |
 | `ratelimit` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `sqli` | 0 | 0 | 0 | - | - | - | N/A |
+| `ssrf_check` | 0 | 0 | 0 | - | - | - | N/A |
+| `templates` | 0 | 0 | 0 | - | - | - | N/A |
 | `tls` | 0 | 0 | 0 | - | - | - | N/A |
+| `traversal` | 0 | 0 | 0 | - | - | - | N/A |
 | **OVERALL** | **28** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
 
 ## 🔍 Endpoint Test Case Breakdown

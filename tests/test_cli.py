@@ -13,7 +13,7 @@ from armorscan.core.models import Grade, ScanResult, ScanSummary, ScanTarget
 
 def test_default_modules_count():
     modules = get_default_modules(burst_count=10)
-    assert len(modules) == 14
+    assert len(modules) == 19
     names = [m.name for m in modules]
     assert "headers" in names
     assert "tls_ssl" in names
@@ -27,11 +27,17 @@ def test_default_modules_count():
     assert "jwt_audit" in names
     assert "secret_leak" in names
     assert "authz_check" in names
+    assert "multi_step" in names
     assert "sqli" in names
+    assert "nosqli" in names
+    assert "traversal" in names
+    assert "ssrf_check" in names
+    assert "graphql" in names
+    assert "templates" in names
 
-    # When include_browser=True, length is 15
+    # When include_browser=True, length is 20
     browser_modules = get_default_modules(burst_count=10, include_browser=True)
-    assert len(browser_modules) == 15
+    assert len(browser_modules) == 20
     assert "browser_dom" in [m.name for m in browser_modules]
 
 
@@ -44,6 +50,9 @@ def test_cli_parser_defaults():
     assert args.html == "armorscan-report.html"
     assert args.no_html is False
     assert args.json is None
+    assert args.sarif is None
+    assert args.templates is None
+    assert args.tui is False
     assert args.insecure is False
     assert args.concurrency == 5
     assert args.burst == 18
@@ -57,6 +66,9 @@ def test_cli_parser_custom_flags():
         "--fail-under", "85",
         "--html", "custom-report.html",
         "--json", "custom-data.json",
+        "--sarif", "custom.sarif",
+        "--templates", "./my-templates",
+        "--tui",
         "-k",
         "--concurrency", "8",
         "--burst", "25",
@@ -68,6 +80,9 @@ def test_cli_parser_custom_flags():
     assert args.fail_under == 85
     assert args.html == "custom-report.html"
     assert args.json == "custom-data.json"
+    assert args.sarif == "custom.sarif"
+    assert args.templates == ["./my-templates"]
+    assert args.tui is True
     assert args.insecure is True
     assert args.concurrency == 8
     assert args.burst == 25
