@@ -87,15 +87,21 @@ class MultiStepLogicModule(BaseModule):
                     )
                     continue
 
+                # If the response is an HTML page (e.g. SPA catch-all fallback), skip
+                if self._is_html(resp_step1) or self._is_html(resp_step2):
+                    continue
+
+                # If both responses are identical, changing the ID parameter had no effect
+                if resp_step1.text == resp_step2.text:
+                    continue
+
                 # If tampered request succeeded with 200 OK and returned content
                 if resp_step2.status_code == 200:
                     # Verify response contains the tampered record or sensitive fields
                     is_unauthorized_access = False
                     if tampered_val in resp_step2.text:
                         is_unauthorized_access = True
-                    elif "data" in resp_step2.text or "account" in resp_step2.text or "order" in resp_step2.text:
-                        is_unauthorized_access = True
-                    elif len(resp_step2.text) > 20 and abs(len(resp_step2.text) - len(resp_step1.text)) < 50:
+                    elif ("data" in resp_step2.text or "account" in resp_step2.text or "order" in resp_step2.text) and resp_step1.text != resp_step2.text:
                         is_unauthorized_access = True
 
                     if is_unauthorized_access:
@@ -167,3 +173,11 @@ class MultiStepLogicModule(BaseModule):
         qs[param_name] = [param_val]
         new_query = urlencode(qs, doseq=True)
         return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+
+    def _is_html(self, resp: HttpResponse) -> bool:
+        """Check if response is an HTML page (such as an SPA fallback)."""
+        ct = resp.headers.get("content-type", "").lower()
+        if "text/html" in ct:
+            return True
+        t = resp.text.strip().lower()
+        return t.startswith("<!doctype html") or t.startswith("<html")

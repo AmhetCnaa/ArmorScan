@@ -86,11 +86,13 @@ class AuthzCheckModule(BaseModule):
 
                 # Case 3: Unauthenticated request returns HTTP 200 OK -> Investigate for Missing Auth Gate
                 if resp_unauth.status_code == 200:
-                    is_sensitive = self._is_sensitive_response(resp_unauth.text, path_part)
+                    is_html = self._is_html(resp_unauth)
+                    is_sensitive = self._is_sensitive_response(resp_unauth.text, path_part, is_html=is_html)
 
-                    # Also compare length with authenticated response if available
+                    # Length similarity only applies to JSON/API responses, not static SPA HTML shells
                     length_similar = (
-                        resp_auth.status_code == 200
+                        not is_html
+                        and resp_auth.status_code == 200
                         and abs(len(resp_auth.text) - len(resp_unauth.text)) < 50
                         and len(resp_unauth.text) > 30
                     )
@@ -148,8 +150,19 @@ class AuthzCheckModule(BaseModule):
             passed_checks=passed_checks,
         )
 
-    def _is_sensitive_response(self, text: str, path: str) -> bool:
+    def _is_html(self, resp: HttpResponse) -> bool:
+        ct = resp.headers.get("content-type", "").lower()
+        if "text/html" in ct:
+            return True
+        t = resp.text.strip().lower()
+        return t.startswith("<!doctype html") or t.startswith("<html")
+
+    def _is_sensitive_response(self, text: str, path: str, is_html: bool = False) -> bool:
         """Check if response body exhibits clear attributes of private user or account data."""
+        if is_html:
+            # HTML pages (like SPA shells) only qualify if explicit sensitive patterns match
+            return any(pat.search(text) for pat in SENSITIVE_BODY_PATTERNS)
+
         if any(pat.search(text) for pat in SENSITIVE_BODY_PATTERNS):
             return True
 

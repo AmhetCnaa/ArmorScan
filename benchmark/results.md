@@ -1,6 +1,6 @@
 # 🛡️ ArmorScan Ground Truth Benchmark Report
 
-> **Execution Date:** 2026-11-07 00:11:22 UTC  
+> **Execution Date:** 2026-11-07 11:11:49 UTC  
 > **Target Base URL:** `http://127.0.0.1:8888`  
 > **Total Evaluated Endpoints:** 24  
 
@@ -20,7 +20,7 @@
 | `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `tls` | 0 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `tls` | 0 | 0 | 0 | - | - | - | N/A |
 | **OVERALL** | **28** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
 
 ## 🔍 Endpoint Test Case Breakdown

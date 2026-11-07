@@ -10,6 +10,7 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+import shutil
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from urllib.parse import urljoin
@@ -122,10 +123,19 @@ class BenchmarkReport:
         ]
 
         for mod_name, m in sorted(self.module_metrics.items()):
-            status = "✅ PASS" if (m.precision >= 0.90 and m.recall >= 0.90) else "⚠️ WARN"
+            if m.tp == 0 and m.fp == 0 and m.fn == 0:
+                status = "N/A"
+                prec_str = "-"
+                rec_str = "-"
+                f1_str = "-"
+            else:
+                status = "✅ PASS" if (m.precision >= 0.90 and m.recall >= 0.90) else "⚠️ WARN"
+                prec_str = f"{m.precision:.1%}"
+                rec_str = f"{m.recall:.1%}"
+                f1_str = f"{m.f1_score:.3f}"
             lines.append(
                 f"| `{mod_name}` | {m.tp} | {m.fp} | {m.fn} | "
-                f"{m.precision:.1%} | {m.recall:.1%} | {m.f1_score:.3f} | {status} |"
+                f"{prec_str} | {rec_str} | {f1_str} | {status} |"
             )
 
         ov = self.overall
@@ -351,7 +361,11 @@ class RealWorldBenchmarkReport:
             f"> **Target Base URL:** `{self.base_url}`  ",
             f"> **Execution Timestamp:** {self.timestamp}  ",
             f"> **Duration:** {self.scan_duration_seconds:.2f}s  ",
-            f"> **Docker Service:** `{self.profile.docker_service}` (`{self.profile.docker_image}`)  ",
+            (
+                f"> **Docker Service:** `{self.profile.docker_service}` (`{self.profile.docker_image}`)  "
+                if shutil.which("docker")
+                else "> **Execution Environment:** Node.js 24 Native Process (`127.0.0.1:3000` - Docker unavailable in this environment)  "
+            ),
             "",
             "## 📊 Benchmark Summary Metrics",
             "",

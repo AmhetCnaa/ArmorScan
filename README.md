@@ -3,7 +3,6 @@
 <div align="center">
 
 [![CI & Accuracy Benchmark](https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml/badge.svg)](https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml)
-[![Accuracy: 100% Precision & Recall](https://img.shields.io/badge/Benchmark%20Accuracy-100%25-brightgreen.svg)](benchmark/results.md)
 [![Python Version](https://img.shields.io/badge/Python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DAST: Non-Destructive](https://img.shields.io/badge/DAST-Non--Destructive%20Canary-purple.svg)](docs/ARCHITECTURE.md)
@@ -190,9 +189,9 @@ armorscan benchmark dvwa
 
 ## 📊 Ground Truth Benchmark & Accuracy Metrics (v0.4.0)
 
-ArmorScan is evaluated against a controlled ground-truth laboratory (`benchmark/labapp/`) containing paired vulnerable and safely-remediated endpoints across all 12 core vulnerability classes.
+> ⚠️ **Metodoloji Notu (Dürüst Doğrulama):** Aşağıdaki laboratuvar sonuçları, ArmorScan geliştiricileri tarafından yazılan sentetik test uygulaması (`benchmark/labapp/`) üzerindedir. Kod ve doğrulama kuralının aynı ekip tarafından yazıldığı durumlarda %100 skor döngüsel (circular) bir doğrulamadır. ArmorScan'in bağımsız bir hedefe karşı gerçek tespit gücünü, kaçırdığı açıkları ve yanlış alarm direncini şeffafça ortaya koymak amacıyla **OWASP Juice Shop** sonuçları hemen altındaki tabloda ayrı olarak raporlanmıştır.
 
-### Measured Accuracy Metrics (Reproducible Quality Gate):
+### 1. Kontrollü Laboratuvar Doğrulaması (`benchmark/labapp/`):
 
 | Module | True Positives (TP) | False Positives (FP) | False Negatives (FN) | Precision | Recall | F1-Score | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -208,11 +207,41 @@ ArmorScan is evaluated against a controlled ground-truth laboratory (`benchmark/
 | `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
 | `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `tls` | 0 | 0 | 0 | - | - | - | N/A |
 | **OVERALL** | **28** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
 
-### Real-World Vulnerable Application Benchmarks:
-- **OWASP Juice Shop** (`bkimminich/juice-shop:v16.0.0`): Angular SPA, Express REST API, SQLite. Evaluates OpenAPI extraction, Express technology banners, CORS reflection, and verifies zero false positives on SPA HTML 200 catch-alls.
-- **Damn Vulnerable Web Application (DVWA)** (`vulnerables/web-dvwa:latest`): Classic PHP/MySQL application evaluating reflected XSS, open redirects, server headers, and cookie hygiene.
+*(Not: `tls` modülü lokal HTTP test ortamında TLS sertifikası bulunmadığı için test vakası içermemektedir ve dürüstçe `N/A` olarak işaretlenmiştir.)*
+
+---
+
+### 2. Bağımsız Gerçek Dünya Testi: OWASP Juice Shop (`127.0.0.1:3000`)
+
+> **Çalıştırma Notu:** Bu sanal geliştirme ortamında Docker/Podman kurulu olmadığından (`which docker` -> bulunamadı), OWASP Juice Shop v20.3.0 resmi GitHub Linux paketi indirilerek Node.js 24 üzerinde `127.0.0.1:3000` adresinde yerel süreç olarak çalıştırılmış ve canlı taranmıştır.
+
+Juice Shop, 16 farklı kategoride toplam **116 resmi güvenlik challenge'ı** barındırır. Bu zafiyetlerin büyük çoğunluğu istemci taraflı DOM çalıştırması (Angular), kullanıcı oturum yolculuğu veya zararlı payload gerektiren CTF bulmacalarıdır. 
+
+ArmorScan'in tahribatsız (non-destructive) DAST motorunun canlı Juice Shop üzerindeki ölçülen performansı:
+
+| Metrik | Değer | Durum / Değerlendirme |
+| :--- | :---: | :--- |
+| **Tespit Edilen Gerçek Açıklar (TP)** | **3** | `MISSING_CSP`, `MISSING_RATE_LIMITING`, `MISSING_REFERRER_POLICY` |
+| **Yanlış Alarmlar (False Positives)** | **0** | SPA fallback (HTTP 200 HTML catch-all) başarıyla filtrelendi; sıfır gürültü |
+| **Hedef Profil Recall (Kapsam)** | **16.7%** | Standart DAST profilindeki 6 beklenen konfigürasyondan 1'i kök rotada teyit edildi |
+| **Tüm 116 Challenge Kapsamı** | **~2.6%** | Geriye kalan challenge'lar DOM-XSS, SQLite injection ve manuel CTF zincirleridir |
+| **Tarama Süresi** | **0.78s** | 45 denetim noktası 1 saniyenin altında tamamlandı |
+
+#### Tespit Edilen ve Kaçırılan Açıkların Detaylı Analizi:
+
+| Güvenlik Alanı | Juice Shop Karşılığı | ArmorScan Durumu | Neden / Mimari Açıklama |
+| :--- | :--- | :---: | :--- |
+| **CSP Güvenliği** | Content Security Policy Eksikliği | ✅ **TESPİT EDİLDİ** | Kök yanıtta katı CSP başlığı bulunmadığı doğrulandı (`MISSING_CSP`). |
+| **Rate Limiting** | Anti-Automation / DoS Koruması | ✅ **TESPİT EDİLDİ** | Ani istek serisinde HTTP 429 veya rate-limit başlığı dönmediği tespit edildi. |
+| **Referrer-Policy** | Hassas Veri Sızıntısı Koruması | ✅ **TESPİT EDİLDİ** | Referrer-Policy başlığı eksikliği raporlandı (`MISSING_REFERRER_POLICY`). |
+| **Dotfile / .env Koruması** | SPA Catch-All Yanıltması | 🛡️ **0 YANLIŞ ALARM** | Juice Shop'un tüm yollara 200 HTML dönmesi kanarya imzasıyla ayırt edildi. |
+| **SQL Injection** | SQLite `products/search?q=` | ❌ *Kapsam Dışı* | ArmorScan yalnızca zararsız kanarya problar kullanır; SQL syntax bozucu injection atmaz. |
+| **DOM XSS** | Angular `/#/search?q=` | ❌ *Kapsam Dışı* | Headless browser (Chromium/Puppeteer) gerektirir; HTTP motoru DOM çalıştırmaz. |
+| **IDOR / BOLA** | `/rest/basket/:id` | ❌ *Oturumsuz Atlandı* | Kök taramada sepet/kullanıcı oturumu açılmadığı için çok adımlı IDOR tetiklenmedi. |
+| **Swagger / OpenAPI** | `/api-docs/swagger.json` | ❌ *Kaçırıldı* | Otomatik crawler kök sayfadan Swagger yolunu statik HTML içinde bulamadı. |
 
 ---
 

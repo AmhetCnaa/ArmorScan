@@ -58,15 +58,24 @@ async def run_labapp_benchmark_async(args: argparse.Namespace, console: Console)
         table.add_column("Status", justify="center")
 
         for mod_name, m in sorted(report.module_metrics.items()):
-            status = "[bold green]PASS[/bold green]" if (m.precision >= 0.90 and m.recall >= 0.90) else "[bold yellow]WARN[/bold yellow]"
+            if m.tp == 0 and m.fp == 0 and m.fn == 0:
+                status = "[dim]N/A (No tests)[/dim]"
+                prec_str = "-"
+                rec_str = "-"
+                f1_str = "-"
+            else:
+                status = "[bold green]PASS[/bold green]" if (m.precision >= 0.90 and m.recall >= 0.90) else "[bold yellow]WARN[/bold yellow]"
+                prec_str = f"{m.precision:.1%}"
+                rec_str = f"{m.recall:.1%}"
+                f1_str = f"{m.f1_score:.3f}"
             table.add_row(
                 mod_name,
                 str(m.tp),
                 str(m.fp),
                 str(m.fn),
-                f"{m.precision:.1%}",
-                f"{m.recall:.1%}",
-                f"{m.f1_score:.3f}",
+                prec_str,
+                rec_str,
+                f1_str,
                 status,
             )
 
