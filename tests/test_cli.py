@@ -13,7 +13,7 @@ from armorscan.core.models import Grade, ScanResult, ScanSummary, ScanTarget
 
 def test_default_modules_count():
     modules = get_default_modules(burst_count=10)
-    assert len(modules) == 19
+    assert len(modules) == 22
     names = [m.name for m in modules]
     assert "headers" in names
     assert "tls_ssl" in names
@@ -34,10 +34,13 @@ def test_default_modules_count():
     assert "ssrf_check" in names
     assert "graphql" in names
     assert "templates" in names
+    assert "async_ssrf" in names
+    assert "concurrency" in names
+    assert "protocols" in names
 
-    # When include_browser=True, length is 20
+    # When include_browser=True, length is 23
     browser_modules = get_default_modules(burst_count=10, include_browser=True)
-    assert len(browser_modules) == 20
+    assert len(browser_modules) == 23
     assert "browser_dom" in [m.name for m in browser_modules]
 
 
@@ -245,5 +248,11 @@ def test_get_default_modules_v070():
     names = [m.name for m in mods]
     assert "fuzzer" in names
     assert "auth_matrix" in names
+
+
+def test_cli_parser_source_dir():
+    parser = build_parser()
+    args = parser.parse_args(["https://target.com", "--source-dir", "./app-src"])
+    assert args.source_dir == "./app-src"
 
 

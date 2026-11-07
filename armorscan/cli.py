@@ -27,9 +27,11 @@ from armorscan.core.models import ScanResult, ScanTarget
 from armorscan.core.runner import ScanRunner
 from armorscan.core.suppression import SuppressionEngine
 from armorscan.core.templates import TemplateEngine
+from armorscan.modules.async_ssrf import AsyncSsrfModule
 from armorscan.modules.authz_check import AuthzCheckModule
 from armorscan.modules.base import BaseModule
 from armorscan.modules.browser_dom import BrowserDomModule
+from armorscan.modules.concurrency import ConcurrencyAuditModule
 from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
 from armorscan.modules.error_leak import ErrorLeakModule
@@ -40,6 +42,7 @@ from armorscan.modules.jwt_audit import JwtAuditModule
 from armorscan.modules.multi_step import MultiStepLogicModule
 from armorscan.modules.nosqli import NoSqliIndicationModule
 from armorscan.modules.ports import LocalPortSniffer
+from armorscan.modules.protocols import ProtocolsResilienceModule
 from armorscan.modules.ratelimit import RateLimitModule
 from armorscan.modules.redirect import OpenRedirectModule
 from armorscan.modules.reflection import InputReflectionModule
@@ -62,8 +65,9 @@ def get_default_modules(
     template_paths: Optional[List[str]] = None,
     include_fuzz: bool = False,
     matrix_roles: Optional[str] = None,
+    include_v1: bool = True,
 ) -> List[BaseModule]:
-    """Instantiate standard suite of security auditing modules (19 core modules, plus optional browser, fuzz, and matrix modules)."""
+    """Instantiate standard suite of security auditing modules (22 core modules, plus optional browser, fuzz, and matrix modules)."""
     mods: List[BaseModule] = [
         SecurityHeadersModule(),
         TlsSslModule(),
@@ -85,6 +89,12 @@ def get_default_modules(
         GraphqlAuditModule(),
         TemplateEngine(template_paths=template_paths),
     ]
+    if include_v1:
+        mods.extend([
+            AsyncSsrfModule(),
+            ConcurrencyAuditModule(),
+            ProtocolsResilienceModule(),
+        ])
     if include_browser:
         mods.append(BrowserDomModule())
     if include_fuzz:
@@ -382,6 +392,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="GitHub personal access token for opening remediation Pull Requests.",
     )
     parser.add_argument(
+        "--source-dir",
+        default=None,
+        metavar="DIR",
+        help="Path to source code directory for static AST route mapping & shadow API discovery.",
+    )
+    parser.add_argument(
         "-q",
         "--quiet",
         action="store_true",
@@ -667,6 +683,36 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
                     console.print(f"   ⚡ [bold yellow]GraphQL Introspection active on:[/bold yellow] [cyan]{crawl_res.graphql_url}[/cyan]")
                 console.print(f"   [dim]Sample routes: {', '.join(crawl_res.discovered_paths[:6])}[/dim]\n")
 
+    # 5b. Static AST Source Code Route Mapping & Shadow API Discovery
+    shadow_api_findings = []
+    ast_mapped_count = 0
+    if getattr(args, "source_dir", None):
+        from armorscan.core.ast_mapper import AstSourceMapper
+        if not args.quiet:
+            console.print(f"🧬 [bold cyan]Performing Static AST Code Mapping on:[/bold cyan] [bold]{args.source_dir}[/bold]...")
+        try:
+            mapper = AstSourceMapper()
+            ast_res = mapper.scan_directory(args.source_dir)
+            ast_mapped_count = len(ast_res.endpoints)
+            for ep in ast_res.endpoints:
+                if ep.path not in target.discovered_paths:
+                    target.discovered_paths.append(ep.path)
+            shadow_api_findings = mapper.generate_findings(ast_res, base_url=target.base_url)
+            if not args.quiet:
+                console.print(
+                    f"   Parsed [bold green]{ast_mapped_count}[/bold green] routes across "
+                    f"[bold green]{ast_res.scanned_files_count}[/bold green] source files."
+                )
+                if shadow_api_findings:
+                    console.print(
+                        f"   🚨 [bold red]Identified {len(shadow_api_findings)} unprotected shadow API route(s) lacking auth middleware![/bold red]\n"
+                    )
+                else:
+                    console.print("   ✅ All mapped sensitive routes enforce authentication middleware.\n")
+        except Exception as e:
+            if not args.quiet:
+                console.print(f"   [yellow]AST mapping notice:[/yellow] {e}\n")
+
     # 6. Execute Security Audits
     modules = get_default_modules(
         burst_count=args.burst,
@@ -709,6 +755,19 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
             )
     else:
         scan_result = await runner.scan(target)
+
+    # Append Shadow API findings if discovered from AST source analysis
+    if shadow_api_findings:
+        from armorscan.core.models import ModuleResult
+        from armorscan.core.scoring import ScoringEngine
+        ast_mod_res = ModuleResult(
+            module_name="ast_mapper",
+            display_name="Static AST Route & Shadow API Auditor",
+            findings=shadow_api_findings,
+            passed_checks=[f"Mapped {ast_mapped_count} endpoints from source directory '{args.source_dir}'."],
+        )
+        scan_result.modules.append(ast_mod_res)
+        scan_result.summary = ScoringEngine.calculate_summary(scan_result.modules)
 
     # 7. Render Console Output or Interactive TUI
     if getattr(args, "tui", False):
