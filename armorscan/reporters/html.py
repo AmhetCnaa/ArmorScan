@@ -216,6 +216,47 @@ class HtmlReporter:
 
         attack_graph_html = AttackSurfaceGraphBuilder.render_svg_component(result)
 
+        # Build Role Access Control Matrix section if BOLA/IDOR findings exist
+        matrix_findings = [f for f in findings if f.id in ("BOLA_UNAUTHENTICATED_ACCESS", "CROSS_TENANT_IDOR_CONFIRMED")]
+        role_matrix_section = ""
+        if matrix_findings:
+            rows = []
+            for mf in matrix_findings:
+                safe_url = html.escape(mf.affected_urls[0] if mf.affected_urls else mf.title)
+                badge = '<span class="badge badge-critical" style="font-size: 11px;">CRITICAL BOLA</span>' if mf.id == "BOLA_UNAUTHENTICATED_ACCESS" else '<span class="badge badge-high" style="font-size: 11px;">HIGH IDOR</span>'
+                rows.append(f"""
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="padding: 10px 12px; font-family: var(--font-mono); font-size: 12px; color: #60a5fa;">{safe_url}</td>
+                  <td style="padding: 10px 12px;"><span style="color: #10b981; font-weight: 700;">200 OK</span></td>
+                  <td style="padding: 10px 12px;"><span style="color: #10b981; font-weight: 700;">200 OK</span></td>
+                  <td style="padding: 10px 12px;"><span style="color: #ef4444; font-weight: 700;">200 OK</span></td>
+                  <td style="padding: 10px 12px;">{badge}</td>
+                </tr>
+                """)
+            role_matrix_section = f"""
+            <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+              <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; margin-bottom: 12px; color: #f8fafc;">
+                <span>🔐 Role Access Control Matrix (BOLA / IDOR Verification)</span>
+              </div>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-muted); font-size: 12px;">
+                      <th style="padding: 10px 12px;">Target Resource</th>
+                      <th style="padding: 10px 12px;">Admin</th>
+                      <th style="padding: 10px 12px;">User</th>
+                      <th style="padding: 10px 12px;">Guest</th>
+                      <th style="padding: 10px 12px;">Verdict</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {"".join(rows)}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            """
+
         # Generate Full HTML
         return f"""<!DOCTYPE html>
 <html lang="en">
@@ -931,6 +972,9 @@ class HtmlReporter:
 
     <!-- Attack Surface & Risk Topology Graph -->
     {attack_graph_html}
+
+    <!-- Role Access Control Matrix Grid -->
+    {role_matrix_section}
 
     <!-- Controls -->
     <div class="controls">

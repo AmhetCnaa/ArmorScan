@@ -60,8 +60,10 @@ def get_default_modules(
     burst_count: int = 18,
     include_browser: bool = False,
     template_paths: Optional[List[str]] = None,
+    include_fuzz: bool = False,
+    matrix_roles: Optional[str] = None,
 ) -> List[BaseModule]:
-    """Instantiate standard suite of security auditing modules (19 core modules, plus optional browser module)."""
+    """Instantiate standard suite of security auditing modules (19 core modules, plus optional browser, fuzz, and matrix modules)."""
     mods: List[BaseModule] = [
         SecurityHeadersModule(),
         TlsSslModule(),
@@ -85,6 +87,12 @@ def get_default_modules(
     ]
     if include_browser:
         mods.append(BrowserDomModule())
+    if include_fuzz:
+        from armorscan.modules.fuzzer import ApiFuzzerModule
+        mods.append(ApiFuzzerModule())
+    if matrix_roles:
+        from armorscan.modules.auth_matrix import AuthMatrixModule, parse_matrix_roles
+        mods.append(AuthMatrixModule(roles=parse_matrix_roles(matrix_roles)))
     return mods
 
 
@@ -327,6 +335,53 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run sentinel checks once without sleeping (for cron / testing).",
     )
     parser.add_argument(
+        "--matrix-roles",
+        default=None,
+        metavar="ROLES",
+        help="Multi-Role BOLA/IDOR Permission Matrix (e.g. 'admin:Bearer <T1>,user:Bearer <T2>,guest:')",
+    )
+    parser.add_argument(
+        "--fuzz",
+        action="store_true",
+        help="Enable non-destructive API boundary fuzzing to detect unhandled HTTP 500 exceptions and CPU lag.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8080,
+        metavar="PORT",
+        help="Port for 'armorscan proxy' mode (default: 8080).",
+    )
+    parser.add_argument(
+        "--auto-audit",
+        action="store_true",
+        default=True,
+        help="Enable live passive security auditing in proxy mode (default: True).",
+    )
+    parser.add_argument(
+        "--no-auto-audit",
+        dest="auto_audit",
+        action="store_false",
+        help="Disable live passive security auditing in proxy mode.",
+    )
+    parser.add_argument(
+        "--auto-pr",
+        action="store_true",
+        help="Automatically open a remediation Pull Request on GitHub for detected vulnerabilities.",
+    )
+    parser.add_argument(
+        "--github-repo",
+        default=None,
+        metavar="OWNER/REPO",
+        help="Target GitHub repository (e.g. 'owner/repo') for automated Pull Request generation.",
+    )
+    parser.add_argument(
+        "--github-token",
+        default=None,
+        metavar="TOKEN",
+        help="GitHub personal access token for opening remediation Pull Requests.",
+    )
+    parser.add_argument(
         "-q",
         "--quiet",
         action="store_true",
@@ -458,6 +513,42 @@ async def run_sentinel_watch_async(target_url: str, args: argparse.Namespace, co
     return 0
 
 
+async def run_proxy_async(args: argparse.Namespace, console: Console) -> int:
+    """Execute lightweight HTTP forward proxy & live traffic auditor."""
+    from armorscan.core.proxy import HttpProxy
+
+    port = getattr(args, "port", 8080)
+    host = getattr(args, "host_or_target", None) or "127.0.0.1"
+    if host.startswith("http"):
+        host = "127.0.0.1"
+    auto_audit = getattr(args, "auto_audit", True)
+
+    proxy = HttpProxy(host=host, port=port, auto_audit=auto_audit, console=console)
+    server = await proxy.start()
+
+    console.print(
+        Panel(
+            f"🛡️ [bold white]ArmorScan Live HTTP Forward Proxy Active[/bold white]\n"
+            f"Listening: [bold cyan]http://{host}:{port}[/bold cyan]  •  Passive Auto-Audit: [bold green]{'Enabled' if auto_audit else 'Disabled'}[/bold green]\n"
+            f"[dim]Configure browser proxy to: http://{host}:{port}[/dim]\n"
+            f"[dim]Press Ctrl+C to terminate proxy and display captured session statistics.[/dim]",
+            border_style="cyan",
+            box=ROUNDED,
+        )
+    )
+
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        pass
+    finally:
+        await proxy.stop()
+        console.print(f"\n[bold yellow]Proxy stopped.[/bold yellow] Total flows intercepted: [bold cyan]{len(proxy.captured_flows)}[/bold cyan]")
+
+    return 0
+
+
 async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     """Asynchronous controller for the scan workflow."""
     # 1. Handle Patch Export
@@ -481,6 +572,10 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
             console.print("[bold red]Error:[/bold red] Missing target URL for watch mode. Usage: [cyan]armorscan watch http://localhost:3000 --interval 1h --webhook <url>[/cyan]")
             return 2
         return await run_sentinel_watch_async(target_url, args, console)
+
+    # 2c. Handle 'proxy' command (Live Traffic Forward Proxy & Auditor)
+    if raw_target and raw_target.lower() == "proxy":
+        return await run_proxy_async(args, console)
 
     # 3. Handle 'benchmark' command
     if raw_target and raw_target.lower() == "benchmark":
@@ -577,6 +672,8 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         burst_count=args.burst,
         include_browser=getattr(args, "browser", False),
         template_paths=getattr(args, "templates", None),
+        include_fuzz=getattr(args, "fuzz", False),
+        matrix_roles=getattr(args, "matrix_roles", None),
     )
     suppression_engine = SuppressionEngine.find_and_load(custom_path=args.ignore_file)
     runner = ScanRunner(
@@ -656,6 +753,23 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
                 patch_res = await ai_engine.generate_patch(f, repo_path=getattr(args, "repo_path", None))
                 console.print(f"\n[bold green]🛠️ Unified Git Diff Patch ({patch_res.framework} -> {patch_res.target_file}):[/bold green]")
                 console.print(Panel(patch_res.unified_diff, title=f"git apply patch for {f.id}", border_style="green", box=ROUNDED))
+
+    # 7d. Self-Healing Automated GitHub Pull Request
+    if getattr(args, "auto_pr", False):
+        from armorscan.core.auto_pr import GitHubAutoPrEngine
+        gh_repo = getattr(args, "github_repo", None)
+        gh_token = getattr(args, "github_token", None)
+        if not gh_repo:
+            console.print("[bold red]Auto-PR Error:[/bold red] Missing --github-repo (e.g. --github-repo 'owner/repo').")
+        else:
+            if not args.quiet:
+                console.print(f"\n🚀 [bold cyan]Opening Self-Healing Remediation Pull Request on GitHub:[/bold cyan] [bold]{gh_repo}[/bold]...")
+            pr_engine = GitHubAutoPrEngine(github_repo=gh_repo, github_token=gh_token)
+            pr_res = await pr_engine.create_security_pr(scan_result, repo_path=getattr(args, "repo_path", None))
+            if pr_res.success:
+                console.print(f"🎉 [bold green]Pull Request successfully created![/bold green] [cyan]{pr_res.pr_url}[/cyan] (Branch: [dim]{pr_res.branch}[/dim])")
+            else:
+                console.print(f"⚠️ [bold red]Auto-PR Failed:[/bold red] {pr_res.error}")
 
     # 8. CI/CD Quality Gate
     if args.fail_under is not None:

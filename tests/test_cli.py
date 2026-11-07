@@ -218,3 +218,32 @@ async def test_cli_sentinel_watch_once_execution(tmp_path):
         assert Path(baseline_path).exists()
 
 
+def test_cli_parser_v070_options():
+    parser = build_parser()
+    args = parser.parse_args([
+        "proxy",
+        "--port", "8888",
+        "--no-auto-audit",
+        "--matrix-roles", "admin:Bearer T1,user:Bearer T2,guest:",
+        "--fuzz",
+        "--auto-pr",
+        "--github-repo", "owner/repo",
+        "--github-token", "ghp_secret",
+    ])
+    assert args.target == "proxy"
+    assert args.port == 8888
+    assert args.auto_audit is False
+    assert args.matrix_roles == "admin:Bearer T1,user:Bearer T2,guest:"
+    assert args.fuzz is True
+    assert args.auto_pr is True
+    assert args.github_repo == "owner/repo"
+    assert args.github_token == "ghp_secret"
+
+
+def test_get_default_modules_v070():
+    mods = get_default_modules(include_fuzz=True, matrix_roles="admin:Bearer T1,guest:")
+    names = [m.name for m in mods]
+    assert "fuzzer" in names
+    assert "auth_matrix" in names
+
+

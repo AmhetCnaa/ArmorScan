@@ -1,36 +1,35 @@
 <div align="center">
 
   <a href="https://github.com/AmhetCnaa/ArmorScan">
-    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v0.6.0 Hero Banner" width="100%" />
+    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v0.7.0 Hero Banner" width="100%" />
   </a>
 
   <br />
   <br />
 
   <p align="center">
-    <em>"Next-generation, non-destructive DAST &amp; Autonomous DevSecOps Sentinel. From headers to DOM taint tracing, IDOR, AI auto-patching, and continuous sentinel monitoring — with 0 False Positives."</em>
+    <em>"The Sovereign Engine: Next-generation, non-destructive DAST, Self-Healing Auto-PRs, Multi-Role BOLA Matrices, Live Proxy Auditing, and Autonomous DevSecOps Sentinel — with 0 False Positives."</em>
   </p>
 
   <p align="center">
     <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
-    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v0.6.0"><img src="https://img.shields.io/badge/Release-v0.6.0-10B981?style=flat-square&logo=github" alt="Release v0.6.0" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v0.7.0"><img src="https://img.shields.io/badge/Release-v0.7.0-10B981?style=flat-square&logo=github" alt="Release v0.7.0" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
     <a href="armorscan/templates/"><img src="https://img.shields.io/badge/Templates-29%2B%20Rules-8B5CF6?style=flat-square" alt="29+ YAML Rules" /></a>
-    <a href="tests/"><img src="https://img.shields.io/badge/Tests-152%2F152%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="152/152 Tests Passed" /></a>
+    <a href="tests/"><img src="https://img.shields.io/badge/Tests-169%2F169%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="169/169 Tests Passed" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-6366F1?style=flat-square" alt="License MIT + Ethical Clause" /></a>
     <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
   </p>
 
   <p align="center">
     <a href="#-start-in-30-seconds"><strong>Quick Start</strong></a> &nbsp;•&nbsp;
-    <a href="#-autonomous-sentinel--continuous-security-watcher"><strong>Autonomous Sentinel</strong></a> &nbsp;•&nbsp;
-    <a href="#-ai-vulnerability-storyteller--auto-patch-engine"><strong>AI Auto-Patch</strong></a> &nbsp;•&nbsp;
-    <a href="#-interactive-attack-surface-topology-map"><strong>Attack Surface Map</strong></a> &nbsp;•&nbsp;
-    <a href="#-why-armorscan"><strong>Architecture</strong></a> &nbsp;•&nbsp;
-    <a href="#-scientific-benchmark-owasp-juice-shop"><strong>Juice Shop Benchmark</strong></a> &nbsp;•&nbsp;
-    <a href="#-yaml-template-library-29-rules"><strong>YAML Library</strong></a> &nbsp;•&nbsp;
-    <a href="#️-legal--ethical-disclaimer"><strong>Legal Disclaimer</strong></a>
+    <a href="#-multi-role-bolaidor-permission-matrix"><strong>BOLA Matrix</strong></a> &nbsp;•&nbsp;
+    <a href="#-built-in-http-forward-proxy--live-traffic-auditor"><strong>Live Proxy</strong></a> &nbsp;•&nbsp;
+    <a href="#-self-healing-ai--automated-github-pull-request-opener"><strong>Auto-PR</strong></a> &nbsp;•&nbsp;
+    <a href="#-api-fuzzing--anomaly-crash-detector"><strong>API Fuzzing</strong></a> &nbsp;•&nbsp;
+    <a href="#-autonomous-sentinel--continuous-security-watcher"><strong>Sentinel</strong></a> &nbsp;•&nbsp;
+    <a href="#-scientific-benchmark-owasp-juice-shop"><strong>Juice Shop Benchmark</strong></a>
   </p>
 
 </div>
@@ -47,12 +46,87 @@ pip install armorscan
 armorscan http://localhost:3000 --tui
 armorscan http://localhost:3000 --html report.html
 
-# 3. AI Vulnerability Storyteller & Unified Git Diff Patch Generator
-armorscan http://localhost:3000 --ai-explain --ai-patch --repo-path ./my-app
+# 3. Multi-Role BOLA/IDOR Permission Matrix & Non-Destructive API Fuzzing
+armorscan http://localhost:3000 --matrix-roles "admin:Bearer <T1>,user:Bearer <T2>,guest:" --fuzz
 
-# 4. CI/CD Quality Gate with GitHub SARIF 2.1.0 Code Scanning
+# 4. Live Background HTTP Forward Proxy & Passive Traffic Auditor
+armorscan proxy --port 8080 --auto-audit
+
+# 5. Self-Healing AI: Automated Remediation Pull Request to GitHub
+armorscan https://my-app.com --auto-pr --github-repo "owner/repo" --github-token "$GH_TOKEN"
+
+# 6. CI/CD Quality Gate with GitHub SARIF 2.1.0 Code Scanning
 armorscan https://staging.example.com --fail-under 80 --sarif results.sarif
 ```
+
+---
+
+## 🔐 Multi-Role BOLA/IDOR Permission Matrix
+
+Broken Object Level Authorization (BOLA/IDOR) is the most critical vulnerability in modern API architectures. ArmorScan now automatically derives and verifies a **Role Access Control Matrix** across multi-tier identities using non-destructive, read-only differential probes:
+
+```bash
+armorscan http://localhost:3000 \
+  --matrix-roles "admin:Bearer <T1>,user:Bearer <T2>,guest:"
+```
+
+- 🚨 **Unauthenticated BOLA (`CRITICAL`):** Flags when private user objects or orders return `200 OK` with sensitive records to unauthenticated guest visitors.
+- ⚠️ **Cross-Tenant IDOR (`HIGH`):** Flags when Tenant B's credentials can retrieve Tenant A's private records without authorization checks.
+- 📊 **Visual Access Matrix Grid:** Generates a real-time role permission table directly in the standalone HTML report (`armorscan-report.html`).
+
+---
+
+## 🛰️ Built-in HTTP Forward Proxy & Live Traffic Auditor
+
+Route your browser, Cypress/Playwright suites, or mobile simulator traffic through ArmorScan to passively audit real-world traffic on the fly:
+
+```bash
+armorscan proxy --port 8080 --auto-audit
+```
+
+```text
+[GET 200] /api/user/profile -> 🛡️ 3 Findings: MISSING_CSP, COOKIE_MISSING_HTTPONLY, AWS_KEY_LEAK
+[GET 200] /static/main.js -> Clean
+```
+
+- ⚡ **Pure Asyncio Engine:** Zero external dependencies (no Java, no Mitmproxy required).
+- 🔒 **HTTPS Tunneling:** Supports full TLS tunneling via standard HTTP `CONNECT`.
+- 👁️ **Live Passive Audits:** Automatically inspects new routes for missing CSP, HSTS, insecure cookies without `HttpOnly`/`Secure`, leaked API keys (OpenAI, AWS, JWTs), and database stack traces.
+
+---
+
+## 🚀 "Self-Healing AI" — Automated GitHub Pull Request Opener
+
+Close the remediation loop entirely. Instead of leaving developers with a diff to manually copy-paste, ArmorScan can automatically branch your repository, commit the patch, and open a ready-to-merge Pull Request:
+
+```bash
+armorscan https://my-app.com \
+  --auto-pr \
+  --github-repo "owner/repo" \
+  --github-token "$GH_TOKEN"
+```
+
+1. **Synthesizes Patch:** Derives verified framework remediation for Express, FastAPI, Django, or Nginx.
+2. **Creates Branch:** Spawns `armorscan/security-patch-<timestamp>` from the default branch.
+3. **Commits Changes:** Updates the affected configuration or middleware file with a standardized commit message.
+4. **Opens Pull Request:** Submits a rich Markdown PR detailing the CWE, severity, business impact, and verification instructions.
+
+---
+
+## 💥 API Fuzzing & Anomaly Crash Detector
+
+Safely mutate parameter boundaries without sending destructive exploits or corrupting database records:
+
+```bash
+armorscan http://localhost:3000 --fuzz
+```
+
+- 🔢 **Numeric Extremes:** Tests 64-bit bounds (`9223372036854775807`, `-9223372036854775808`), `NaN`, `-1`, and floating-point epsilons.
+- 🔤 **String & Buffer Bounds:** Probes with 1024-4096 character buffers, Unicode Right-to-Left (RTL) override (`\u202E`), and null-byte sequences (`%00`).
+- 🧩 **JSON Type Confusion:** Mutates primitive fields into objects (`{}`), arrays (`[]`), and `null`.
+- 🛡️ **Zero False Positive Anomaly Criteria:**
+  - `UNHANDLED_EXCEPTION_500_ANOMALY` (**HIGH**): Server crashes with HTTP 500/502/503 when baseline was healthy.
+  - `POTENTIAL_RESOURCE_EXHAUSTION_LAG` (**MEDIUM**): Latency degrades by >10x baseline (> 2.0s).
 
 ---
 

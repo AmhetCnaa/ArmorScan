@@ -1,6 +1,6 @@
 # 🛡️ ArmorScan Ground Truth Benchmark Report
 
-> **Execution Date:** 2026-11-07 19:59:57 UTC  
+> **Execution Date:** 2026-11-07 20:22:11 UTC  
 > **Target Base URL:** `http://127.0.0.1:8888`  
 > **Total Evaluated Endpoints:** 24  
 

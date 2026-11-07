@@ -127,3 +127,26 @@ def test_svg_component_and_html_integration(sample_scan_result: ScanResult):
     assert "id=\"finding-card-CROSS_TENANT_OBJECT_ACCESS\"" in full_html
     assert "function focusFindingCard(findingId)" in full_html
     assert "highlight-pulse" in full_html
+
+
+def test_role_matrix_grid_html_integration():
+    target = ScanTarget.from_url("http://127.0.0.1:3000")
+    bola_finding = Finding(
+        id="BOLA_UNAUTHENTICATED_ACCESS",
+        title="BOLA on Orders",
+        description="Guest read order 1",
+        severity=Severity.CRITICAL,
+        confidence=Confidence.CONFIRMED,
+        module="auth_matrix",
+        impact="Leak sensitive order data",
+        affected_urls=["http://127.0.0.1:3000/api/orders/1"],
+    )
+    from armorscan.core.models import ModuleResult
+    mod = ModuleResult(module_name="auth_matrix", display_name="Auth Matrix", findings=[bola_finding])
+    scan_res = ScanResult(target=target, modules=[mod])
+
+    full_html = HtmlReporter.generate(scan_res)
+    assert "Role Access Control Matrix (BOLA / IDOR Verification)" in full_html
+    assert "CRITICAL BOLA" in full_html
+    assert "/api/orders/1" in full_html
+    assert "200 OK" in full_html

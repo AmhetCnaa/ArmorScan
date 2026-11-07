@@ -62,7 +62,7 @@
     <rect x="0" y="-36" width="375" height="28" rx="14" fill="#0F172A" stroke="#10B981" stroke-width="1.2" stroke-opacity="0.6" />
     <circle cx="16" cy="-22" r="4.5" fill="#10B981" />
     <text x="30" y="-17" fill="#A7F3D0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="600" letter-spacing="1.2">
-      v0.6.0 NEXT-GEN DEVSECOPS &amp; SENTINEL
+      v0.7.0 THE SOVEREIGN ENGINE
     </text>
 
     <!-- Title -->
@@ -72,7 +72,7 @@
 
     <!-- Subtitle -->
     <text x="2" y="76" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Helvetica, sans-serif" font-size="19.5" font-weight="400">
-      Next-Generation Non-Destructive DAST &amp; Autonomous DevSecOps Sentinel
+      Autonomous DevSecOps, Self-Healing Auto-PR &amp; Enterprise DAST Ecosystem
     </text>
 
     <!-- Feature Metric Pills -->
@@ -94,8 +94,8 @@
 
       <!-- Card 4 -->
       <rect x="610" y="0" width="195" height="68" rx="10" fill="#0B1120" fill-opacity="0.85" stroke="#1E293B" stroke-width="1.5" />
-      <text x="628" y="28" fill="#F59E0B" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" font-weight="700">SARIF 2.1.0</text>
-      <text x="628" y="50" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.5" font-weight="600" letter-spacing="0.5">GITHUB SECURITY TAB</text>
+      <text x="628" y="28" fill="#F59E0B" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" font-weight="700">SELF-HEALING</text>
+      <text x="628" y="50" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.5" font-weight="600" letter-spacing="0.5">AUTO-PR &amp; BOLA MATRIX</text>
     </g>
   </g>
 </svg>
