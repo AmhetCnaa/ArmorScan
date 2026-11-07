@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 230" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgPipe" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090D16" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="arrowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1120" height="230" rx="14" fill="url(#bgPipe)" stroke="#1E293B" stroke-width="2" />
+
+  <!-- Stage 1 -->
+  <g transform="translate(26, 32)">
+    <rect width="235" height="166" rx="10" fill="#0B1120" stroke="#334155" stroke-width="1.5" />
+    <rect x="16" y="16" width="38" height="24" rx="5" fill="#1E293B" />
+    <text x="35" y="32" text-anchor="middle" fill="#38BDF8" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="700">01</text>
+    <text x="16" y="64" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif" font-size="16" font-weight="700">Surface &amp; JS Discovery</text>
+    <text x="16" y="90" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Smart BFS Web Crawler</text>
+    <text x="16" y="112" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Webpack/Angular JS Parser</text>
+    <text x="16" y="134" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• OpenAPI / GraphQL Schema</text>
+    <text x="16" y="154" fill="#38BDF8" font-family="ui-monospace, Menlo, monospace" font-size="11.5">SPA 404 Canary Baseline</text>
+  </g>
+
+  <!-- Connector 1 -->
+  <path d="M 266 115 L 292 115" stroke="url(#arrowGrad)" stroke-width="2.5" stroke-dasharray="4 3" />
+  <polygon points="292,110 302,115 292,120" fill="#06B6D4" />
+
+  <!-- Stage 2 -->
+  <g transform="translate(306, 32)">
+    <rect width="235" height="166" rx="10" fill="#0B1120" stroke="#10B981" stroke-width="1.5" stroke-opacity="0.6" />
+    <rect x="16" y="16" width="38" height="24" rx="5" fill="#064E3B" />
+    <text x="35" y="32" text-anchor="middle" fill="#34D399" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="700">02</text>
+    <text x="16" y="64" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif" font-size="16" font-weight="700">20 Audit Modules</text>
+    <text x="16" y="90" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Boolean SQLi &amp; NoSQLi Diff</text>
+    <text x="16" y="112" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Dual-Session Read-Only IDOR</text>
+    <text x="16" y="134" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Null-Byte Traversal &amp; SSRF</text>
+    <text x="16" y="154" fill="#34D399" font-family="ui-monospace, Menlo, monospace" font-size="11.5">+ Nuclei YAML Rule Engine</text>
+  </g>
+
+  <!-- Connector 2 -->
+  <path d="M 546 115 L 572 115" stroke="url(#arrowGrad)" stroke-width="2.5" stroke-dasharray="4 3" />
+  <polygon points="572,110 582,115 572,120" fill="#06B6D4" />
+
+  <!-- Stage 3 -->
+  <g transform="translate(586, 32)">
+    <rect width="235" height="166" rx="10" fill="#0B1120" stroke="#6366F1" stroke-width="1.5" stroke-opacity="0.6" />
+    <rect x="16" y="16" width="38" height="24" rx="5" fill="#1E1B4B" />
+    <text x="35" y="32" text-anchor="middle" fill="#A5B4FC" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="700">03</text>
+    <text x="16" y="64" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif" font-size="16" font-weight="700">DOM Taint &amp; Diff Verify</text>
+    <text x="16" y="90" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Headless Chromium Hooks</text>
+    <text x="16" y="112" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• innerHTML / eval Sink Trace</text>
+    <text x="16" y="134" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Two-Pass FP Filter</text>
+    <text x="16" y="154" fill="#A5B4FC" font-family="ui-monospace, Menlo, monospace" font-size="11.5">100.0% Precision Guaranteed</text>
+  </g>
+
+  <!-- Connector 3 -->
+  <path d="M 826 115 L 852 115" stroke="url(#arrowGrad)" stroke-width="2.5" stroke-dasharray="4 3" />
+  <polygon points="852,110 862,115 852,120" fill="#06B6D4" />
+
+  <!-- Stage 4 -->
+  <g transform="translate(866, 32)">
+    <rect width="228" height="166" rx="10" fill="#0B1120" stroke="#F59E0B" stroke-width="1.5" stroke-opacity="0.6" />
+    <rect x="16" y="16" width="38" height="24" rx="5" fill="#451A03" />
+    <text x="35" y="32" text-anchor="middle" fill="#FCD34D" font-family="ui-monospace, Menlo, monospace" font-size="12" font-weight="700">04</text>
+    <text x="16" y="64" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif" font-size="16" font-weight="700">DevSecOps &amp; TUI</text>
+    <text x="16" y="90" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Split-Screen Terminal TUI</text>
+    <text x="16" y="112" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• GitHub SARIF 2.1.0 &amp; PR Bot</text>
+    <text x="16" y="134" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12.5">• Zero-CDN Dark HTML Report</text>
+    <text x="16" y="154" fill="#FCD34D" font-family="ui-monospace, Menlo, monospace" font-size="11.5">1-Click Patch Exporter</text>
+  </g>
+</svg>

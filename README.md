@@ -1,30 +1,35 @@
 <div align="center">
 
-<h1 align="center">🛡️ ArmorScan</h1>
+  <a href="https://github.com/AmhetCnaa/ArmorScan">
+    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v0.5.0 Hero Banner" width="100%" />
+  </a>
 
-<p align="center">
-  <em>"Next-generation, non-destructive DAST & Deep Application Security Auditor. From headers to DOM taint tracing and IDOR — with 0 False Positives."</em>
-</p>
+  <br />
+  <br />
 
-<p align="center">
-  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
-  <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v0.5.0"><img src="https://img.shields.io/badge/Release-v0.5.0-10B981?style=flat-square&logo=github" alt="Release v0.5.0" /></a>
-  <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
-  <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
-  <a href="tests/"><img src="https://img.shields.io/badge/Tests-144%2F144%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="144/144 Tests Passed" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-8B5CF6?style=flat-square" alt="License MIT + Ethical Clause" /></a>
-  <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
-</p>
+  <p align="center">
+    <em>"Next-generation, non-destructive DAST &amp; Deep Application Security Auditor. From headers to DOM taint tracing and IDOR — with 0 False Positives."</em>
+  </p>
 
-<p align="center">
-  <a href="#-start-in-30-seconds">Quick Start</a> •
-  <a href="#-why-armorscan">Why ArmorScan?</a> •
-  <a href="#-interactive-tui-dashboard">TUI Preview</a> •
-  <a href="#-scientific-benchmark-owasp-juice-shop">Benchmarks</a> •
-  <a href="#-yaml-template-engine">YAML Engine</a> •
-  <a href="#-github-action--sarif-210">CI/CD & SARIF</a> •
-  <a href="#️-legal--ethical-disclaimer">Legal Disclaimer</a>
-</p>
+  <p align="center">
+    <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v0.5.0"><img src="https://img.shields.io/badge/Release-v0.5.0-10B981?style=flat-square&logo=github" alt="Release v0.5.0" /></a>
+    <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
+    <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
+    <a href="tests/"><img src="https://img.shields.io/badge/Tests-144%2F144%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="144/144 Tests Passed" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-8B5CF6?style=flat-square" alt="License MIT + Ethical Clause" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
+  </p>
+
+  <p align="center">
+    <a href="#-start-in-30-seconds"><strong>Quick Start</strong></a> &nbsp;•&nbsp;
+    <a href="#️-interactive-tui-workstation"><strong>TUI Workstation</strong></a> &nbsp;•&nbsp;
+    <a href="#-why-armorscan"><strong>Core Architecture</strong></a> &nbsp;•&nbsp;
+    <a href="#-scientific-benchmark-owasp-juice-shop"><strong>Juice Shop Benchmark</strong></a> &nbsp;•&nbsp;
+    <a href="#-nuclei-style-yaml-engine"><strong>YAML Engine</strong></a> &nbsp;•&nbsp;
+    <a href="#-github-action--sarif-210"><strong>SARIF &amp; CI/CD</strong></a> &nbsp;•&nbsp;
+    <a href="#️-legal--ethical-disclaimer"><strong>Legal Disclaimer</strong></a>
+  </p>
 
 </div>
 
@@ -45,44 +50,23 @@ armorscan https://staging.example.com --fail-under 80 --sarif results.sarif
 
 ---
 
-## 🖥️ Interactive TUI Dashboard
+## 🖥️ Interactive TUI Workstation
 
-Launch the split-screen terminal workstation (`--tui`) to inspect live HTTP evidence, copy 1-click `cURL` reproduction commands, and grab framework-specific remediation patches:
+Launch the split-screen terminal workstation (`--tui`) to navigate severity-ranked findings on the left while inspecting live HTTP differential evidence, 1-click `cURL` reproduction commands, and framework-specific remediation snippets on the right:
 
 <div align="center">
-
-```text
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ 🛡️ ArmorScan v0.5.0 — Interactive Security TUI  •  Target: http://127.0.0.1:3000  •  Score: 18/100 C │
-│ Findings: 15 (1 Critical, 9 High, 4 Medium, 1 Low)  •  Precision: 100.0% (0 False Positives)         │
-├──────────────────────────────────────────┬───────────────────────────────────────────────────────────┤
-│ 📋 Findings (15)                         │ 🔍 Finding Details & Evidence                             │
-│                                          │                                                           │
-│ ❯ [CRIT] CROSS_TENANT_OBJECT_ACCESS      │ ID: CROSS_TENANT_OBJECT_ACCESS (CWE-639 • OWASP A01:2021) │
-│   [HIGH] DOM_XSS_SINK_TAINT_FLOW         │ Module: multi_step  •  Confidence: CONFIRMED              │
-│   [HIGH] SQLI_BOOLEAN_DIFFERENCE         │ URL: http://127.0.0.1:3000/rest/basket/1                  │
-│   [HIGH] NOSQLI_OPERATOR_INJECTION       │                                                           │
-│   [HIGH] PATH_TRAVERSAL_DETECTED         │ ── Evidence ───────────────────────────────────────────── │
-│   [HIGH] DATABASE_ERROR_DISCLOSURE       │ Authenticated as User A (bid=6), GET /rest/basket/1       │
-│   [HIGH] OPEN_REDIRECT_UNVALIDATED       │ returned User B's private basket (HTTP 200, 749 bytes).   │
-│   [HIGH] JWT_SENSITIVE_DATA_IN_PAYLOAD   │                                                           │
-│   [HIGH] MISSING_AUTHENTICATION_GATE     │ ── Reproduce (cURL) ───────────────────────────────────── │
-│   [HIGH] MISSING_CSP                     │ $ curl -i -X GET 'http://127.0.0.1:3000/rest/basket/1' \  │
-│   [MED]  EXPOSED_OPENAPI_SPEC            │     -H 'Authorization: Bearer <REDACTED_JWT>'             │
-│   [MED]  EXPOSED_PROMETHEUS_METRICS      │                                                           │
-│   [MED]  JWT_MISSING_EXPIRATION          │ ── Auto-Remediation (FastAPI / Express) ───────────────── │
-│   [MED]  MISSING_RATE_LIMITING           │ if basket.user_id != current_user.id:                     │
-│   [LOW]  MISSING_REFERRER_POLICY         │     raise HTTPException(status_code=403, detail="Denied") │
-├──────────────────────────────────────────┴───────────────────────────────────────────────────────────┤
-│ [↑/↓ or j/k] Navigate   •   [Enter / o] Open Target URL in Browser   •   [q / Esc] Exit Dashboard    │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
-```
-
+  <img src="docs/assets/tui-preview.svg" alt="ArmorScan Interactive TUI Dashboard Preview" width="100%" />
 </div>
 
 ---
 
 ## ✨ Why ArmorScan?
+
+<div align="center">
+  <img src="docs/assets/architecture-flow.svg" alt="ArmorScan 4-Stage Architecture Pipeline" width="100%" />
+</div>
+
+<br />
 
 <table>
   <tr>
@@ -92,7 +76,7 @@ Launch the split-screen terminal workstation (`--tui`) to inspect live HTTP evid
     </td>
     <td width="50%" valign="top">
       <h3>⚡ Blazing Fast &amp; Zero-False-Positive</h3>
-      <p>Powered by an asynchronous <code>httpx</code> HTTP/2 engine with SPA 404 canary baselining and two-pass differential verification.Every finding is graded by confidence (<code>confirmed</code>, <code>firm</code>, <code>tentative</code>) — achieving <strong>0 False Positives</strong> on OWASP Juice Shop.</p>
+      <p>Powered by an asynchronous <code>httpx</code> HTTP/2 engine with SPA 404 canary baselining and two-pass differential verification. Every finding is graded by confidence (<code>confirmed</code>, <code>firm</code>, <code>tentative</code>) — achieving <strong>0 False Positives</strong> on OWASP Juice Shop.</p>
     </td>
   </tr>
   <tr>
@@ -111,6 +95,12 @@ Launch the split-screen terminal workstation (`--tui`) to inspect live HTTP evid
 
 ## 📊 Scientific Benchmark: OWASP Juice Shop
 
+<div align="center">
+  <img src="docs/assets/benchmark-chart.svg" alt="OWASP Juice Shop DAST Recall Progression Chart" width="100%" />
+</div>
+
+<br />
+
 ArmorScan is continuously benchmarked against two distinct environments:
 1. **External Independent Target — OWASP Juice Shop v19.0.0 (`127.0.0.1:3000`):** Out of 116 official challenges, 98 require business-logic abuse, OSINT, or destructive actions out of scope for non-destructive DAST. Against the **18 Automated Non-Destructive DAST-Detectable Categories**, ArmorScan v0.5.0 achieves **83.3% Recall (15/18)** with **100.0% Precision (0 False Positives)**.
 2. **Controlled Regression Lab (`benchmark/labapp/`):** A 28-case deterministic FastAPI testbed used as a CI quality gate to ensure code changes never introduce false positives.
@@ -126,7 +116,7 @@ ArmorScan is continuously benchmarked against two distinct environments:
 <details>
 <summary><strong>🔬 View All 15 Live Findings Verified on OWASP Juice Shop (Click to Expand)</strong></summary>
 
-<br>
+<br />
 
 | # | Vulnerability Category | Module | Finding ID | Severity | Confidence | Verified Live Evidence (`127.0.0.1:3000`) |
 | :-: | :--- | :--- | :--- | :---: | :---: | :--- |
@@ -152,7 +142,7 @@ ArmorScan is continuously benchmarked against two distinct environments:
 
 ---
 
-## 🧩 Nuclei-Style YAML Template Engine
+## 🧩 Nuclei-Style YAML Engine
 
 Write custom security checks in declarative YAML and run them via `armorscan scan https://target.com --templates ./my-templates/`:
 
@@ -221,5 +211,5 @@ jobs:
 ---
 
 <div align="center">
-  <sub>Distributed under the <a href="LICENSE">MIT License (with Legal & Ethical Use Clause)</a> • Built with ❤️ for the AppSec & DevSecOps Community</sub>
+  <sub>Distributed under the <a href="LICENSE">MIT License (with Legal &amp; Ethical Use Clause)</a> • Built with ❤️ for the AppSec &amp; DevSecOps Community</sub>
 </div>

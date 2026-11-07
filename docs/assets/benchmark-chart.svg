@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 340" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgChart" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090D16" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="barV040" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+    <linearGradient id="barV041" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="barV050" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="50%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1120" height="340" rx="14" fill="url(#bgChart)" stroke="#1E293B" stroke-width="2" />
+
+  <!-- Header -->
+  <text x="40" y="48" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif" font-size="20" font-weight="700">
+    📊 OWASP Juice Shop v19.0.0 — Live Automated DAST Recall Progression
+  </text>
+  <text x="40" y="72" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif" font-size="13.5">
+    Evaluated against the 18 Non-Destructive Automated DAST Categories on 127.0.0.1:3000  •  Strict 0 False Positive Policy
+  </text>
+
+  <!-- Right Side Precision Badge -->
+  <rect x="850" y="28" width="230" height="48" rx="10" fill="#064E3B" fill-opacity="0.45" stroke="#10B981" stroke-width="1.5" />
+  <text x="965" y="49" text-anchor="middle" fill="#34D399" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="700">
+    PRECISION: 100.0%
+  </text>
+  <text x="965" y="67" text-anchor="middle" fill="#A7F3D0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5">
+    0 FALSE POSITIVES ACROSS ALL RUNS
+  </text>
+
+  <!-- Row 1: v0.4.0 -->
+  <g transform="translate(40, 110)">
+    <text x="0" y="22" fill="#94A3B8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="700">v0.4.0 Baseline</text>
+    <text x="0" y="42" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12">Surface Headers + Rate Limit</text>
+    <rect x="230" y="8" width="680" height="34" rx="8" fill="#0B1120" stroke="#1E293B" stroke-width="1" />
+    <!-- 16.7% of 680 = 113.5 -->
+    <rect x="230" y="8" width="114" height="34" rx="8" fill="url(#barV040)" />
+    <text x="928" y="30" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="700">
+      16.7% <tspan fill="#64748B" font-size="13">(3/18 TP)</tspan>
+    </text>
+  </g>
+
+  <!-- Row 2: v0.4.1 -->
+  <g transform="translate(40, 180)">
+    <text x="0" y="22" fill="#38BDF8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="700">v0.4.1 Deep Logic</text>
+    <text x="0" y="42" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12">+ JS Crawler, Auth, IDOR, DOM, SQLi</text>
+    <rect x="230" y="8" width="680" height="34" rx="8" fill="#0B1120" stroke="#1E293B" stroke-width="1" />
+    <!-- 50% of 680 = 340 -->
+    <rect x="230" y="8" width="340" height="34" rx="8" fill="url(#barV041)" />
+    <text x="928" y="30" fill="#38BDF8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="700">
+      50.0% <tspan fill="#64748B" font-size="13">(9/18 TP)</tspan>
+    </text>
+  </g>
+
+  <!-- Row 3: v0.5.0 -->
+  <g transform="translate(40, 250)">
+    <text x="0" y="22" fill="#10B981" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" font-weight="700">v0.5.0 Enterprise</text>
+    <text x="0" y="42" fill="#64748B" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12">+ NoSQLi, Traversal, YAML, Error/Authz</text>
+    <rect x="230" y="8" width="680" height="34" rx="8" fill="#0B1120" stroke="#1E293B" stroke-width="1" />
+    <!-- 83.3% of 680 = 566.4 -->
+    <rect x="230" y="8" width="566" height="34" rx="8" fill="url(#barV050)" />
+    <text x="928" y="30" fill="#10B981" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="700">
+      83.3% <tspan fill="#34D399" font-size="13">(15/18 TP)</tspan>
+    </text>
+  </g>
+</svg>
