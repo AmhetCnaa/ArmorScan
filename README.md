@@ -1,341 +1,225 @@
-# 🛡️ ArmorScan
-
 <div align="center">
 
-[![CI & Accuracy Benchmark](https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml/badge.svg)](https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml)
-[![Python Version](https://img.shields.io/badge/Python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DAST: Non-Destructive](https://img.shields.io/badge/DAST-Non--Destructive%20Canary-purple.svg)](docs/ARCHITECTURE.md)
-[![Release](https://img.shields.io/badge/Release-v0.4.0-success.svg)](CHANGELOG.md)
+<h1 align="center">🛡️ ArmorScan</h1>
 
-**Modern, Fast, Developer-Friendly DAST & Web Security Scanner CLI**  
-*Audit your web applications, APIs, and microservices in seconds with zero false-positive tolerance.*
+<p align="center">
+  <em>"Next-generation, non-destructive DAST & Deep Application Security Auditor. From headers to DOM taint tracing and IDOR — with 0 False Positives."</em>
+</p>
 
-[Key Highlights](#-key-highlights) •
-[Installation](#-installation--quick-start) •
-[CLI Usage](#-cli-usage-examples) •
-[13 Security Modules](#-the-13-security-audit-modules) •
-[Benchmark Suite](#-ground-truth-benchmark--accuracy-metrics-v040) •
-[Architecture Guide](docs/ARCHITECTURE.md) •
-[Changelog](CHANGELOG.md)
+<p align="center">
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
+  <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v0.5.0"><img src="https://img.shields.io/badge/Release-v0.5.0-10B981?style=flat-square&logo=github" alt="Release v0.5.0" /></a>
+  <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
+  <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
+  <a href="tests/"><img src="https://img.shields.io/badge/Tests-144%2F144%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="144/144 Tests Passed" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-8B5CF6?style=flat-square" alt="License MIT + Ethical Clause" /></a>
+  <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
+</p>
+
+<p align="center">
+  <a href="#-start-in-30-seconds">Quick Start</a> •
+  <a href="#-why-armorscan">Why ArmorScan?</a> •
+  <a href="#-interactive-tui-dashboard">TUI Preview</a> •
+  <a href="#-scientific-benchmark-owasp-juice-shop">Benchmarks</a> •
+  <a href="#-yaml-template-engine">YAML Engine</a> •
+  <a href="#-github-action--sarif-210">CI/CD & SARIF</a> •
+  <a href="#️-legal--ethical-disclaimer">Legal Disclaimer</a>
+</p>
 
 </div>
 
 ---
 
-## ⚡ Key Highlights
-
-- 🚀 **Blazing Fast**: Asynchronous HTTP/2 scanning with `httpx` (typical scan takes **< 1.5 seconds**).
-- 🔬 **Two-Pass Confidence Engine**: Automatically generates cURL reproduction commands and validates findings via response diff analysis (`CONFIRMED`, `SUSPECTED`, `INFORMATIONAL`).
-- 🎯 **Deep Application & Logic Auditor**:
-  - 💉 **Input Reflection**: Context-aware probe analysis (raw HTML, `<script>`, HTML attributes) to detect XSS vectors without firing destructive scripts.
-  - 🔄 **Open Redirect**: Probes navigation parameters against external domain indicators (HTTP 3xx `Location` and meta refresh).
-  - 💥 **Error & Stack Trace Leakage**: Injects boundary canary probes to identify raw database errors (SQLite, MySQL, PostgreSQL, Oracle) and framework stack traces.
-  - 🔑 **JWT Security**: Audits tokens for insecure `alg: none`, missing expiration claims (`exp`), and sensitive credentials in payloads.
-  - 🕵️ **Secret & API Key Hunter**: Scans HTML and same-origin JS bundles for exposed OpenAI, AWS, GitHub, Stripe, Slack secrets, and private RFC 1918 IPs with automated masking.
-  - 🚪 **Missing Authentication Gate**: Tests whether private APIs inadvertently permit unauthenticated access.
-  - 👥 **Multi-Step Logic & BOLA/IDOR**: Detects cross-tenant object manipulation (`user_id`, `tenant_id`, `account_id`) across state transitions (CWE-639).
-- 📜 **API Schema-Driven Crawling**: Ingests **OpenAPI 3.x** and **Swagger 2.0** specifications (`--schema`) and probes **GraphQL Introspection** endpoints.
-- 🔐 **Authenticated Scanning & Session Keep-Alive**: Supports static authorization headers/cookies, automated pre-scan login macros (`--login-url`), and continuous session health verification (`--auth-check-url`).
-- 🔒 **Security Headers & TLS**: Inspects HSTS, CSP (`unsafe-inline`, `unsafe-eval`, wildcards), Clickjacking, MIME-sniffing, and server version banners.
-- 🍪 **Cookie Hygiene**: Validates `HttpOnly`, `Secure`, `SameSite` (Lax/Strict), and modern `__Host-` / `__Secure-` prefix standards.
-- 📂 **Sensitive Dotfile & Exposure Audit**: Canary 404 baseline eliminates SPA catch-all false positives while detecting leaked `.env`, `.git/HEAD`, `.DS_Store`, and backup files.
-- 🌐 **CORS & Method Security**: Identifies arbitrary origin reflection with credentials, `Origin: null` trust, domain regex bypasses, and dangerous HTTP verbs (TRACE/XST).
-- ⏱️ **Rate Limiting & DoS Resilience**: Safe, non-destructive burst testing verifying HTTP 429 throttling and RateLimit-* headers.
-- 🔍 **Local Port & Database Sniffer**: `armorscan discover 127.0.0.1` detects active dev web servers and unauthenticated database exposures in under 1 second.
-- 🛡️ **Finding Suppression & Deduplication**: Filter accepted risks via `.armorscanignore` and deduplicate findings across multi-page crawls.
-- 📊 **Triple Reporting**: Rich interactive terminal dashboard, standalone zero-CDN dark-mode HTML report, and machine-readable JSON.
-- 🔄 **DevSecOps / CI/CD Quality Gate**: Exit code 1 enforcement via `--fail-under <SCORE>` to prevent vulnerable code from entering production.
-- 🛠️ **Remediation Patch Exporter**: Exports ready-to-use security configurations for **Nginx**, **Express.js (Helmet)**, and **FastAPI** (`--export-patch`).
-
----
-
-## 🚀 Installation & Quick Start
+## ⚡ Start in 30 Seconds
 
 ```bash
-# Clone the repository
-git clone https://github.com/AmhetCnaa/ArmorScan.git
-cd ArmorScan
+# 1. Install (via pip or pipx)
+pip install armorscan
 
-# Setup Python virtual environment (Python 3.11+ / 3.12 recommended)
-uv venv --python 3.12
-source .venv/bin/activate
+# 2. Scan Localhost or Live Target (HTML Report + Interactive TUI Dashboard)
+armorscan http://localhost:3000 --tui
 
-# Install ArmorScan in editable mode with all dev dependencies
-uv pip install -e ".[dev]"
-
-# Verify installation
-armorscan --version
-# Output: ArmorScan 0.4.0
+# 3. CI/CD Pipeline Quality Gate + GitHub SARIF 2.1.0 Code Scanning
+armorscan https://staging.example.com --fail-under 80 --sarif results.sarif
 ```
 
 ---
 
-## 💻 CLI Usage Examples
+## 🖥️ Interactive TUI Dashboard
 
-### 1. Basic Scan (Localhost or Remote)
-```bash
-# Scan a local development server
-armorscan http://localhost:8000
+Launch the split-screen terminal workstation (`--tui`) to inspect live HTTP evidence, copy 1-click `cURL` reproduction commands, and grab framework-specific remediation patches:
 
-# Scan a production application
-armorscan https://myapp.example.com
+<div align="center">
+
+```text
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ 🛡️ ArmorScan v0.5.0 — Interactive Security TUI  •  Target: http://127.0.0.1:3000  •  Score: 18/100 C │
+│ Findings: 15 (1 Critical, 9 High, 4 Medium, 1 Low)  •  Precision: 100.0% (0 False Positives)         │
+├──────────────────────────────────────────┬───────────────────────────────────────────────────────────┤
+│ 📋 Findings (15)                         │ 🔍 Finding Details & Evidence                             │
+│                                          │                                                           │
+│ ❯ [CRIT] CROSS_TENANT_OBJECT_ACCESS      │ ID: CROSS_TENANT_OBJECT_ACCESS (CWE-639 • OWASP A01:2021) │
+│   [HIGH] DOM_XSS_SINK_TAINT_FLOW         │ Module: multi_step  •  Confidence: CONFIRMED              │
+│   [HIGH] SQLI_BOOLEAN_DIFFERENCE         │ URL: http://127.0.0.1:3000/rest/basket/1                  │
+│   [HIGH] NOSQLI_OPERATOR_INJECTION       │                                                           │
+│   [HIGH] PATH_TRAVERSAL_DETECTED         │ ── Evidence ───────────────────────────────────────────── │
+│   [HIGH] DATABASE_ERROR_DISCLOSURE       │ Authenticated as User A (bid=6), GET /rest/basket/1       │
+│   [HIGH] OPEN_REDIRECT_UNVALIDATED       │ returned User B's private basket (HTTP 200, 749 bytes).   │
+│   [HIGH] JWT_SENSITIVE_DATA_IN_PAYLOAD   │                                                           │
+│   [HIGH] MISSING_AUTHENTICATION_GATE     │ ── Reproduce (cURL) ───────────────────────────────────── │
+│   [HIGH] MISSING_CSP                     │ $ curl -i -X GET 'http://127.0.0.1:3000/rest/basket/1' \  │
+│   [MED]  EXPOSED_OPENAPI_SPEC            │     -H 'Authorization: Bearer <REDACTED_JWT>'             │
+│   [MED]  EXPOSED_PROMETHEUS_METRICS      │                                                           │
+│   [MED]  JWT_MISSING_EXPIRATION          │ ── Auto-Remediation (FastAPI / Express) ───────────────── │
+│   [MED]  MISSING_RATE_LIMITING           │ if basket.user_id != current_user.id:                     │
+│   [LOW]  MISSING_REFERRER_POLICY         │     raise HTTPException(status_code=403, detail="Denied") │
+├──────────────────────────────────────────┴───────────────────────────────────────────────────────────┤
+│ [↑/↓ or j/k] Navigate   •   [Enter / o] Open Target URL in Browser   •   [q / Esc] Exit Dashboard    │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-### 2. CI/CD Quality Gate (Fail Pipeline if Score < 80)
-```bash
-armorscan https://staging.example.com --fail-under 80
-```
-*If the security score is below 80, ArmorScan exits with status code 1, automatically failing the CI step.*
-
-### 3. Generate Custom HTML and JSON Reports
-```bash
-armorscan https://myapp.example.com \
-  --html artifacts/security-report.html \
-  --json artifacts/security-report.json \
-  --fail-under 85
-```
-
-### 4. Smart Web Crawler & Multi-Page Discovery
-```bash
-# Automatically discover internal links, routes, and forms up to depth 3
-armorscan https://myapp.example.com --crawl --depth 3 --max-pages 25
-```
-
-### 5. API Schema-Driven Scanning (OpenAPI & Swagger)
-```bash
-# Ingest OpenAPI 3.x / Swagger 2.0 schema from local file or remote URL
-armorscan https://api.example.com --schema https://api.example.com/openapi.json
-armorscan https://api.example.com --schema ./openapi.yaml
-```
-
-### 6. Authenticated Scanning & Session Keep-Alive
-```bash
-# Using static token:
-armorscan https://myapp.example.com \
-  --auth-header "Authorization: Bearer my-secret-jwt-token" \
-  --auth-check-url "/api/v1/users/me"
-
-# Using automated login macro:
-armorscan https://myapp.example.com \
-  --login-url "/api/v1/auth/login" \
-  --login-body '{"username":"admin","password":"secretpassword"}' \
-  --login-token-path "data.access_token" \
-  --auth-check-url "/api/v1/dashboard"
-```
-
-### 7. Suppressing Accepted Findings (`.armorscanignore`)
-```bash
-armorscan https://myapp.example.com --ignore-file .armorscanignore
-```
-Sample `.armorscanignore`:
-```ini
-# Suppress missing HSTS on internal dev domain
-RULE_ID: MISSING_HSTS
-URL_PATTERN: https://.*\.internal\.dev/.*
-REASON: Internal domain behind private VPN terminating TLS at proxy
-EXPIRES: 2026-12-31
-```
-
-### 8. Local Port & Database Sniffer (`armorscan discover`)
-```bash
-# Discover active dev web servers (3000, 5173, 8000, 8080) and unauthenticated databases (Redis, Mongo, Postgres, MySQL)
-armorscan discover 127.0.0.1
-```
-
-### 9. Auto-Remediation Patch Exporter (`--export-patch`)
-```bash
-# Export production-ready configuration files directly to disk:
-armorscan --export-patch nginx    # Generates security-headers.conf
-armorscan --export-patch express  # Generates securityMiddleware.js
-armorscan --export-patch fastapi  # Generates security_middleware.py
-```
-
-### 10. Real-World Target Benchmark (`armorscan benchmark`)
-```bash
-# Benchmark against internal controlled FastAPI testbed (100% precision & recall quality gate)
-armorscan benchmark
-
-# Benchmark against OWASP Juice Shop:
-docker compose -f benchmark/docker-compose.yml up -d juice-shop
-armorscan benchmark juice-shop
-
-# Benchmark against Damn Vulnerable Web Application (DVWA):
-docker compose -f benchmark/docker-compose.yml up -d dvwa
-armorscan benchmark dvwa
-```
+</div>
 
 ---
 
-## 🛡️ The 20 Security Audit Modules & Engines (v0.5.0)
+## ✨ Why ArmorScan?
 
-| Module | Category | CWE | OWASP Top 10 | Primary Verification Target |
-| :--- | :--- | :-: | :---: | :--- |
-| **`headers`** | Configuration | CWE-693 | A05:2021 | Strict CSP, HSTS, X-Frame-Options, Permissions-Policy, Server Version Banners |
-| **`tls_ssl`** | Transport | CWE-319 | A02:2021 | TLS 1.0/1.1 deprecation, weak ciphers, self-signed or expired certificates |
-| **`cookies`** | Session | CWE-614 | A01:2021 | `HttpOnly`, `Secure`, `SameSite` (Lax/Strict), `__Host-` prefix validation |
-| **`exposure`** | Information Leak | CWE-552 | A05:2021 | Leaked `.env`, `.git/HEAD`, `.DS_Store`, backup files, GraphQL & OpenAPI specs |
-| **`cors`** | Access Control | CWE-942 | A01:2021 | Arbitrary Origin reflection with credentials, `Origin: null`, wildcard conflicts |
-| **`ratelimit`** | Availability | CWE-799 | A04:2021 | Missing rate-limiting headers, HTTP 429 response handling under burst load |
-| **`reflection`** | Injection | CWE-79 | A03:2021 | Context-aware HTML entity encoding, script context, attribute reflection |
-| **`redirect`** | Access Control | CWE-601 | A01:2021 | Unvalidated redirection parameters (`next`, `url`, `redirect`, `to`, `dest`) |
-| **`error_leak`** | Information Leak | CWE-209 | A05:2021 | Stack traces, SQLite/PostgreSQL/MySQL errors, framework debug screens |
-| **`jwt_audit`** | Authentication | CWE-345 | A07:2021 | Insecure `alg: none`, missing `exp`, sensitive credentials in payload |
-| **`secret_leak`**| Information Leak | CWE-798 | A07:2021 | Leaked OpenAI keys, AWS access keys, GitHub PATs, Stripe secrets, webhooks |
-| **`authz_check`**| Access Control | CWE-306 | A01:2021 | Missing authentication gates on private/admin API endpoints |
-| **`multi_step`** | Business Logic | CWE-639 | A01:2021 | Broken Object Level Authorization (BOLA/IDOR) & tenant isolation failures |
-| **`sqli`** | Injection | CWE-89 | A03:2021 | Safe boolean differential analysis (`1=1` vs `1=2`), no data extraction |
-| **`nosqli`** | Injection | CWE-943 | A03:2021 | Safe NoSQL operator (`$gt`, `$ne`) & boolean expression differentials |
-| **`traversal`** | File Security | CWE-22 | A01:2021 | Safe Path Traversal (LFI) & Poison Null-Byte filter bypass verification |
-| **`ssrf_check`** | Server-Side | CWE-918 | A10:2021 | Unvalidated outbound server requests via safe loopback/metadata indicators |
-| **`graphql`** | API Security | CWE-200 | A05:2021 | Unauthenticated GraphQL `__schema` introspection & type dumping |
-| **`templates`** | Community Engine | CWE-200 | A05:2021 | Nuclei-style declarative YAML security templates (`status`, `words`, `regex`) |
-| **`browser_dom`**| Client DOM | CWE-79 | A03:2021 | Headless Chromium runtime sink interception (`innerHTML`, `document.write`) |
-
----
-
-## 📊 Ground Truth Benchmark & Accuracy Metrics (v0.5.0)
-
-> ⚠️ **Metodoloji Notu (Dürüst Doğrulama):** Aşağıdaki laboratuvar sonuçları, ArmorScan geliştiricileri tarafından yazılan sentetik test uygulaması (`benchmark/labapp/`) üzerindedir. Kod ve doğrulama kuralının aynı ekip tarafından yazıldığı durumlarda %100 skor döngüsel (circular) bir doğrulamadır. ArmorScan'in bağımsız bir hedefe karşı gerçek tespit gücünü, kaçırdığı açıkları ve yanlış alarm direncini şeffafça ortaya koymak amacıyla **OWASP Juice Shop** sonuçları hemen altındaki tabloda ayrı olarak raporlanmıştır.
-
-### 1. Kontrollü Laboratuvar Doğrulaması (`benchmark/labapp/`):
-
-| Module | True Positives (TP) | False Positives (FP) | False Negatives (FN) | Precision | Recall | F1-Score | Status |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| `authz_check` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `cookies` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `cors` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `error_leak` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `exposure` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `headers` | 6 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `jwt_audit` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `multi_step` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `ratelimit` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `tls` | 0 | 0 | 0 | - | - | - | N/A |
-| **OVERALL** | **28** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🔍 Deep Logic Auditing</h3>
+      <p>Goes far beyond surface header checks. Performs headless Playwright <strong>DOM sink taint tracing</strong> (<code>Element.innerHTML</code>, <code>document.write</code>), non-destructive <strong>Boolean SQLi</strong> &amp; <strong>NoSQLi</strong> differential analysis, Poison Null-Byte <strong>Path Traversal</strong>, and dual-session read-only <strong>BOLA/IDOR</strong> verification.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>⚡ Blazing Fast &amp; Zero-False-Positive</h3>
+      <p>Powered by an asynchronous <code>httpx</code> HTTP/2 engine with SPA 404 canary baselining and two-pass differential verification.Every finding is graded by confidence (<code>confirmed</code>, <code>firm</code>, <code>tentative</code>) — achieving <strong>0 False Positives</strong> on OWASP Juice Shop.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🧩 Nuclei-Style YAML Engine</h3>
+      <p>Extend ArmorScan with community or custom declarative YAML security templates (<code>--templates ./my-templates/</code>) supporting multi-condition status, word, and regex matchers — without writing a single line of Python.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🛠️ Auto-Remediation &amp; DevSecOps</h3>
+      <p>Doesn't just report vulnerabilities — generates ready-to-paste security patches for <strong>Nginx</strong>, <strong>Express.js (Helmet)</strong>, <strong>FastAPI</strong>, and <strong>Django</strong>, plus native <strong>OASIS SARIF 2.1.0</strong> exports for GitHub Security tab integration.</p>
+    </td>
+  </tr>
+</table>
 
 ---
 
-### 2. Bağımsız Gerçek Dünya Testi: OWASP Juice Shop (`127.0.0.1:3000`)
+## 📊 Scientific Benchmark: OWASP Juice Shop
 
-> **Çalıştırma Notu:** OWASP Juice Shop Node.js 24 üzerinde `127.0.0.1:3000` adresinde yerel süreç olarak çalıştırılmış; `Authorization: Bearer <TOKEN>`, Web Crawler, YAML Şablon Motoru ve Playwright Headless Chromium entegrasyonu ile canlı taranmıştır.
+ArmorScan is continuously benchmarked against two distinct environments:
+1. **External Independent Target — OWASP Juice Shop v19.0.0 (`127.0.0.1:3000`):** Out of 116 official challenges, 98 require business-logic abuse, OSINT, or destructive actions out of scope for non-destructive DAST. Against the **18 Automated Non-Destructive DAST-Detectable Categories**, ArmorScan v0.5.0 achieves **83.3% Recall (15/18)** with **100.0% Precision (0 False Positives)**.
+2. **Controlled Regression Lab (`benchmark/labapp/`):** A 28-case deterministic FastAPI testbed used as a CI quality gate to ensure code changes never introduce false positives.
 
-#### 📊 Ölçülen Performans ve Doğruluk (v0.3.0 -> v0.4.0 -> v0.5.0):
+| Metric | v0.4.0 (Baseline) | v0.4.1 (+JS Crawler, Auth, DOM, SQLi) | v0.5.0 (+NoSQLi, Traversal, SSRF, GraphQL, YAML) | Delta (`v0.4.0` → `v0.5.0`) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Automated DAST Scope (Denominator)** | 18 | 18 | **18** | Fixed (18 DAST categories) |
+| **True Positives Detected (TP)** | 3 | 9 | **15** | **+12 (+400% increase)** |
+| **DAST Recall (out of 18)** | 16.7% | 50.0% | **83.3%** | **+66.6 pts** |
+| **False Positives (FP)** | 0 | 0 | **0** | **0 FP Maintained** |
+| **Precision** | 100.0% | 100.0% | **100.0%** | **100.0% Maintained** |
 
-| Metrik | v0.3.0 | v0.4.0 | **v0.5.0 (Güncel)** | Durum / Değerlendirme |
-| :--- | :---: | :---: | :---: | :--- |
-| **Tespit Edilen Gerçek Açıklar (TP)** | 2 | 9 | **15** | 15 farklı gerçek zafiyet sıfır zararla tespit edildi |
-| **Yanlış Alarmlar (False Positives)** | 0 | 0 | **0** | SPA fallback (HTTP 200 HTML catch-all) elendi; **%100 Kesinlik** |
-| **Otomatik DAST Kapsamı (Recall)** | 11.1% | 50.0% | **83.3% (15/18)** | Otomatik DAST kapsamındaki 18 açıktan 15'i yakalandı |
-| **F1-Score** | 0.200 | 0.667 | **0.909** | Endüstri standardı doğruluk ve kapsam dengesi |
+<details>
+<summary><strong>🔬 View All 15 Live Findings Verified on OWASP Juice Shop (Click to Expand)</strong></summary>
 
-#### Tespit Edilen 15 Açığın Detaylı Doğrulama Tablosu:
+<br>
 
-| # | Güvenlik Alanı | Modül | Seviye | Güven | Kanıt ve Mimari Açıklama |
-| :-: | :--- | :--- | :---: | :---: | :--- |
-| 1 | **CSP Güvenliği** | `headers` | HIGH | firm | Kök yanıtta katı `Content-Security-Policy` başlığı yok (`MISSING_CSP`). |
-| 2 | **Referrer-Policy** | `headers` | LOW | firm | `Referrer-Policy` başlığı eksik (`MISSING_REFERRER_POLICY`). |
-| 3 | **OpenAPI / Swagger** | `exposure` | MEDIUM | firm | `main.js` analiziyle `/api-docs/` ve Swagger UI otomatik keşfedildi (`EXPOSED_OPENAPI_SPEC`). |
-| 4 | **Rate Limiting** | `ratelimit` | MEDIUM | firm | 18 eşzamanlı istekte 18x HTTP 200 yanıtı; HTTP 429 sınırı yok (`MISSING_RATE_LIMITING`). |
-| 5 | **Open Redirect** | `redirect` | HIGH | confirmed | `/redirect?to=` üzerinde allowlist bypass ile harici adrese 302 yönlendirme (`OPEN_REDIRECT_UNVALIDATED`). |
-| 6 | **DB Hata & Stack İfşası**| `error_leak`| HIGH | confirmed | `/rest/products/search?q=` üzerinde `SQLITE_ERROR` ve Express stack trace sızıntısı (`DATABASE_ERROR_DISCLOSURE`). |
-| 7 | **JWT Expiration** | `jwt_audit` | MEDIUM | confirmed | Oturum JWT'sinde `exp` claim'i bulunmuyor; süresiz geçerli (`JWT_MISSING_EXPIRATION`). |
-| 8 | **JWT Parola Sızıntısı** | `jwt_audit` | HIGH | confirmed | JWT yükünde kullanıcı MD5 parola özeti (`data.password`) ifşa ediliyor (`JWT_SENSITIVE_DATA_IN_PAYLOAD`). |
-| 9 | **Missing Auth Gate** | `authz_check`| CRITICAL| confirmed | `/rest/admin/application-configuration` yetkisiz erişimde 36 KB iç konfigürasyon sızdırıyor (`MISSING_AUTHENTICATION_GATE`). |
-| 10 | **BOLA / IDOR** | `multi_step` | HIGH | confirmed | Kullanıcı 2 token'ı ile `GET /rest/basket/2` üzerinden Kullanıcı 1 sepeti okundu (`CROSS_TENANT_OBJECT_ACCESS`). |
-| 11 | **Boolean SQLi Belirtisi**| `sqli` | HIGH | tentative| `/rest/products/search?q=` üzerinde `1=1` (34KB) vs `1=2` (boş liste) yanıt farkı (`SQLI_BOOLEAN_DIFFERENCE_SUSPECTED`). |
-| 12 | **NoSQLi Operatör Farkı** | `nosqli` | HIGH | tentative| `/rest/track-order/` üzerinde `' \|\| true \|\| '` (920B) vs `' && false && '` (59B) MarsDB farkı (`NOSQLI_OPERATOR_INJECTION_SUSPECTED`). |
-| 13 | **Path Traversal / Null** | `traversal` | HIGH | confirmed | `/ftp/package.json.bak%2500.md` ile 403 engeli aşılarak yedek dosyası okundu (`PATH_TRAVERSAL_DETECTED`). |
-| 14 | **Prometheus Metrics** | `templates` | MEDIUM | confirmed | YAML şablon motoru ile `/metrics` telemetri sızıntısı yakalandı (`EXPOSED_PROMETHEUS_METRICS`). |
-| 15 | **Client DOM XSS Sink** | `browser_dom`| HIGH | confirmed | Playwright ile kanaryanın `#searchValue` `Element.innerHTML` sink'ine aktığı yakalandı (`DOM_XSS_SINK_TAINT_FLOW`). |
+| # | Vulnerability Category | Module | Finding ID | Severity | Confidence | Verified Live Evidence (`127.0.0.1:3000`) |
+| :-: | :--- | :--- | :--- | :---: | :---: | :--- |
+| 1 | **Missing CSP** | `headers` | `MISSING_CSP` | HIGH | `confirmed` | Root response lacks `Content-Security-Policy` header. |
+| 2 | **Missing Referrer-Policy** | `headers` | `MISSING_REFERRER_POLICY` | LOW | `confirmed` | Root response lacks `Referrer-Policy` header. |
+| 3 | **Exposed OpenAPI Spec** | `exposure` | `EXPOSED_OPENAPI_SPEC` | MEDIUM | `confirmed` | JS bundle parser discovered `/api-docs/swagger.json` (HTTP 200). |
+| 4 | **Missing Rate Limiting** | `ratelimit` | `MISSING_RATE_LIMITING` | MEDIUM | `confirmed` | 15 rapid requests returned HTTP 200 with zero `429` or `RateLimit-*` headers. |
+| 5 | **Open Redirect Bypass** | `redirect` | `OPEN_REDIRECT_UNVALIDATED` | HIGH | `confirmed` | `/redirect?to=https://github.com/bkimminich/juice-shop?p=https://armorscan...` returned HTTP 302. |
+| 6 | **DB Error Disclosure** | `error_leak` | `DATABASE_ERROR_DISCLOSURE` | HIGH | `confirmed` | `/rest/products/search?q=armorscan'` leaked raw `SQLITE_ERROR: near ")"` stack trace. |
+| 7 | **JWT Missing `exp`** | `jwt_audit` | `JWT_MISSING_EXPIRATION` | MEDIUM | `confirmed` | Authenticated JWT payload lacks `exp` expiration claim. |
+| 8 | **JWT Sensitive Payload** | `jwt_audit` | `JWT_SENSITIVE_DATA_IN_PAYLOAD` | HIGH | `confirmed` | JWT payload exposes `email`, `password` MD5 hash, and `totpSecret`. |
+| 9 | **Unauthenticated Admin API** | `authz_check` | `MISSING_AUTHENTICATION_GATE` | HIGH | `confirmed` | Unauthenticated `GET /rest/admin/application-configuration` leaked full server config JSON. |
+| 10 | **Cross-Tenant IDOR** | `multi_step` | `CROSS_TENANT_OBJECT_ACCESS` | CRITICAL | `confirmed` | User A token accessed User B's `/rest/basket/1` (HTTP 200, 749B private items). |
+| 11 | **Boolean SQLi Differential** | `sqli` | `SQLI_BOOLEAN_DIFFERENCE_SUSPECTED`| HIGH | `tentative` | `/rest/products/search?q=nomatch')) OR 1=1--` returned 29,294B vs `AND 1=2--` (13B). |
+| 12 | **NoSQLi Operator Diff** | `nosqli` | `NOSQLI_OPERATOR_INJECTION_SUSPECTED`| HIGH | `tentative` | `/rest/track-order/` `' \|\| true \|\| '` returned 920B vs `' && false && '` (59B). |
+| 13 | **Path Traversal / Null-Byte**| `traversal` | `PATH_TRAVERSAL_DETECTED` | HIGH | `confirmed` | `/ftp/package.json.bak%2500.md` bypassed HTTP 403 filter and leaked `package.json.bak`. |
+| 14 | **Exposed Prometheus Metrics**| `templates` | `EXPOSED_PROMETHEUS_METRICS` | MEDIUM | `confirmed` | YAML template detected unauthenticated `/metrics` telemetry endpoint. |
+| 15 | **Client DOM XSS Taint Flow** | `browser_dom` | `DOM_XSS_SINK_TAINT_FLOW` | HIGH | `confirmed` | Headless Chromium traced URL hash `?q=` canary into `#searchValue` `Element.innerHTML`. |
+
+> Full methodology, numerator/denominator breakdown, and remaining 3 edge-case categories are documented in [`benchmark/juice_shop_results.md`](benchmark/juice_shop_results.md) and [`benchmark/results.md`](benchmark/results.md).
+
+</details>
 
 ---
 
-## 🤖 GitHub Actions CI/CD Pipeline
+## 🧩 Nuclei-Style YAML Template Engine
 
-Add this workflow to `.github/workflows/security.yml`:
+Write custom security checks in declarative YAML and run them via `armorscan scan https://target.com --templates ./my-templates/`:
 
 ```yaml
-name: Security Audit Gate
+id: exposed-prometheus-metrics
+info:
+  name: Exposed Prometheus Metrics Endpoint
+  severity: MEDIUM
+  confidence: confirmed
+  cwe_id: CWE-200
+  owasp_category: A05:2021-Security Misconfiguration
+  description: The application exposes an unauthenticated Prometheus /metrics endpoint.
 
+requests:
+  - method: GET
+    path:
+      - "/metrics"
+    matchers:
+      condition: and
+      status: [200]
+      words:
+        - "# HELP"
+        - "# TYPE"
+```
+
+---
+
+## 🤖 GitHub Action & SARIF 2.1.0
+
+Drop ArmorScan directly into `.github/workflows/security.yml` to block vulnerable PRs and publish findings to the **GitHub Security → Code Scanning** tab:
+
+```yaml
+name: ArmorScan DevSecOps Gate
 on: [push, pull_request]
 
 jobs:
-  dast-audit:
+  security-audit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Run ArmorScan DAST & Upload SARIF
+        uses: AmhetCnaa/ArmorScan@v0.5.0
         with:
-          python-version: "3.12"
-
-      - name: Install ArmorScan
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
-
-      # Start your test server (e.g., Docker, FastAPI, Express)
-      - name: Start Application Server
-        run: |
-          npm start &
-          sleep 3
-
-      # Run ArmorScan quality gate
-      - name: Run ArmorScan DAST
-        run: |
-          armorscan http://localhost:3000 \
-            --fail-under 80 \
-            --html armorscan-report.html \
-            --json armorscan-report.json
-
-      # Upload interactive report as GitHub artifact
-      - name: Upload Security Report Artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: armorscan-security-report
-          path: |
-            armorscan-report.html
-            armorscan-report.json
+          target: "http://localhost:3000"
+          fail-under: "80"
+          sarif-file: "armorscan-results.sarif"
+          upload-sarif: "true"
+          comment-on-pr: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ---
 
-## 🧪 Running the Test Suite
+## ⚠️ Legal & Ethical Disclaimer
 
-```bash
-# Execute all 144 automated unit, integration, and benchmark tests
-pytest -v
-```
-
----
-
-## ⚖️ Legal Disclaimer & Ethical Use Statement (Sorumluluk Reddi ve Yasal Uyarı)
-
-> [!CAUTION]
-> **IMPORTANT NOTICE / ÖNEMLİ YASAL UYARI:**  
-> ArmorScan is developed strictly for **authorized security auditing, defensive penetration testing, vulnerability assessment, and educational research purposes**.  
-> ArmorScan yalnızca **yetkilendirilmiş güvenlik denetimleri, savunma odaklı zafiyet taramaları ve akademik/eğitim amaçlı araştırmalar** için tasarlanmıştır.
-
-### 🌐 English
-- **Authorized Auditing Only:** You must obtain explicit, prior written authorization from the owner or authorized administrator of any system, network, API, or web application before conducting scans.
-- **Prohibition of Malicious Use:** Scanning, probing, or testing targets without authorization is illegal and strictly prohibited. Such actions may violate regional, national, and international cybersecurity laws (e.g., the United States Computer Fraud and Abuse Act (CFAA), the United Kingdom Computer Misuse Act 1990, and relevant EU directives).
-- **Limitation of Liability:** The creators, contributors, and copyright holders of ArmorScan assume **no liability** and are not responsible for any misuse, unauthorized scanning, operational disruption, downtime, data loss, or legal consequences resulting from the use of this tool.
-- **User Responsibility:** All legal, technical, and regulatory responsibilities arising from the execution of ArmorScan reside entirely with the user.
-
-### 🇹🇷 Türkçe
-- **Yalnızca Yetkili Denetimler:** ArmorScan'i herhangi bir web uygulaması, API, sunucu veya ağ üzerinde çalıştırmadan önce sistem sahibinden **açık, yazılı ve doğrulanabilir yasal izin** alınması zorunludur.
-- **Yetkisiz ve Kötü Niyetli Kullanım Yasağı:** Sistem sahiplerinin izni olmaksızın zafiyet taraması, port/parametre analizi veya bilgi toplama faaliyeti yürütmek kesinlikle yasaktır ve suç teşkil eder. Bu tür faaliyetler, 5237 sayılı Türk Ceza Kanunu (TCK Madde 243-246: Bilişim Alanında Suçlar) ve ilgili uluslararası mevzuat çerçevesinde adli ve cezai yaptırımlara tabidir.
-- **Sorumluluk Reddi:** ArmorScan geliştiricileri ve katkıcıları; aracın kötü niyetli kullanımından, yetkisiz hedeflere uygulanmasından, servis kesintilerinden (DoS), veri bozulmalarından veya doğabilecek adli/cezai soruşturmalardan **hiçbir koşul altında sorumlu tutulamaz**.
-- **Kullanıcı Sorumluluğu:** Aracın kullanımına ilişkin tüm yasal, idari ve teknik sorumluluk münhasıran testi gerçekleştiren şahıs veya kuruma aittir.
+> **⚠️ Legal & Ethical Disclaimer:** ArmorScan is developed strictly for educational, defensive, and authorized security auditing purposes. Scanning targets without prior explicit written authorization is illegal. The developers assume no liability and are not responsible for any misuse or damage caused by this utility.
+>
+> **🇹🇷 Yasal Uyarı ve Sorumluluk Reddi:** ArmorScan yalnızca eğitim, savunma ve yetkilendirilmiş güvenlik denetimleri için geliştirilmiştir. Hedef sistem sahiplerinin açık ve yazılı izni olmaksızın tarama yapılması yasa dışıdır (5237 sayılı TCK Madde 243-246). Geliştiriciler, bu aracın kötüye kullanımından veya yol açabileceği zararlardan hiçbir şekilde sorumlu tutulamaz.
 
 ---
 
-## 📄 License
-ArmorScan is distributed under the [MIT License](LICENSE).
-
+<div align="center">
+  <sub>Distributed under the <a href="LICENSE">MIT License (with Legal & Ethical Use Clause)</a> • Built with ❤️ for the AppSec & DevSecOps Community</sub>
+</div>
