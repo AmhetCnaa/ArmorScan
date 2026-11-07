@@ -46,6 +46,17 @@ class JwtAuditModule(BaseModule):
 
         collected_jwts: Set[str] = set()
 
+        # Check client Authorization / AuthConfig header if configured
+        if client.auth_config and client.auth_config.headers:
+            for val in client.auth_config.headers.values():
+                for match in JWT_REGEX.findall(str(val)):
+                    collected_jwts.add(match)
+        elif client._client and hasattr(client._client, "headers"):
+            auth_val = client._client.headers.get("authorization") or client._client.headers.get("Authorization")
+            if auth_val:
+                for match in JWT_REGEX.findall(auth_val):
+                    collected_jwts.add(match)
+
         # Check Set-Cookie headers
         for sc in resp.headers.get_list("set-cookie"):
             for match in JWT_REGEX.findall(sc):
@@ -178,7 +189,18 @@ class JwtAuditModule(BaseModule):
                 passed_checks.append("jwt-exp-claim-enforced")
 
         # 3. Check Sensitive Plaintext Data in Payload
-        payload_keys = set(str(k).lower() for k in payload.keys())
+        def extract_all_keys(data: Any) -> Set[str]:
+            k_set = set()
+            if isinstance(data, dict):
+                for k, v in data.items():
+                    k_set.add(str(k).lower())
+                    k_set.update(extract_all_keys(v))
+            elif isinstance(data, list):
+                for item in data:
+                    k_set.update(extract_all_keys(item))
+            return k_set
+
+        payload_keys = extract_all_keys(payload)
         exposed_keys = payload_keys.intersection(SENSITIVE_PAYLOAD_KEYS)
 
         if exposed_keys:

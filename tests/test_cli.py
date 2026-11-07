@@ -13,7 +13,7 @@ from armorscan.core.models import Grade, ScanResult, ScanSummary, ScanTarget
 
 def test_default_modules_count():
     modules = get_default_modules(burst_count=10)
-    assert len(modules) == 13
+    assert len(modules) == 14
     names = [m.name for m in modules]
     assert "headers" in names
     assert "tls_ssl" in names
@@ -27,7 +27,12 @@ def test_default_modules_count():
     assert "jwt_audit" in names
     assert "secret_leak" in names
     assert "authz_check" in names
-    assert "multi_step" in names
+    assert "sqli" in names
+
+    # When include_browser=True, length is 15
+    browser_modules = get_default_modules(burst_count=10, include_browser=True)
+    assert len(browser_modules) == 15
+    assert "browser_dom" in [m.name for m in browser_modules]
 
 
 def test_cli_parser_defaults():
@@ -42,6 +47,7 @@ def test_cli_parser_defaults():
     assert args.insecure is False
     assert args.concurrency == 5
     assert args.burst == 18
+    assert args.browser is False
 
 
 def test_cli_parser_custom_flags():
@@ -54,6 +60,7 @@ def test_cli_parser_custom_flags():
         "-k",
         "--concurrency", "8",
         "--burst", "25",
+        "--browser",
         "-q",
     ])
 
@@ -64,6 +71,7 @@ def test_cli_parser_custom_flags():
     assert args.insecure is True
     assert args.concurrency == 8
     assert args.burst == 25
+    assert args.browser is True
     assert args.quiet is True
 
 

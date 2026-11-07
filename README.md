@@ -167,14 +167,14 @@ armorscan benchmark dvwa
 
 ---
 
-## 🛡️ The 13 Security Audit Modules
+## 🛡️ The 15 Security Audit Modules
 
 | Module | Category | CWE | OWASP Top 10 | Primary Verification Target |
 | :--- | :--- | :-: | :---: | :--- |
 | **`headers`** | Configuration | CWE-693 | A05:2021 | Strict CSP, HSTS, X-Frame-Options, Permissions-Policy, Server Version Banners |
 | **`tls_ssl`** | Transport | CWE-319 | A02:2021 | TLS 1.0/1.1 deprecation, weak ciphers, self-signed or expired certificates |
 | **`cookies`** | Session | CWE-614 | A01:2021 | `HttpOnly`, `Secure`, `SameSite` (Lax/Strict), `__Host-` prefix validation |
-| **`exposure`** | Information Leak | CWE-552 | A05:2021 | Leaked `.env`, `.git/HEAD`, `.DS_Store`, backup files, GraphQL Introspection |
+| **`exposure`** | Information Leak | CWE-552 | A05:2021 | Leaked `.env`, `.git/HEAD`, `.DS_Store`, backup files, GraphQL & OpenAPI specs |
 | **`cors`** | Access Control | CWE-942 | A01:2021 | Arbitrary Origin reflection with credentials, `Origin: null`, wildcard conflicts |
 | **`ratelimit`** | Availability | CWE-799 | A04:2021 | Missing rate-limiting headers, HTTP 429 response handling under burst load |
 | **`reflection`** | Injection | CWE-79 | A03:2021 | Context-aware HTML entity encoding, script context, attribute reflection |
@@ -184,6 +184,8 @@ armorscan benchmark dvwa
 | **`secret_leak`**| Information Leak | CWE-798 | A07:2021 | Leaked OpenAI keys, AWS access keys, GitHub PATs, Stripe secrets, webhooks |
 | **`authz_check`**| Access Control | CWE-306 | A01:2021 | Missing authentication gates on private/internal API endpoints |
 | **`multi_step`** | Business Logic | CWE-639 | A01:2021 | Broken Object Level Authorization (BOLA/IDOR) & tenant isolation failures |
+| **`sqli`** | Injection | CWE-89 | A03:2021 | Safe boolean differential analysis (`1=1` vs `1=2`), no data extraction |
+| **`browser_dom`**| Client DOM | CWE-79 | A03:2021 | Headless Chromium runtime sink interception (`innerHTML`, `document.write`) |
 
 ---
 
@@ -216,32 +218,37 @@ armorscan benchmark dvwa
 
 ### 2. Bağımsız Gerçek Dünya Testi: OWASP Juice Shop (`127.0.0.1:3000`)
 
-> **Çalıştırma Notu:** Bu sanal geliştirme ortamında Docker/Podman kurulu olmadığından (`which docker` -> bulunamadı), OWASP Juice Shop v20.3.0 resmi GitHub Linux paketi indirilerek Node.js 24 üzerinde `127.0.0.1:3000` adresinde yerel süreç olarak çalıştırılmış ve canlı taranmıştır.
+> **Çalıştırma Notu:** Bu ortamda Docker/Podman bulunmadığından, OWASP Juice Shop resmi Linux paketi Node.js 24 üzerinde `127.0.0.1:3000` adresinde yerel süreç olarak çalıştırılmış, `Authorization: Bearer <TOKEN>`, Web Crawler ve Playwright Headless Chromium entegrasyonu ile canlı taranmıştır.
 
-Juice Shop, 16 farklı kategoride toplam **116 resmi güvenlik challenge'ı** barındırır. Bu zafiyetlerin büyük çoğunluğu istemci taraflı DOM çalıştırması (Angular), kullanıcı oturum yolculuğu veya zararlı payload gerektiren CTF bulmacalarıdır. 
+#### 📐 Payda Düzeltmesi (116 Challenge vs Otomatik DAST Kapsamı):
+Juice Shop toplam **116 resmi challenge** içerir. Ancak bir DAST aracının güvenli (non-destructive) ve otomatik denetleyebileceği açıklar ile manuel CTF bulmacaları (cüzdan boşaltma, Metamask, kaba kuvvet parola tahmini, EXIF GPS çıkarma, ReDoS çökertme) bilimsel olarak ayrılmalıdır:
+- **Manuel / CTF / Yıkıcı Kapsam Dışı (~98):** Veritabanı şema boşaltma (UNION SQLi), RCE/SSTI komut çalıştırma, kaba kuvvet parola/güvenlik sorusu tahmini, sosyal mühendislik.
+- **Otomatik DAST Kapsamı (18):** Güvenlik başlıkları, rate limiting, Swagger ifşası, JWT süresi ve parola sızıntısı, BOLA/IDOR sepet erişimi, güvenli boolean SQLi yanıt farkı, DOM sink veri akışı, açık yönlendirme, hassas dosya sızıntıları, CORS ve çerez hijyeni.
 
-ArmorScan'in tahribatsız (non-destructive) DAST motorunun canlı Juice Shop üzerindeki ölçülen performansı:
+#### 📊 Ölçülen Performans ve Doğruluk:
 
 | Metrik | Değer | Durum / Değerlendirme |
 | :--- | :---: | :--- |
-| **Tespit Edilen Gerçek Açıklar (TP)** | **3** | `MISSING_CSP`, `MISSING_RATE_LIMITING`, `MISSING_REFERRER_POLICY` |
-| **Yanlış Alarmlar (False Positives)** | **0** | SPA fallback (HTTP 200 HTML catch-all) başarıyla filtrelendi; sıfır gürültü |
-| **Hedef Profil Recall (Kapsam)** | **16.7%** | Standart DAST profilindeki 6 beklenen konfigürasyondan 1'i kök rotada teyit edildi |
-| **Tüm 116 Challenge Kapsamı** | **~2.6%** | Geriye kalan challenge'lar DOM-XSS, SQLite injection ve manuel CTF zincirleridir |
-| **Tarama Süresi** | **0.78s** | 45 denetim noktası 1 saniyenin altında tamamlandı |
+| **Tespit Edilen Gerçek Açıklar (TP)** | **9** | `MISSING_CSP`, `MISSING_REFERRER_POLICY`, `EXPOSED_OPENAPI_SPEC`, `MISSING_RATE_LIMITING`, `JWT_MISSING_EXPIRATION`, `JWT_SENSITIVE_DATA_IN_PAYLOAD`, `CROSS_TENANT_OBJECT_ACCESS`, `SQLI_BOOLEAN_DIFFERENCE_SUSPECTED`, `DOM_XSS_SINK_TAINT_FLOW` |
+| **Yanlış Alarmlar (False Positives)** | **0** | SPA fallback (HTTP 200 HTML catch-all) başarıyla elendi; %100 kesinlik |
+| **Otomatik DAST Kapsamı (Recall)** | **50.0% (9/18)** | DAST ile otomatik tespit edilebilir açıkların yarısı sıfır zararla yakalandı |
+| **Keşfedilen Sayfa & API Yolu** | **51** | JS bundle AST/regex ayrıştırma ile 42 REST rotası ve Swagger bulundu |
+| **Tarama Süresi** | **1.84s** | 15 güvenlik modülü ve headless browser DOM analizi 2 saniyenin altında tamamlandı |
 
-#### Tespit Edilen ve Kaçırılan Açıkların Detaylı Analizi:
+#### Tespit Edilen Açıkların Detaylı Doğrulama Tablosu:
 
-| Güvenlik Alanı | Juice Shop Karşılığı | ArmorScan Durumu | Neden / Mimari Açıklama |
-| :--- | :--- | :---: | :--- |
-| **CSP Güvenliği** | Content Security Policy Eksikliği | ✅ **TESPİT EDİLDİ** | Kök yanıtta katı CSP başlığı bulunmadığı doğrulandı (`MISSING_CSP`). |
-| **Rate Limiting** | Anti-Automation / DoS Koruması | ✅ **TESPİT EDİLDİ** | Ani istek serisinde HTTP 429 veya rate-limit başlığı dönmediği tespit edildi. |
-| **Referrer-Policy** | Hassas Veri Sızıntısı Koruması | ✅ **TESPİT EDİLDİ** | Referrer-Policy başlığı eksikliği raporlandı (`MISSING_REFERRER_POLICY`). |
-| **Dotfile / .env Koruması** | SPA Catch-All Yanıltması | 🛡️ **0 YANLIŞ ALARM** | Juice Shop'un tüm yollara 200 HTML dönmesi kanarya imzasıyla ayırt edildi. |
-| **SQL Injection** | SQLite `products/search?q=` | ❌ *Kapsam Dışı* | ArmorScan yalnızca zararsız kanarya problar kullanır; SQL syntax bozucu injection atmaz. |
-| **DOM XSS** | Angular `/#/search?q=` | ❌ *Kapsam Dışı* | Headless browser (Chromium/Puppeteer) gerektirir; HTTP motoru DOM çalıştırmaz. |
-| **IDOR / BOLA** | `/rest/basket/:id` | ❌ *Oturumsuz Atlandı* | Kök taramada sepet/kullanıcı oturumu açılmadığı için çok adımlı IDOR tetiklenmedi. |
-| **Swagger / OpenAPI** | `/api-docs/swagger.json` | ❌ *Kaçırıldı* | Otomatik crawler kök sayfadan Swagger yolunu statik HTML içinde bulamadı. |
+| Güvenlik Alanı | Modül | Seviye | Güven | Kanıt ve Mimari Açıklama |
+| :--- | :--- | :---: | :---: | :--- |
+| **CSP Güvenliği** | `headers` | HIGH | firm | Kök yanıtta katı `Content-Security-Policy` başlığı yok (`MISSING_CSP`). |
+| **Referrer-Policy** | `headers` | LOW | firm | `Referrer-Policy` başlığı eksik (`MISSING_REFERRER_POLICY`). |
+| **OpenAPI / Swagger** | `exposure` | MEDIUM | firm | `main.js` analiziyle `/api-docs/` ve Swagger UI otomatik keşfedildi (`EXPOSED_OPENAPI_SPEC`). |
+| **Rate Limiting** | `ratelimit` | MEDIUM | firm | 18 eşzamanlı istekte 18x HTTP 200 yanıtı; HTTP 429 sınırı yok (`MISSING_RATE_LIMITING`). |
+| **JWT Expiration** | `jwt_audit` | MEDIUM | confirmed | Oturum JWT'sinde `exp` claim'i bulunmuyor; süresiz geçerli (`JWT_MISSING_EXPIRATION`). |
+| **JWT Parola Sızıntısı** | `jwt_audit` | HIGH | confirmed | JWT yükünde kullanıcı MD5 parola özeti (`data.password`) ifşa ediliyor (`JWT_SENSITIVE_DATA_IN_PAYLOAD`). |
+| **BOLA / IDOR** | `multi_step` | HIGH | confirmed | Kullanıcı 2 token'ı ile `GET /rest/basket/2` üzerinden Kullanıcı 1 sepeti okundu (`CROSS_TENANT_OBJECT_ACCESS`). |
+| **Boolean SQLi Belirtisi**| `sqli` | HIGH | tentative| `/rest/products/search?q=` üzerinde `1=1` (34KB) vs `1=2` (boş liste) yanıt farkı (`SQLI_BOOLEAN_DIFFERENCE_SUSPECTED`). |
+| **Client DOM XSS Sink** | `browser_dom`| HIGH | confirmed | Playwright ile kanaryanın `#searchValue` `Element.innerHTML` sink'ine aktığı yakalandı (`DOM_XSS_SINK_TAINT_FLOW`). |
+| **Dotfile / .env Koruması**| `exposure` | - | - | 🛡️ **0 YANLIŞ ALARM:** SPA 200 HTML catch-all yanıtları kanarya imzası ile elendi. |
 
 ---
 

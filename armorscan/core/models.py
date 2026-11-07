@@ -128,7 +128,10 @@ class Finding(BaseModel):
         if headers:
             for k, v in headers.items():
                 if k.lower() in ("host", "user-agent", "origin", "cookie", "referer", "content-type", "authorization"):
-                    cmd_parts.append(f"-H '{k}: {v}'")
+                    val_str = str(v)
+                    if k.lower() == "authorization" and len(val_str) > 16:
+                        val_str = f"{val_str[:12]}...[REDACTED]"
+                    cmd_parts.append(f"-H '{k}: {val_str}'")
         if data:
             cmd_parts.append(f"--data '{data}'")
         return " \\\n  ".join(cmd_parts)

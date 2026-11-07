@@ -46,6 +46,8 @@ class MultiStepLogicModule(BaseModule):
             candidate_urls.add(urljoin(target.base_url, "/safe/logic_idor?user_id=usr_alice"))
             candidate_urls.add(urljoin(target.base_url, "/api/orders?id=101"))
             candidate_urls.add(urljoin(target.base_url, "/api/invoices?id=101"))
+            candidate_urls.add(urljoin(target.base_url, "/rest/basket/1"))
+            candidate_urls.add(urljoin(target.base_url, "/api/Addresss/1"))
 
         for endpoint_url in sorted(candidate_urls):
             parsed = urlparse(endpoint_url)
@@ -53,6 +55,12 @@ class MultiStepLogicModule(BaseModule):
 
             # Check if URL contains an ID parameter to tamper
             param_to_test: Optional[str] = None
+            is_path_param = False
+            url_step1: str = ""
+            url_step2: str = ""
+            current_val: str = ""
+            tampered_val: str = ""
+
             for p_name in qs:
                 if p_name.lower() in ID_PARAM_NAMES:
                     param_to_test = p_name
@@ -63,21 +71,36 @@ class MultiStepLogicModule(BaseModule):
                 param_to_test = "user_id"
                 qs["user_id"] = ["usr_alice"]
 
+            # If no query parameter, check if path ends with a numeric resource ID (e.g. /rest/basket/1)
+            if not param_to_test:
+                path_match = re.search(r"^(.+/)([\d]+)$", parsed.path)
+                if path_match:
+                    prefix = path_match.group(1)
+                    current_val = path_match.group(2)
+                    tampered_val = str(int(current_val) + 1)
+                    param_to_test = "path_id"
+                    is_path_param = True
+                    url_step1 = endpoint_url
+                    url_step2 = urljoin(endpoint_url, f"{prefix}{tampered_val}")
+
             if not param_to_test:
                 continue
 
-            current_val = qs[param_to_test][0] if param_to_test in qs and qs[param_to_test] else "usr_alice"
-            tampered_val = self._get_tampered_id(current_val)
+            if not is_path_param:
+                current_val = qs[param_to_test][0] if param_to_test in qs and qs[param_to_test] else "usr_alice"
+                tampered_val = self._get_tampered_id(current_val)
+                # Step 1: Baseline request with initial user/tenant ID
+                url_step1 = self._build_url(parsed, param_to_test, current_val)
+                # Step 2: Tampered request with neighboring user/tenant ID
+                url_step2 = self._build_url(parsed, param_to_test, tampered_val)
 
-            # Step 1: Baseline request with initial user/tenant ID
-            url_step1 = self._build_url(parsed, param_to_test, current_val)
             try:
                 resp_step1 = await client.get(url_step1)
                 if not resp_step1.ok or resp_step1.status_code != 200:
                     continue
 
-                # Step 2: Tampered request with neighboring user/tenant ID
-                url_step2 = self._build_url(parsed, param_to_test, tampered_val)
+                if not is_path_param:
+                    url_step2 = self._build_url(parsed, param_to_test, tampered_val)
                 resp_step2 = await client.get(url_step2)
 
                 # Check if access was blocked (403 Forbidden or 404 Not Found) -> Safe

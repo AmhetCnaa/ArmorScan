@@ -26,6 +26,11 @@ IGNORED_EXTENSIONS = {
 }
 
 HREF_REGEX = re.compile(r"""(?:href|action|src)=["']([^"'#\s>]+)["']""", re.IGNORECASE)
+SCRIPT_SRC_REGEX = re.compile(r"""<script\b[^>]*\bsrc=["']([^"']+)["']""", re.IGNORECASE)
+JS_ROUTE_REGEX = re.compile(
+    r"""(?:['"`])(\/(?:api|rest|api-docs|swagger|openapi|auth|admin|b2b|v[0-9]+|redirect)[a-zA-Z0-9_\-\/\.\?=&%#]*)(?:['"`])""",
+    re.IGNORECASE,
+)
 FORM_BLOCK_REGEX = re.compile(r"""<form\b([^>]*)>(.*?)</form>""", re.IGNORECASE | re.DOTALL)
 INPUT_REGEX = re.compile(r"""<input\b([^>]*)>""", re.IGNORECASE)
 ATTR_REGEX = re.compile(r"""([a-zA-Z_0-9-]+)\s*=\s*["']([^"']*)["']""")
@@ -119,6 +124,7 @@ class WebCrawler:
 
         # Queue holds (url, current_depth)
         queue: List[Tuple[str, int]] = [(start_url, 0)]
+        scanned_scripts: Set[str] = set()
 
         while queue and len(visited) < self.max_pages:
             current_url, depth = queue.pop(0)
@@ -138,12 +144,39 @@ class WebCrawler:
                 # Non-HTML response, do not parse for links
                 continue
 
-            # Extract links and forms from HTML
-            extracted_links, page_forms = self._parse_html(current_url, resp.text)
+            # Extract links, forms, and scripts from HTML
+            extracted_links, page_forms, script_tags = self._parse_html(current_url, resp.text)
             forms.extend(page_forms)
             for f in page_forms:
                 for p in f.parameters:
                     discovered_parameters.add(p)
+
+            # Analyze same-origin JavaScript bundles for hidden API routes & Swagger
+            for s_src in script_tags:
+                s_norm = self._normalize_link(current_url, s_src, target_scheme, target_host, target_port)
+                if s_norm and s_norm not in scanned_scripts:
+                    scanned_scripts.add(s_norm)
+                    try:
+                        s_resp = await client.get(s_norm)
+                        if s_resp.ok and s_resp.text:
+                            for m in JS_ROUTE_REGEX.finditer(s_resp.text):
+                                js_route = m.group(1).strip()
+                                if any(js_route.lower().endswith(ext) for ext in IGNORED_EXTENSIONS):
+                                    continue
+                                full_js_url = urljoin(target.base_url, js_route)
+                                parsed_js_url = urlparse(full_js_url)
+                                discovered_urls.add(full_js_url)
+                                discovered_paths.add(parsed_js_url.path or "/")
+
+                                # If route references swagger or api-docs, trigger schema probe
+                                if any(k in js_route.lower() for k in ("swagger", "api-docs", "openapi")):
+                                    s_url, s_eps = await OpenApiParser.discover_and_parse(
+                                        client, target.base_url, custom_schema_path=js_route
+                                    )
+                                    if s_eps:
+                                        api_endpoints.extend(s_eps)
+                    except Exception:
+                        pass
 
             for link in extracted_links:
                 normalized = self._normalize_link(current_url, link, target_scheme, target_host, target_port)
@@ -172,10 +205,17 @@ class WebCrawler:
             graphql_introspection_active=gql_active,
         )
 
-    def _parse_html(self, page_url: str, html_text: str) -> Tuple[List[str], List[DiscoveredForm]]:
-        """Extract links, forms, and input parameters using regular expressions."""
+    def _parse_html(self, page_url: str, html_text: str) -> Tuple[List[str], List[DiscoveredForm], List[str]]:
+        """Extract links, forms, input parameters, and script sources using regular expressions."""
         links: List[str] = []
         forms: List[DiscoveredForm] = []
+        scripts: List[str] = []
+
+        # Find all script src
+        for match in SCRIPT_SRC_REGEX.finditer(html_text):
+            src_val = match.group(1).strip()
+            if src_val:
+                scripts.append(src_val)
 
         # Find all href and action links
         for match in HREF_REGEX.finditer(html_text):
@@ -225,7 +265,7 @@ class WebCrawler:
                 full_action = urljoin(page_url, action)
                 forms.append(DiscoveredForm(page_url=page_url, action_url=full_action))
 
-        return links, forms
+        return links, forms, scripts
 
     def _normalize_link(
         self,

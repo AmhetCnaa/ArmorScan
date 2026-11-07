@@ -21,6 +21,9 @@ COMMON_OPENAPI_PATHS = [
     "/openapi.json",
     "/swagger.json",
     "/api-docs",
+    "/api-docs/",
+    "/api-docs/swagger.json",
+    "/api-docs/swagger-ui-init.js",
     "/api/openapi.json",
     "/v2/api-docs",
     "/v3/api-docs",
@@ -240,14 +243,53 @@ class OpenApiParser:
             target_url = urljoin(base_url, path)
             try:
                 resp = await client.get(target_url)
-                if resp.ok and resp.status_code == 200 and ("paths" in resp.text or "swagger" in resp.text or "openapi" in resp.text):
-                    endpoints = cls.parse_content(resp.text)
-                    if endpoints:
-                        return target_url, endpoints
+                if resp.ok and resp.status_code == 200:
+                    # Case 1: Direct JSON or YAML
+                    if "paths" in resp.text or "swagger" in resp.text or "openapi" in resp.text:
+                        endpoints = cls.parse_content(resp.text)
+                        if endpoints:
+                            return target_url, endpoints
+
+                    # Case 2: Swagger UI HTML or swagger-ui-init.js
+                    if "swagger-ui" in resp.text.lower() or "<title>swagger ui" in resp.text.lower():
+                        init_url = urljoin(target_url, "swagger-ui-init.js")
+                        init_resp = await client.get(init_url)
+                        if init_resp.ok and ("swaggerDoc" in init_resp.text or "openapi" in init_resp.text):
+                            doc = cls._extract_swagger_doc_from_js(init_resp.text)
+                            if doc:
+                                endpoints = cls.parse_content(json.dumps(doc))
+                                if endpoints:
+                                    return init_url, endpoints
             except Exception:
                 continue
 
         return None, []
+
+    @classmethod
+    def _extract_swagger_doc_from_js(cls, text: str) -> Optional[Dict[str, Any]]:
+        """Extract swaggerDoc JSON object from swagger-ui-init.js."""
+        idx = text.find('"swaggerDoc":')
+        if idx == -1:
+            idx = text.find("'swaggerDoc':")
+        if idx == -1:
+            return None
+        brace_start = text.find("{", idx)
+        if brace_start == -1:
+            return None
+        cnt = 0
+        end = brace_start
+        for i in range(brace_start, len(text)):
+            if text[i] == "{":
+                cnt += 1
+            elif text[i] == "}":
+                cnt -= 1
+                if cnt == 0:
+                    end = i + 1
+                    break
+        try:
+            return json.loads(text[brace_start:end])
+        except Exception:
+            return None
 
 
 class GraphQLAuditor:

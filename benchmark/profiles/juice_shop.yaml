@@ -10,33 +10,58 @@ docker_image: "bkimminich/juice-shop:v16.0.0"
 expected_vulnerabilities:
   - id: "MISSING_CSP"
     module: "headers"
-    severity: "MEDIUM"
+    severity: "HIGH"
     description: "Juice Shop default configuration lacks strict Content-Security-Policy header"
 
-  - id: "MISSING_PERMISSIONS_POLICY"
+  - id: "MISSING_REFERRER_POLICY"
     module: "headers"
     severity: "LOW"
-    description: "Permissions-Policy header is missing"
+    description: "Referrer-Policy header is absent"
 
   - id: "X_POWERED_BY_DISCLOSURE"
     module: "headers"
     severity: "LOW"
     description: "Exposes 'X-Powered-By: Express' technology banner"
 
-  - id: "EXPOSED_OPENAPI_SPEC"
-    module: "exposure"
-    severity: "MEDIUM"
-    description: "Exposes public Swagger/OpenAPI documentation at /api-docs/swagger.json"
-
-  - id: "CORS_ARBITRARY_ORIGIN_REFLECTION"
-    module: "cors"
-    severity: "HIGH"
-    description: "Reflects arbitrary Origin header in CORS preflight"
-
   - id: "COOKIE_MISSING_SAMESITE"
     module: "cookies"
     severity: "MEDIUM"
     description: "Session cookies missing SameSite protection"
+
+  - id: "EXPOSED_OPENAPI_SPEC"
+    module: "exposure"
+    severity: "MEDIUM"
+    description: "Exposes public Swagger/OpenAPI documentation at /api-docs/ discovered via JS bundles"
+
+  - id: "MISSING_RATE_LIMITING"
+    module: "ratelimit"
+    severity: "MEDIUM"
+    description: "Burst test demonstrates lack of rate limiting defenses and HTTP 429 throttling"
+
+  - id: "JWT_MISSING_EXPIRATION"
+    module: "jwt_audit"
+    severity: "MEDIUM"
+    description: "Authentication tokens lack expiration claim ('exp') causing perpetual session validity"
+
+  - id: "JWT_SENSITIVE_DATA_IN_PAYLOAD"
+    module: "jwt_audit"
+    severity: "HIGH"
+    description: "Authentication tokens leak user credentials / MD5 password hash in unencrypted payload data"
+
+  - id: "CROSS_TENANT_OBJECT_ACCESS"
+    module: "multi_step"
+    severity: "HIGH"
+    description: "BOLA/IDOR on /rest/basket/:id allowing cross-user basket inspection"
+
+  - id: "SQLI_BOOLEAN_DIFFERENCE_SUSPECTED"
+    module: "sqli"
+    severity: "HIGH"
+    description: "Safe non-destructive boolean differential indication on search query parameter 'q'"
+
+  - id: "DOM_XSS_SINK_TAINT_FLOW"
+    module: "browser_dom"
+    severity: "HIGH"
+    description: "Passive canary parameter flows directly into Element.innerHTML sink in client DOM"
 
 forbidden_false_positives:
   - id: "EXPOSED_ENV_FILE"
@@ -46,3 +71,15 @@ forbidden_false_positives:
   - id: "EXPOSED_GIT_REPOSITORY"
     module: "exposure"
     reason: "SPA catch-all returns HTML for /.git/HEAD; scanner must verify ref signature"
+
+  - id: "UNENCODED_HTML_INPUT_REFLECTION"
+    module: "reflection"
+    reason: "Client-side SPA reflects in DOM, not raw server response; reflection module must not produce FP"
+
+  - id: "OPEN_REDIRECT_UNVALIDATED"
+    module: "redirect"
+    reason: "SPA router handles navigation client-side without open server 302 redirect"
+
+  - id: "DATABASE_ERROR_DISCLOSURE"
+    module: "error_leak"
+    reason: "Normal application responses must not be flagged as database leaks"

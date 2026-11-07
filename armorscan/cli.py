@@ -28,6 +28,7 @@ from armorscan.core.runner import ScanRunner
 from armorscan.core.suppression import SuppressionEngine
 from armorscan.modules.authz_check import AuthzCheckModule
 from armorscan.modules.base import BaseModule
+from armorscan.modules.browser_dom import BrowserDomModule
 from armorscan.modules.cookies import CookieHygieneModule
 from armorscan.modules.cors import CorsAndMethodModule
 from armorscan.modules.error_leak import ErrorLeakModule
@@ -40,6 +41,7 @@ from armorscan.modules.ratelimit import RateLimitModule
 from armorscan.modules.redirect import OpenRedirectModule
 from armorscan.modules.reflection import InputReflectionModule
 from armorscan.modules.secret_leak import SecretLeakModule
+from armorscan.modules.sqli import SqliIndicationModule
 from armorscan.modules.tls_ssl import TlsSslModule
 from armorscan.remediations.patch_exporter import PatchExporter
 from armorscan.reporters.console import ConsoleReporter
@@ -47,9 +49,9 @@ from armorscan.reporters.html import HtmlReporter
 from armorscan.reporters.json_rep import JsonReporter
 
 
-def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
-    """Instantiate standard suite of all 13 security auditing modules."""
-    return [
+def get_default_modules(burst_count: int = 18, include_browser: bool = False) -> List[BaseModule]:
+    """Instantiate standard suite of security auditing modules (14 core modules, plus optional browser module)."""
+    mods: List[BaseModule] = [
         SecurityHeadersModule(),
         TlsSslModule(),
         CookieHygieneModule(),
@@ -63,7 +65,11 @@ def get_default_modules(burst_count: int = 18) -> List[BaseModule]:
         SecretLeakModule(),
         AuthzCheckModule(),
         MultiStepLogicModule(),
+        SqliIndicationModule(),
     ]
+    if include_browser:
+        mods.append(BrowserDomModule())
+    return mods
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -219,6 +225,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=18,
         help="Number of concurrent burst requests for rate limiting test (default: 18).",
+    )
+    parser.add_argument(
+        "--browser",
+        action="store_true",
+        help="Enable headless Chromium browser-based DOM sink taint tracing (detects DOM XSS flows into innerHTML/document.write).",
     )
     parser.add_argument(
         "-q",
@@ -391,7 +402,10 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
                 console.print(f"   [dim]Sample routes: {', '.join(crawl_res.discovered_paths[:6])}[/dim]\n")
 
     # 6. Execute Security Audits
-    modules = get_default_modules(burst_count=args.burst)
+    modules = get_default_modules(
+        burst_count=args.burst,
+        include_browser=getattr(args, "browser", False),
+    )
     suppression_engine = SuppressionEngine.find_and_load(custom_path=args.ignore_file)
     runner = ScanRunner(
         modules=modules,

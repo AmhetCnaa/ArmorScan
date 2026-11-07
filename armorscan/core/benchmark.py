@@ -33,6 +33,7 @@ from armorscan.modules.ratelimit import RateLimitModule
 from armorscan.modules.redirect import OpenRedirectModule
 from armorscan.modules.reflection import InputReflectionModule
 from armorscan.modules.secret_leak import SecretLeakModule
+from armorscan.modules.sqli import SqliIndicationModule
 from armorscan.modules.tls_ssl import TlsSslModule
 
 MODULE_MAP: Dict[str, type[BaseModule]] = {
@@ -48,6 +49,7 @@ MODULE_MAP: Dict[str, type[BaseModule]] = {
     "exposure": ExposureAuditModule,
     "authz_check": AuthzCheckModule,
     "multi_step": MultiStepLogicModule,
+    "sqli": SqliIndicationModule,
     "tls": TlsSslModule,
 }
 

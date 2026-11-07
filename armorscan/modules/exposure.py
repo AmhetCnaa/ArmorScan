@@ -76,6 +76,8 @@ class ExposureAuditModule(BaseModule):
             "/config.json",
             "/swagger.json",
             "/openapi.json",
+            "/api-docs/",
+            "/api-docs/swagger-ui-init.js",
             "/robots.txt",
         ]
 
@@ -133,13 +135,16 @@ class ExposureAuditModule(BaseModule):
             is_spa_catch_all,
         )
 
-        # 3.6 Check /swagger.json and /openapi.json
+        # 3.6 Check /swagger.json, /openapi.json, and /api-docs/
         self._check_openapi_specs(
             probe_map.get("/swagger.json"),
             probe_map.get("/openapi.json"),
+            probe_map.get("/api-docs/"),
+            probe_map.get("/api-docs/swagger-ui-init.js"),
             target,
             findings,
             passed_checks,
+            canary_len=canary_len,
         )
 
         # 3.7 Check /robots.txt
@@ -416,14 +421,21 @@ class ExposureAuditModule(BaseModule):
         self,
         resp_swagger: Optional[HttpResponse],
         resp_openapi: Optional[HttpResponse],
+        resp_api_docs: Optional[HttpResponse],
+        resp_swagger_init: Optional[HttpResponse],
         target: ScanTarget,
         findings: List[Finding],
         passed_checks: List[str],
+        canary_len: int = 0,
     ) -> None:
         found_spec = None
         evidence_url = ""
 
-        for path, resp in (("/swagger.json", resp_swagger), ("/openapi.json", resp_openapi)):
+        # 1. Check direct JSON/YAML schema files
+        for path, resp in (
+            ("/swagger.json", resp_swagger),
+            ("/openapi.json", resp_openapi),
+        ):
             if resp and resp.ok and resp.status_code == 200 and not self._is_html(resp):
                 try:
                     data = json.loads(resp.text)
@@ -433,6 +445,18 @@ class ExposureAuditModule(BaseModule):
                         break
                 except Exception:
                     pass
+
+        # 2. Check Swagger UI HTML or swagger-ui-init.js (must not be generic SPA 200 catch-all)
+        if not found_spec and resp_api_docs and resp_api_docs.ok and resp_api_docs.status_code == 200:
+            body = resp_api_docs.text
+            if abs(len(body) - canary_len) > 20 and ("swagger ui" in body.lower() or "swagger-ui" in body.lower()):
+                found_spec = {"paths": {"/api": {}}}
+                evidence_url = f"{target.base_url}/api-docs/"
+
+        if not found_spec and resp_swagger_init and resp_swagger_init.ok and resp_swagger_init.status_code == 200:
+            if "swaggerDoc" in resp_swagger_init.text:
+                found_spec = {"paths": {"/api": {}}}
+                evidence_url = f"{target.base_url}/api-docs/swagger-ui-init.js"
 
         if found_spec:
             endpoints_count = len(found_spec.get("paths", {}))
