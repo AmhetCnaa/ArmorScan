@@ -127,3 +127,17 @@ def test_cli_parser_schema():
     parser = build_parser()
     args = parser.parse_args(["https://target.com", "--schema", "swagger.json"])
     assert args.schema == "swagger.json"
+
+
+@pytest.mark.asyncio
+async def test_cli_benchmark_command_dispatch():
+    parser = build_parser()
+    args = parser.parse_args(["benchmark", "juice-shop"])
+    console = Console(quiet=True)
+
+    with patch("scripts.run_benchmark.run_real_world_benchmark_async", new_callable=AsyncMock) as mock_bench:
+        mock_bench.return_value = 0
+        code = await run_scan_async(args, console)
+        assert code == 0
+        mock_bench.assert_called_once()
+

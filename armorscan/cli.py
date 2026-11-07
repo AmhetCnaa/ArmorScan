@@ -304,12 +304,26 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     # 3. Handle 'benchmark' command
     if raw_target and raw_target.lower() == "benchmark":
         from scripts.run_benchmark import main_async as run_benchmark_async
+        sub_target = (args.host_or_target or "labapp").lower()
+        if sub_target in ("juice-shop", "juice_shop", "dvwa"):
+            benchmark_target = sub_target
+            bench_url = None
+        elif sub_target.startswith("http"):
+            benchmark_target = "labapp"
+            bench_url = sub_target
+        else:
+            benchmark_target = "labapp"
+            bench_url = "http://127.0.0.1:8888"
+
         benchmark_args = argparse.Namespace(
-            url=args.host_or_target or "http://127.0.0.1:8888",
+            target=benchmark_target,
+            url=bench_url,
+            profile=None,
             ground_truth="benchmark/ground_truth.yaml",
-            output="benchmark/results.md",
+            output=None,
             min_precision=0.95,
             min_recall=0.95,
+            no_crawl=False,
         )
         return await run_benchmark_async(benchmark_args)
 

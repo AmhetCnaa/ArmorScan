@@ -1,0 +1,48 @@
+name: "OWASP Juice Shop"
+target_id: "juice_shop"
+version: "v16.0.0"
+description: "Modern Angular Single Page Application with Node/Express REST API and SQLite"
+default_url: "http://127.0.0.1:3000"
+health_check_path: "/"
+docker_service: "juice-shop"
+docker_image: "bkimminich/juice-shop:v16.0.0"
+
+expected_vulnerabilities:
+  - id: "MISSING_CSP"
+    module: "headers"
+    severity: "MEDIUM"
+    description: "Juice Shop default configuration lacks strict Content-Security-Policy header"
+
+  - id: "MISSING_PERMISSIONS_POLICY"
+    module: "headers"
+    severity: "LOW"
+    description: "Permissions-Policy header is missing"
+
+  - id: "X_POWERED_BY_DISCLOSURE"
+    module: "headers"
+    severity: "LOW"
+    description: "Exposes 'X-Powered-By: Express' technology banner"
+
+  - id: "EXPOSED_OPENAPI_SPEC"
+    module: "exposure"
+    severity: "MEDIUM"
+    description: "Exposes public Swagger/OpenAPI documentation at /api-docs/swagger.json"
+
+  - id: "CORS_ARBITRARY_ORIGIN_REFLECTION"
+    module: "cors"
+    severity: "HIGH"
+    description: "Reflects arbitrary Origin header in CORS preflight"
+
+  - id: "COOKIE_MISSING_SAMESITE"
+    module: "cookies"
+    severity: "MEDIUM"
+    description: "Session cookies missing SameSite protection"
+
+forbidden_false_positives:
+  - id: "EXPOSED_ENV_FILE"
+    module: "exposure"
+    reason: "SPA catch-all returns HTTP 200 for /.env; scanner must verify signature, not just 200 OK"
+
+  - id: "EXPOSED_GIT_REPOSITORY"
+    module: "exposure"
+    reason: "SPA catch-all returns HTML for /.git/HEAD; scanner must verify ref signature"

@@ -1,0 +1,48 @@
+name: "Damn Vulnerable Web Application (DVWA)"
+target_id: "dvwa"
+version: "v1.10"
+description: "Classic PHP/MySQL vulnerable web application with multi-level security configurations"
+default_url: "http://127.0.0.1:8080"
+health_check_path: "/login.php"
+docker_service: "dvwa"
+docker_image: "vulnerables/web-dvwa:latest"
+
+expected_vulnerabilities:
+  - id: "UNENCODED_HTML_INPUT_REFLECTION"
+    module: "reflection"
+    severity: "HIGH"
+    description: "Reflected parameter input without HTML entity encoding on /vulnerabilities/xss_r/"
+
+  - id: "OPEN_REDIRECT_UNVALIDATED"
+    module: "redirect"
+    severity: "MEDIUM"
+    description: "Open redirection flaw allowing redirect to arbitrary domain"
+
+  - id: "SERVER_VERSION_DISCLOSURE"
+    module: "headers"
+    severity: "LOW"
+    description: "Apache banner leakage via Server header"
+
+  - id: "MISSING_CSP"
+    module: "headers"
+    severity: "MEDIUM"
+    description: "No Content-Security-Policy header defined"
+
+  - id: "MISSING_HSTS"
+    module: "headers"
+    severity: "MEDIUM"
+    description: "No HSTS header configured"
+
+  - id: "COOKIE_MISSING_SAMESITE"
+    module: "cookies"
+    severity: "MEDIUM"
+    description: "PHPSESSID cookie missing SameSite flags"
+
+forbidden_false_positives:
+  - id: "EXPOSED_ENV_FILE"
+    module: "exposure"
+    reason: "Standard 404 response must not be mistaken for an environment file"
+
+  - id: "CROSS_TENANT_OBJECT_ACCESS"
+    module: "multi_step"
+    reason: "Public login page must not trigger false positive IDOR findings"
