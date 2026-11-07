@@ -1,28 +1,53 @@
 # 🛡️ ArmorScan
 
-> **Modern, Fast, Developer-Friendly DAST & Web Security Scanner CLI**  
-> Test your localhost or production web apps & APIs in seconds before deploying.
+<div align="center">
+
+[![CI & Accuracy Benchmark](https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml/badge.svg)](https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml)
+[![Accuracy: 100% Precision & Recall](https://img.shields.io/badge/Benchmark%20Accuracy-100%25-brightgreen.svg)](benchmark/results.md)
+[![Python Version](https://img.shields.io/badge/Python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DAST: Non-Destructive](https://img.shields.io/badge/DAST-Non--Destructive%20Canary-purple.svg)](docs/ARCHITECTURE.md)
+[![Release](https://img.shields.io/badge/Release-v0.4.0-success.svg)](CHANGELOG.md)
+
+**Modern, Fast, Developer-Friendly DAST & Web Security Scanner CLI**  
+*Audit your web applications, APIs, and microservices in seconds with zero false-positive tolerance.*
+
+[Key Highlights](#-key-highlights) •
+[Installation](#-installation--quick-start) •
+[CLI Usage](#-cli-usage-examples) •
+[13 Security Modules](#-the-13-security-audit-modules) •
+[Benchmark Suite](#-ground-truth-benchmark--accuracy-metrics-v040) •
+[Architecture Guide](docs/ARCHITECTURE.md) •
+[Changelog](CHANGELOG.md)
+
+</div>
 
 ---
 
 ## ⚡ Key Highlights
+
 - 🚀 **Blazing Fast**: Asynchronous HTTP/2 scanning with `httpx` (typical scan takes **< 1.5 seconds**).
-- 🧬 **Deep Application & Logic Auditor (v0.3.0)**:
-  - 🎯 **Input Reflection & Context Analysis**: Probes query and form parameters with non-harmful canary tokens to identify unencoded reflections in raw HTML bodies, `<script>` tags, and attribute contexts.
-  - 🔄 **Open Redirect Testing**: Tests navigation parameters against unvalidated external redirects via HTTP 3xx `Location` and client-side `<meta http-equiv="refresh">` tags.
-  - 💥 **Error-Based Info & Database Leakage**: Injects unexpected probes to detect verbose database errors (MySQL, PostgreSQL, Oracle, SQLite, MongoDB) and unhandled stack traces (Python, Node.js, Java, PHP).
-  - 🔑 **JWT Client Security & Lifecycle**: Automatically decodes client-side and cookie-based JWTs to flag `alg: none` bypasses, missing/excessive `exp` expiration claims, and plaintext credential leaks.
-  - 🕵️ **DOM & Client-Side Secret Hunter**: Scans HTML source and linked same-origin JS bundles for exposed API keys (OpenAI, AWS, GitHub, Stripe, Slack, Google) and private RFC 1918 IPs with automated masking.
-- 🔒 **Security Headers & TLS**: Deep inspection of HSTS, CSP (`unsafe-inline`, `unsafe-eval`, wildcards), Clickjacking, MIME-sniffing, and server version leaks.
-- 🍪 **Cookie Hygiene**: Heuristic session token detection (`session`, `jwt`, `token`, `auth`, `PHPSESSID`), `Secure`, `HttpOnly`, `SameSite`, and modern `__Host-` / `__Secure-` prefix standards.
-- 📂 **Sensitive File & Disclosure**: Canary 404 baseline to eliminate SPA/catch-all false positives while detecting leaked `.env`, `.git/HEAD`, `.DS_Store`, WordPress backups, and OpenAPI schemas.
-- 🌐 **CORS & Method Security**: Arbitrary origin reflection with credentials, null origin trust, domain regex bypasses, and dangerous HTTP verbs (TRACE/XST, PUT, DELETE).
-- ⏱️ **Rate Limiting & DoS Resilience**: Safe, non-destructive burst test verifying HTTP 429 throttling and RateLimit-* headers.
-- 🕷️ **Smart Web Crawler / Spider**: Automated internal link discovery (`--crawl`, `--depth`, `--max-pages`).
-- 🔍 **Local Port & Database Sniffer**: `armorscan discover 127.0.0.1` for dev servers and unauthenticated databases.
-- 📊 **Triple Reporting**: Rich interactive terminal UI, standalone zero-CDN HTML report, and machine-readable JSON.
-- 🔄 **DevSecOps / CI/CD Quality Gate**: Exit code 1 enforcement via `--fail-under <SCORE>` to stop compromised pull requests before deployment.
-- 🛠️ **Production-Ready Remediation**: Copy-paste configuration blocks for **Nginx**, **Express.js**, **FastAPI**, and **Django**, plus `--export-patch`.
+- 🔬 **Two-Pass Confidence Engine**: Automatically generates cURL reproduction commands and validates findings via response diff analysis (`CONFIRMED`, `SUSPECTED`, `INFORMATIONAL`).
+- 🎯 **Deep Application & Logic Auditor**:
+  - 💉 **Input Reflection**: Context-aware probe analysis (raw HTML, `<script>`, HTML attributes) to detect XSS vectors without firing destructive scripts.
+  - 🔄 **Open Redirect**: Probes navigation parameters against external domain indicators (HTTP 3xx `Location` and meta refresh).
+  - 💥 **Error & Stack Trace Leakage**: Injects boundary canary probes to identify raw database errors (SQLite, MySQL, PostgreSQL, Oracle) and framework stack traces.
+  - 🔑 **JWT Security**: Audits tokens for insecure `alg: none`, missing expiration claims (`exp`), and sensitive credentials in payloads.
+  - 🕵️ **Secret & API Key Hunter**: Scans HTML and same-origin JS bundles for exposed OpenAI, AWS, GitHub, Stripe, Slack secrets, and private RFC 1918 IPs with automated masking.
+  - 🚪 **Missing Authentication Gate**: Tests whether private APIs inadvertently permit unauthenticated access.
+  - 👥 **Multi-Step Logic & BOLA/IDOR**: Detects cross-tenant object manipulation (`user_id`, `tenant_id`, `account_id`) across state transitions (CWE-639).
+- 📜 **API Schema-Driven Crawling**: Ingests **OpenAPI 3.x** and **Swagger 2.0** specifications (`--schema`) and probes **GraphQL Introspection** endpoints.
+- 🔐 **Authenticated Scanning & Session Keep-Alive**: Supports static authorization headers/cookies, automated pre-scan login macros (`--login-url`), and continuous session health verification (`--auth-check-url`).
+- 🔒 **Security Headers & TLS**: Inspects HSTS, CSP (`unsafe-inline`, `unsafe-eval`, wildcards), Clickjacking, MIME-sniffing, and server version banners.
+- 🍪 **Cookie Hygiene**: Validates `HttpOnly`, `Secure`, `SameSite` (Lax/Strict), and modern `__Host-` / `__Secure-` prefix standards.
+- 📂 **Sensitive Dotfile & Exposure Audit**: Canary 404 baseline eliminates SPA catch-all false positives while detecting leaked `.env`, `.git/HEAD`, `.DS_Store`, and backup files.
+- 🌐 **CORS & Method Security**: Identifies arbitrary origin reflection with credentials, `Origin: null` trust, domain regex bypasses, and dangerous HTTP verbs (TRACE/XST).
+- ⏱️ **Rate Limiting & DoS Resilience**: Safe, non-destructive burst testing verifying HTTP 429 throttling and RateLimit-* headers.
+- 🔍 **Local Port & Database Sniffer**: `armorscan discover 127.0.0.1` detects active dev web servers and unauthenticated database exposures in under 1 second.
+- 🛡️ **Finding Suppression & Deduplication**: Filter accepted risks via `.armorscanignore` and deduplicate findings across multi-page crawls.
+- 📊 **Triple Reporting**: Rich interactive terminal dashboard, standalone zero-CDN dark-mode HTML report, and machine-readable JSON.
+- 🔄 **DevSecOps / CI/CD Quality Gate**: Exit code 1 enforcement via `--fail-under <SCORE>` to prevent vulnerable code from entering production.
+- 🛠️ **Remediation Patch Exporter**: Exports ready-to-use security configurations for **Nginx**, **Express.js (Helmet)**, and **FastAPI** (`--export-patch`).
 
 ---
 
@@ -37,11 +62,12 @@ cd ArmorScan
 uv venv --python 3.12
 source .venv/bin/activate
 
-# Install ArmorScan in editable mode with development dependencies
+# Install ArmorScan in editable mode with all dev dependencies
 uv pip install -e ".[dev]"
 
 # Verify installation
 armorscan --version
+# Output: ArmorScan 0.4.0
 ```
 
 ---
@@ -53,7 +79,7 @@ armorscan --version
 # Scan a local development server
 armorscan http://localhost:8000
 
-# Scan an external staging or production domain
+# Scan a production application
 armorscan https://myapp.example.com
 ```
 
@@ -71,19 +97,54 @@ armorscan https://myapp.example.com \
   --fail-under 85
 ```
 
-### 4. Smart Web Crawler & Multi-Page Discovery (v0.2.0)
+### 4. Smart Web Crawler & Multi-Page Discovery
 ```bash
 # Automatically discover internal links, routes, and forms up to depth 3
 armorscan https://myapp.example.com --crawl --depth 3 --max-pages 25
 ```
 
-### 5. Local Port & Database Sniffer (`armorscan discover`) (v0.2.0)
+### 5. API Schema-Driven Scanning (OpenAPI & Swagger)
 ```bash
-# Discover active web servers (3000, 5173, 8000) and unauthenticated databases (Redis, Mongo, Postgres)
+# Ingest OpenAPI 3.x / Swagger 2.0 schema from local file or remote URL
+armorscan https://api.example.com --schema https://api.example.com/openapi.json
+armorscan https://api.example.com --schema ./openapi.yaml
+```
+
+### 6. Authenticated Scanning & Session Keep-Alive
+```bash
+# Using static token:
+armorscan https://myapp.example.com \
+  --auth-header "Authorization: Bearer my-secret-jwt-token" \
+  --auth-check-url "/api/v1/users/me"
+
+# Using automated login macro:
+armorscan https://myapp.example.com \
+  --login-url "/api/v1/auth/login" \
+  --login-body '{"username":"admin","password":"secretpassword"}' \
+  --login-token-path "data.access_token" \
+  --auth-check-url "/api/v1/dashboard"
+```
+
+### 7. Suppressing Accepted Findings (`.armorscanignore`)
+```bash
+armorscan https://myapp.example.com --ignore-file .armorscanignore
+```
+Sample `.armorscanignore`:
+```ini
+# Suppress missing HSTS on internal dev domain
+RULE_ID: MISSING_HSTS
+URL_PATTERN: https://.*\.internal\.dev/.*
+REASON: Internal domain behind private VPN terminating TLS at proxy
+EXPIRES: 2026-12-31
+```
+
+### 8. Local Port & Database Sniffer (`armorscan discover`)
+```bash
+# Discover active dev web servers (3000, 5173, 8000, 8080) and unauthenticated databases (Redis, Mongo, Postgres, MySQL)
 armorscan discover 127.0.0.1
 ```
 
-### 6. Auto-Remediation Patch Exporter (`--export-patch`) (v0.2.0)
+### 9. Auto-Remediation Patch Exporter (`--export-patch`)
 ```bash
 # Export production-ready configuration files directly to disk:
 armorscan --export-patch nginx    # Generates security-headers.conf
@@ -91,44 +152,73 @@ armorscan --export-patch express  # Generates securityMiddleware.js
 armorscan --export-patch fastapi  # Generates security_middleware.py
 ```
 
-### 7. Testing with Self-Signed Certificates (Localhost SSL)
+### 10. Real-World Target Benchmark (`armorscan benchmark`)
 ```bash
-armorscan https://localhost:3000 --insecure
+# Benchmark against internal controlled FastAPI testbed (100% precision & recall quality gate)
+armorscan benchmark
+
+# Benchmark against OWASP Juice Shop:
+docker compose -f benchmark/docker-compose.yml up -d juice-shop
+armorscan benchmark juice-shop
+
+# Benchmark against Damn Vulnerable Web Application (DVWA):
+docker compose -f benchmark/docker-compose.yml up -d dvwa
+armorscan benchmark dvwa
 ```
 
 ---
 
-## 🛠️ CLI Options Reference
+## 🛡️ The 13 Security Audit Modules
 
-```text
-usage: armorscan [-h] [--fail-under SCORE] [--html [PATH]] [--no-html]
-                 [--json [PATH]] [-k] [--concurrency CONCURRENCY]
-                 [--burst BURST] [-q] [-v]
-                 [target]
-
-🛡️ ArmorScan: Modern, fast, developer-friendly DAST & web security scanner.
-
-positional arguments:
-  target                Target URL to scan (e.g. https://example.com or http://localhost:8000)
-
-options:
-  -h, --help            Show this help message and exit
-  --fail-under SCORE    CI/CD Quality Gate: Fail with exit code 1 if security score is below this threshold (0-100).
-  --html [PATH]         Output path for interactive standalone HTML report (default: armorscan-report.html).
-  --no-html             Disable HTML report generation.
-  --json [PATH]         Output path for machine-readable JSON report.
-  -k, --insecure        Disable SSL/TLS certificate verification (useful for self-signed development certs).
-  --concurrency N       Number of concurrent modules to execute (default: 5).
-  --burst N             Number of concurrent burst requests for rate limiting test (default: 18).
-  -q, --quiet           Quiet mode: suppress ASCII banner and live progress.
-  -v, --version         Show program's version number and exit.
-```
+| Module | Category | CWE | OWASP Top 10 | Primary Verification Target |
+| :--- | :--- | :-: | :---: | :--- |
+| **`headers`** | Configuration | CWE-693 | A05:2021 | Strict CSP, HSTS, X-Frame-Options, Permissions-Policy, Server Version Banners |
+| **`tls_ssl`** | Transport | CWE-319 | A02:2021 | TLS 1.0/1.1 deprecation, weak ciphers, self-signed or expired certificates |
+| **`cookies`** | Session | CWE-614 | A01:2021 | `HttpOnly`, `Secure`, `SameSite` (Lax/Strict), `__Host-` prefix validation |
+| **`exposure`** | Information Leak | CWE-552 | A05:2021 | Leaked `.env`, `.git/HEAD`, `.DS_Store`, backup files, GraphQL Introspection |
+| **`cors`** | Access Control | CWE-942 | A01:2021 | Arbitrary Origin reflection with credentials, `Origin: null`, wildcard conflicts |
+| **`ratelimit`** | Availability | CWE-799 | A04:2021 | Missing rate-limiting headers, HTTP 429 response handling under burst load |
+| **`reflection`** | Injection | CWE-79 | A03:2021 | Context-aware HTML entity encoding, script context, attribute reflection |
+| **`redirect`** | Access Control | CWE-601 | A01:2021 | Unvalidated redirection parameters (`next`, `url`, `redirect`, `dest`) |
+| **`error_leak`** | Information Leak | CWE-209 | A05:2021 | Stack traces, SQLite/PostgreSQL/MySQL errors, framework debug screens |
+| **`jwt_audit`** | Authentication | CWE-345 | A07:2021 | Insecure `alg: none`, missing `exp`, sensitive credentials in payload |
+| **`secret_leak`**| Information Leak | CWE-798 | A07:2021 | Leaked OpenAI keys, AWS access keys, GitHub PATs, Stripe secrets, webhooks |
+| **`authz_check`**| Access Control | CWE-306 | A01:2021 | Missing authentication gates on private/internal API endpoints |
+| **`multi_step`** | Business Logic | CWE-639 | A01:2021 | Broken Object Level Authorization (BOLA/IDOR) & tenant isolation failures |
 
 ---
 
-## 🤖 GitHub Actions CI/CD Pipeline Example
+## 📊 Ground Truth Benchmark & Accuracy Metrics (v0.4.0)
 
-Add this step to your `.github/workflows/security.yml`:
+ArmorScan is evaluated against a controlled ground-truth laboratory (`benchmark/labapp/`) containing paired vulnerable and safely-remediated endpoints across all 12 core vulnerability classes.
+
+### Measured Accuracy Metrics (Reproducible Quality Gate):
+
+| Module | True Positives (TP) | False Positives (FP) | False Negatives (FN) | Precision | Recall | F1-Score | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `authz_check` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `cookies` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `cors` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `error_leak` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `exposure` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `headers` | 6 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `jwt_audit` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `multi_step` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `ratelimit` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
+| **OVERALL** | **28** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
+
+### Real-World Vulnerable Application Benchmarks:
+- **OWASP Juice Shop** (`bkimminich/juice-shop:v16.0.0`): Angular SPA, Express REST API, SQLite. Evaluates OpenAPI extraction, Express technology banners, CORS reflection, and verifies zero false positives on SPA HTML 200 catch-alls.
+- **Damn Vulnerable Web Application (DVWA)** (`vulnerables/web-dvwa:latest`): Classic PHP/MySQL application evaluating reflected XSS, open redirects, server headers, and cookie hygiene.
+
+---
+
+## 🤖 GitHub Actions CI/CD Pipeline
+
+Add this workflow to `.github/workflows/security.yml`:
 
 ```yaml
 name: Security Audit Gate
@@ -148,7 +238,7 @@ jobs:
 
       - name: Install ArmorScan
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install .
 
       # Start your test server (e.g., Docker, FastAPI, Express)
@@ -178,63 +268,10 @@ jobs:
 
 ---
 
-## 📊 Ground Truth Benchmark & Accuracy Metrics (v0.4.0 Lab)
-
-To ensure real-world effectiveness and eliminate false positives, ArmorScan is continuously evaluated against a controlled ground-truth security laboratory (`benchmark/labapp/`) containing verified vulnerable and safely-remediated endpoints for all 12 core vulnerability classes.
-
-### Measured Accuracy Metrics (Zero-Fabrication, Fully Reproducible):
-
-| Module | True Positives (TP) | False Positives (FP) | False Negatives (FN) | Precision | Recall | F1-Score | Status |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| `authz_check` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `cookies` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `cors` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `error_leak` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `exposure` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `headers` | 6 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `jwt_audit` | 3 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `multi_step` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `ratelimit` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `redirect` | 1 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `reflection` | 2 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| `secret_leak` | 5 | 0 | 0 | 100.0% | 100.0% | 1.000 | ✅ PASS |
-| **OVERALL** | **28** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | **✅ PASS** |
-
-### Real-World Vulnerable Application Benchmarking (Juice Shop & DVWA):
-
-ArmorScan includes verified benchmark profiles for standard vulnerable test targets:
-- **OWASP Juice Shop** (`bkimminich/juice-shop:v16.0.0`): Modern Angular SPA, Express REST API, SQLite. Evaluates OpenAPI extraction, Express banners, CORS reflection, and verifies zero false positives on SPA HTML 200 catch-alls.
-- **Damn Vulnerable Web Application (DVWA)** (`vulnerables/web-dvwa:latest`): Classic PHP/MySQL application evaluating reflected XSS, open redirects, server headers, and cookie hygiene.
-
-```bash
-# 1. Start the target container with Docker Compose:
-docker compose -f benchmark/docker-compose.yml up -d juice-shop
-
-# 2. Execute benchmark against OWASP Juice Shop:
-armorscan benchmark juice-shop
-# Or with dedicated script:
-python scripts/benchmark_external.py --target juice-shop
-
-# 3. Benchmark against DVWA:
-docker compose -f benchmark/docker-compose.yml up -d dvwa
-armorscan benchmark dvwa
-```
-
-### Running the Controlled Lab Benchmark:
-```bash
-# Direct CLI execution (automatically launches labapp on 127.0.0.1:8888)
-armorscan benchmark
-
-# Or via script with custom CI thresholds:
-python scripts/run_benchmark.py --min-precision 0.95 --min-recall 0.95
-```
-
----
-
 ## 🧪 Running the Test Suite
 
 ```bash
-# Execute all 124+ automated unit, integration, and benchmark tests
+# Execute all 125 automated unit, integration, and benchmark tests
 pytest -v
 ```
 
@@ -242,5 +279,3 @@ pytest -v
 
 ## 📄 License
 ArmorScan is distributed under the [MIT License](LICENSE).
-
-
