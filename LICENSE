@@ -19,3 +19,41 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+--------------------------------------------------------------------------------
+LEGAL DISCLAIMER & ETHICAL USE STATEMENT (SORUMLULUK REDDİ VE YASAL UYARI)
+--------------------------------------------------------------------------------
+ArmorScan is developed and distributed exclusively for educational, defensive,
+and authorized security auditing purposes.
+
+1. AUTHORIZED USE ONLY:
+Permission to use this Software is contingent upon the user having explicit,
+prior, and written authorization from the owner or authorized administrator
+of any target system, network, or application being scanned.
+
+2. PROHIBITION OF ILLEGAL OR MALICIOUS USE:
+Using this Software against targets without prior authorization is strictly
+forbidden and may constitute a criminal offense under applicable regional,
+national, and international computer crime and cybersecurity laws (including
+but not limited to the United States Computer Fraud and Abuse Act (CFAA),
+the United Kingdom Computer Misuse Act 1990, the EU Cybercrime Directive,
+and the Turkish Penal Code Articles 243-246).
+
+3. DISCLAIMER OF LIABILITY & NO WARRANTY:
+IN NO EVENT SHALL THE AUTHORS, COPYRIGHT HOLDERS, MAINTAINERS, OR CONTRIBUTORS
+BE LIABLE FOR ANY CLAIM, DAMAGES, LOSS OF DATA, SERVICE DOWNTIME, CIVIL OR
+CRIMINAL PENALTIES, OR OTHER LIABILITIES ARISING FROM, OUT OF, OR IN CONNECTION
+WITH THE USE, MISUSE, MODIFICATION, OR DISTRIBUTION OF THIS SOFTWARE.
+ALL OPERATIONAL AND LEGAL RISKS RESIDE ENTIRELY WITH THE USER.
+
+--------------------------------------------------------------------------------
+TÜRKÇE SORUMLULUK REDDİ VE YASAL UYARI:
+Bu yazılım yalnızca yasal, yetkilendirilmiş ve savunma odaklı güvenlik denetimleri
+ile eğitim/araştırma faaliyetleri için sunulmaktadır. Yazılımın sistem sahiplerinin
+açık ve yazılı izni olmaksızın herhangi bir sistem, ağ veya uygulama üzerinde
+kullanılması kesinlikle yasaktır ve bilişim suçları kapsamında değerlendirilir
+(5237 sayılı Türk Ceza Kanunu Madde 243-246). Geliştiriciler ve telif hakkı
+sahipleri; yazılımın kötüye kullanımından, yetkisiz hedeflere yönelik taramalardan
+veya ortaya çıkabilecek herhangi bir maddi/manevi zarardan hiçbir şekilde hukuki
+veya cezai olarak sorumlu tutulamaz. Tüm yasal sorumluluk münhasıran kullanıcıya aittir.
+

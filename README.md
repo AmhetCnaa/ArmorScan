@@ -309,11 +309,33 @@ jobs:
 ## 🧪 Running the Test Suite
 
 ```bash
-# Execute all 125 automated unit, integration, and benchmark tests
+# Execute all 144 automated unit, integration, and benchmark tests
 pytest -v
 ```
 
 ---
 
+## ⚖️ Legal Disclaimer & Ethical Use Statement (Sorumluluk Reddi ve Yasal Uyarı)
+
+> [!CAUTION]
+> **IMPORTANT NOTICE / ÖNEMLİ YASAL UYARI:**  
+> ArmorScan is developed strictly for **authorized security auditing, defensive penetration testing, vulnerability assessment, and educational research purposes**.  
+> ArmorScan yalnızca **yetkilendirilmiş güvenlik denetimleri, savunma odaklı zafiyet taramaları ve akademik/eğitim amaçlı araştırmalar** için tasarlanmıştır.
+
+### 🌐 English
+- **Authorized Auditing Only:** You must obtain explicit, prior written authorization from the owner or authorized administrator of any system, network, API, or web application before conducting scans.
+- **Prohibition of Malicious Use:** Scanning, probing, or testing targets without authorization is illegal and strictly prohibited. Such actions may violate regional, national, and international cybersecurity laws (e.g., the United States Computer Fraud and Abuse Act (CFAA), the United Kingdom Computer Misuse Act 1990, and relevant EU directives).
+- **Limitation of Liability:** The creators, contributors, and copyright holders of ArmorScan assume **no liability** and are not responsible for any misuse, unauthorized scanning, operational disruption, downtime, data loss, or legal consequences resulting from the use of this tool.
+- **User Responsibility:** All legal, technical, and regulatory responsibilities arising from the execution of ArmorScan reside entirely with the user.
+
+### 🇹🇷 Türkçe
+- **Yalnızca Yetkili Denetimler:** ArmorScan'i herhangi bir web uygulaması, API, sunucu veya ağ üzerinde çalıştırmadan önce sistem sahibinden **açık, yazılı ve doğrulanabilir yasal izin** alınması zorunludur.
+- **Yetkisiz ve Kötü Niyetli Kullanım Yasağı:** Sistem sahiplerinin izni olmaksızın zafiyet taraması, port/parametre analizi veya bilgi toplama faaliyeti yürütmek kesinlikle yasaktır ve suç teşkil eder. Bu tür faaliyetler, 5237 sayılı Türk Ceza Kanunu (TCK Madde 243-246: Bilişim Alanında Suçlar) ve ilgili uluslararası mevzuat çerçevesinde adli ve cezai yaptırımlara tabidir.
+- **Sorumluluk Reddi:** ArmorScan geliştiricileri ve katkıcıları; aracın kötü niyetli kullanımından, yetkisiz hedeflere uygulanmasından, servis kesintilerinden (DoS), veri bozulmalarından veya doğabilecek adli/cezai soruşturmalardan **hiçbir koşul altında sorumlu tutulamaz**.
+- **Kullanıcı Sorumluluğu:** Aracın kullanımına ilişkin tüm yasal, idari ve teknik sorumluluk münhasıran testi gerçekleştiren şahıs veya kuruma aittir.
+
+---
+
 ## 📄 License
 ArmorScan is distributed under the [MIT License](LICENSE).
+
