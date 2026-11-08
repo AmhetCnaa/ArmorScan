@@ -26,8 +26,8 @@ from armorscan.core.models import ScanTarget
 DEFAULT_USER_AGENT = (
     f"ArmorScan/{__version__} (+https://github.com/AmhetCnaa/ArmorScan; Security Scanner)"
 )
-DEFAULT_TIMEOUT = httpx.Timeout(connect=3.0, read=6.0, write=3.0, pool=3.0)
-TURBO_TIMEOUT = httpx.Timeout(connect=1.5, read=3.0, write=1.5, pool=2.0)
+DEFAULT_TIMEOUT = httpx.Timeout(connect=1.5, read=1.5, write=1.5, pool=1.5)
+TURBO_TIMEOUT = httpx.Timeout(connect=1.0, read=1.5, write=1.0, pool=1.0)
 
 
 class HttpResponse:
@@ -146,6 +146,7 @@ class HttpClient:
             resolved_proxy = None
             verify_ssl = False  # Localhost often uses self-signed or HTTP
 
+        kwargs.setdefault("http2", target.is_https)
         return cls(verify_ssl=verify_ssl, proxy=resolved_proxy, auth_config=auth_config, **kwargs)
 
     async def __aenter__(self) -> HttpClient:

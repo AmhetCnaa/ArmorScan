@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "armorscan"
-version = "1.1.0"
+version = "1.1.1"
 description = "Modern, fast, developer-friendly DAST & Security Scanner CLI for localhost and production web targets."
 readme = "README.md"
 authors = [

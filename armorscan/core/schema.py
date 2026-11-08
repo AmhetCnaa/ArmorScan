@@ -238,11 +238,11 @@ class OpenApiParser:
                 if endpoints:
                     return target_url, endpoints
 
-        # Auto-probe common schema paths
-        for path in COMMON_OPENAPI_PATHS:
+        # Auto-probe common schema paths concurrently
+        async def _probe_schema_path(path: str) -> Tuple[Optional[str], List[ApiEndpoint]]:
             target_url = urljoin(base_url, path)
             try:
-                resp = await client.get(target_url)
+                resp = await client.get(target_url, timeout=1.5)
                 if resp.ok and resp.status_code == 200:
                     # Case 1: Direct JSON or YAML
                     if "paths" in resp.text or "swagger" in resp.text or "openapi" in resp.text:
@@ -253,7 +253,7 @@ class OpenApiParser:
                     # Case 2: Swagger UI HTML or swagger-ui-init.js
                     if "swagger-ui" in resp.text.lower() or "<title>swagger ui" in resp.text.lower():
                         init_url = urljoin(target_url, "swagger-ui-init.js")
-                        init_resp = await client.get(init_url)
+                        init_resp = await client.get(init_url, timeout=1.5)
                         if init_resp.ok and ("swaggerDoc" in init_resp.text or "openapi" in init_resp.text):
                             doc = cls._extract_swagger_doc_from_js(init_resp.text)
                             if doc:
@@ -261,7 +261,14 @@ class OpenApiParser:
                                 if endpoints:
                                     return init_url, endpoints
             except Exception:
-                continue
+                pass
+            return None, []
+
+        import asyncio
+        probe_results = await asyncio.gather(*[_probe_schema_path(p) for p in COMMON_OPENAPI_PATHS])
+        for found_url, found_eps in probe_results:
+            if found_url and found_eps:
+                return found_url, found_eps
 
         return None, []
 
@@ -308,25 +315,29 @@ class GraphQLAuditor:
         """
         candidate_paths = [path] if path else COMMON_GRAPHQL_PATHS
 
-        for candidate in candidate_paths:
+        async def _probe_gql(candidate: str) -> Tuple[bool, Optional[str], List[ApiEndpoint]]:
             if not candidate:
-                continue
+                return False, None, []
             gql_url = urljoin(base_url, candidate)
-
             try:
-                # 1. Probe with POST JSON introspection query
                 resp = await client.post(
                     gql_url,
                     json={"query": GRAPHQL_INTROSPECTION_QUERY},
                     headers={"Content-Type": "application/json"},
+                    timeout=1.5,
                 )
-
                 if resp.ok and resp.status_code == 200 and "__schema" in resp.text:
                     endpoints = cls._extract_graphql_operations(resp.text, candidate)
                     return True, gql_url, endpoints
-
             except Exception:
-                continue
+                pass
+            return False, None, []
+
+        import asyncio
+        results = await asyncio.gather(*[_probe_gql(c) for c in candidate_paths if c])
+        for active, g_url, eps in results:
+            if active:
+                return True, g_url, eps
 
         return False, None, []
 

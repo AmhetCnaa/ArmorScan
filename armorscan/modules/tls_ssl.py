@@ -155,7 +155,7 @@ class TlsSslModule(BaseModule):
         try:
             cert_info = await asyncio.wait_for(
                 loop.run_in_executor(None, self._fetch_peer_cert, target.host, target.port),
-                timeout=2.0,
+                timeout=1.5,
             )
         except Exception as e:
             # If TLS handshake fails, record finding

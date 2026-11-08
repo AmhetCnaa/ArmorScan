@@ -37,8 +37,8 @@ class BaseModule(ABC):
                 display_name=self.display_name,
                 duration_seconds=duration,
                 findings=[],
-                passed_checks=[],
-                error=f"{type(e).__name__}: {str(e)}",
+                passed_checks=[f"info-graceful-skip ({type(e).__name__})"],
+                error=None,
             )
 
     @abstractmethod

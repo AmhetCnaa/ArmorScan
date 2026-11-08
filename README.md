@@ -1,7 +1,7 @@
 <div align="center">
 
   <a href="https://github.com/AmhetCnaa/ArmorScan">
-    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v1.1.0 Hero Banner" width="100%" />
+    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v1.1.1 Hero Banner" width="100%" />
   </a>
 
   <br />
@@ -13,11 +13,11 @@
 
   <p align="center">
     <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
-    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v1.1.0"><img src="https://img.shields.io/badge/Release-v1.1.0-10B981?style=flat-square&logo=github" alt="Release v1.1.0" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/Release-v1.1.1-10B981?style=flat-square&logo=github" alt="Release v1.1.1" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
     <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
     <a href="armorscan/templates/"><img src="https://img.shields.io/badge/Templates-29%2B%20Rules-8B5CF6?style=flat-square" alt="29+ YAML Rules" /></a>
-    <a href="tests/"><img src="https://img.shields.io/badge/Tests-191%2F191%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="191/191 Tests Passed" /></a>
+    <a href="tests/"><img src="https://img.shields.io/badge/Tests-193%2F193%20Passed-22C55E?style=flat-square&logo=pytest&logoColor=white" alt="193/193 Tests Passed" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-6366F1?style=flat-square" alt="License MIT + Ethical Clause" /></a>
     <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
   </p>

@@ -178,6 +178,8 @@ class ScanTarget(BaseModel):
     is_https: bool
     is_localhost: bool
     discovered_paths: List[str] = Field(default_factory=list)
+    audit_routes: List[str] = Field(default_factory=list)
+    discovered_forms_count: int = 0
 
     @classmethod
     def from_url(cls, url: str) -> ScanTarget:

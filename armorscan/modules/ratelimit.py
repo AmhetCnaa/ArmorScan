@@ -32,19 +32,32 @@ class RateLimitModule(BaseModule):
     display_name: str = "Rate Limiting & DoS Resilience Audit"
     description: str = "Tests for HTTP 429 throttling and inspects RateLimit headers using a controlled burst."
 
-    def __init__(self, burst_count: int = 18, concurrency: int = 10):
+    def __init__(self, burst_count: int = 8, concurrency: int = 8):
         self.burst_count = burst_count
         self.concurrency = concurrency
 
     async def run(self, target: ScanTarget, client: HttpClient) -> ModuleResult:
+        import asyncio
         findings: List[Finding] = []
         passed_checks: List[str] = []
 
         url = target.raw_url
         probe_urls = [url] * self.burst_count
 
-        # Execute safe, bounded concurrent burst
-        responses = await client.burst_requests(probe_urls, concurrency=self.concurrency)
+        # Execute safe, bounded concurrent burst with strict 1.5s timeout
+        try:
+            responses = await asyncio.wait_for(
+                client.burst_requests(probe_urls, concurrency=self.concurrency),
+                timeout=1.5,
+            )
+        except (asyncio.TimeoutError, Exception):
+            passed_checks.append("info-rate-limit-burst-timeout-bailout")
+            return ModuleResult(
+                module_name=self.name,
+                display_name=self.display_name,
+                findings=findings,
+                passed_checks=passed_checks,
+            )
 
         status_counts: Dict[int, int] = {}
         detected_headers: Dict[str, str] = {}

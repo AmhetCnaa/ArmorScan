@@ -26,11 +26,11 @@ IGNORED_EXTENSIONS = {
     ".exe", ".dmg", ".apk", ".iso",
 }
 
-# Link extraction regular expressions
-A_HREF_REGEX = re.compile(r"""<a\b[^>]*\bhref=["']([^"'#\s>]+)["']""", re.IGNORECASE)
-AREA_HREF_REGEX = re.compile(r"""<area\b[^>]*\bhref=["']([^"'#\s>]+)["']""", re.IGNORECASE)
-IFRAME_SRC_REGEX = re.compile(r"""<(?:iframe|frame)\b[^>]*\bsrc=["']([^"'#\s>]+)["']""", re.IGNORECASE)
-GENERIC_LINK_REGEX = re.compile(r"""(?:href|src|action)=["']([^"'#\s>]+)["']""", re.IGNORECASE)
+# Link extraction regular expressions (support double-quoted, single-quoted, and unquoted attributes)
+A_HREF_REGEX = re.compile(r"""<a\b[^>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)'|([^\s>"'#]+))""", re.IGNORECASE)
+AREA_HREF_REGEX = re.compile(r"""<area\b[^>]*?\bhref\s*=\s*(?:"([^"#]+)"|'([^'#]+)'|([^\s>"'#]+))""", re.IGNORECASE)
+IFRAME_SRC_REGEX = re.compile(r"""<(?:iframe|frame)\b[^>]*?\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>"']+))""", re.IGNORECASE)
+GENERIC_LINK_REGEX = re.compile(r"""(?:href|src|action)\s*=\s*(?:"([^"#\s>]+)"|'([^'#\s>]+)'|([^\s>"'#]+))""", re.IGNORECASE)
 
 # Form parsing regular expressions
 FORM_BLOCK_REGEX = re.compile(r"""<form\b([^>]*)>(.*?)</form>""", re.IGNORECASE | re.DOTALL)
@@ -62,6 +62,7 @@ class SpiderResult(BaseModel):
     base_url: str
     discovered_urls: List[str] = Field(default_factory=list)
     discovered_paths: List[str] = Field(default_factory=list)
+    audit_routes: List[str] = Field(default_factory=list)
     pages_crawled: int = 0
     forms: List[ExtractedForm] = Field(default_factory=list)
     fuzzable_parameters: Set[str] = Field(default_factory=set)
@@ -155,31 +156,38 @@ class DeepSpider:
 
         return forms
 
+    @staticmethod
+    def _first_group(match: re.Match) -> str:
+        for g in match.groups():
+            if g is not None:
+                return g.strip()
+        return ""
+
     def extract_links(self, page_url: str, html_text: str) -> List[str]:
         """Extract all hyperlinked URLs from anchors, areas, and iframes."""
         raw_links: Set[str] = set()
 
         # Extract <a> hrefs
         for m in A_HREF_REGEX.finditer(html_text):
-            val = m.group(1).strip()
+            val = self._first_group(m)
             if val and not val.startswith(("javascript:", "mailto:", "tel:", "#")):
                 raw_links.add(val)
 
         # Extract <area> hrefs
         for m in AREA_HREF_REGEX.finditer(html_text):
-            val = m.group(1).strip()
+            val = self._first_group(m)
             if val and not val.startswith(("javascript:", "mailto:", "tel:", "#")):
                 raw_links.add(val)
 
         # Extract <iframe/frame> srcs
         for m in IFRAME_SRC_REGEX.finditer(html_text):
-            val = m.group(1).strip()
+            val = self._first_group(m)
             if val and not val.startswith(("javascript:", "data:", "about:")):
                 raw_links.add(val)
 
         # Fallback generic scanner
         for m in GENERIC_LINK_REGEX.finditer(html_text):
-            val = m.group(1).strip()
+            val = self._first_group(m)
             if val and not val.startswith(("javascript:", "mailto:", "tel:", "#", "data:")):
                 raw_links.add(val)
 
@@ -231,12 +239,14 @@ class DeepSpider:
         visited: Set[str] = set()
         discovered_urls: Set[str] = {start_url}
         discovered_paths: Set[str] = {target.path or "/"}
+        audit_routes: Set[str] = {target.path or "/"}
         all_forms: List[ExtractedForm] = []
         fuzzable_parameters: Set[str] = set()
 
         # Seed parameters from start URL query string if present
         start_parsed = urlparse(start_url)
         if start_parsed.query:
+            audit_routes.add(f"{start_parsed.path or '/'}?{start_parsed.query}")
             for param in parse_qs(start_parsed.query):
                 fuzzable_parameters.add(param)
 
@@ -271,11 +281,18 @@ class DeepSpider:
             for f in page_forms:
                 for p in f.parameter_names:
                     fuzzable_parameters.add(p)
-                # If form action is in-scope, add action URL
+                # If form action is in-scope, add action URL and synthetic query route
                 if self.is_in_scope(f.action_url, target_scheme, target_host, target_port):
                     discovered_urls.add(f.action_url)
                     p_action = urlparse(f.action_url)
-                    discovered_paths.add(p_action.path or "/")
+                    action_path = p_action.path or "/"
+                    discovered_paths.add(action_path)
+                    audit_routes.add(action_path)
+                    if f.parameter_names:
+                        sample_query = "&".join(f"{pn}=1" for pn in f.parameter_names[:4])
+                        param_route = f"{action_path}?{sample_query}"
+                        discovered_paths.add(param_route)
+                        audit_routes.add(param_route)
 
             # Extract outgoing links
             links = self.extract_links(current_url, resp.text)
@@ -283,9 +300,14 @@ class DeepSpider:
                 if self.is_in_scope(lk, target_scheme, target_host, target_port):
                     discovered_urls.add(lk)
                     p_lk = urlparse(lk)
-                    discovered_paths.add(p_lk.path or "/")
+                    lk_path = p_lk.path or "/"
+                    discovered_paths.add(lk_path)
+                    audit_routes.add(lk_path)
 
                     if p_lk.query:
+                        full_rel = f"{lk_path}?{p_lk.query}"
+                        discovered_paths.add(full_rel)
+                        audit_routes.add(full_rel)
                         for param in parse_qs(p_lk.query):
                             fuzzable_parameters.add(param)
 
@@ -299,6 +321,7 @@ class DeepSpider:
             base_url=target.base_url,
             discovered_urls=sorted(list(discovered_urls)),
             discovered_paths=sorted(list(discovered_paths)),
+            audit_routes=sorted(list(audit_routes)),
             pages_crawled=len(visited),
             forms=all_forms,
             fuzzable_parameters=fuzzable_parameters,

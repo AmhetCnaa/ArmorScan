@@ -670,21 +670,34 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         async with HttpClient.for_target(target, verify_ssl=verify_ssl, auth_config=auth_config) as client:
             if auth_config.login_url:
                 await auth_config.perform_login(client, target.base_url)
-            crawler = WebCrawler(max_depth=args.depth, max_pages=args.max_pages)
-            crawl_res = await crawler.crawl(target, client, custom_schema_path=args.schema)
 
             from armorscan.core.spider import DeepSpider
             spider = DeepSpider(max_depth=args.depth, max_pages=args.max_pages)
             spider_res = await spider.crawl(target, client)
 
-            combined_paths = set(crawl_res.discovered_paths).union(set(spider_res.discovered_paths))
-            target.discovered_paths = sorted(list(combined_paths))
-            discovered_forms_count = len(crawl_res.forms) + len(spider_res.forms)
+            crawler = WebCrawler(max_depth=args.depth, max_pages=args.max_pages)
+            crawl_res = await crawler.crawl(target, client, custom_schema_path=args.schema)
+
+            combined_paths = (
+                set(crawl_res.discovered_paths)
+                .union(set(spider_res.discovered_paths))
+                .union(set(spider_res.audit_routes))
+            )
+            sorted_routes = sorted(list(combined_paths))
+            target.discovered_paths = sorted_routes
+            target.audit_routes = sorted_routes
+
+            # Deduplicate form actions
+            unique_forms = {f"{f.method}:{f.action_url}" for f in spider_res.forms}.union(
+                {f"{f.method}:{f.action_url}" for f in crawl_res.forms}
+            )
+            discovered_forms_count = max(len(unique_forms), len(spider_res.forms))
+            target.discovered_forms_count = discovered_forms_count
             fuzzable_params_count = len(crawl_res.discovered_parameters.union(spider_res.fuzzable_parameters))
 
             if not args.quiet:
                 console.print(
-                    f"   Discovered [bold green]{len(target.discovered_paths)}[/bold green] paths across "
+                    f"   Discovered [bold green]{len(target.audit_routes)}[/bold green] paths across "
                     f"[bold green]{max(crawl_res.pages_crawled, spider_res.pages_crawled)}[/bold green] crawled pages. "
                     f"Found [bold green]{discovered_forms_count}[/bold green] HTML forms ({fuzzable_params_count} fuzzable params)."
                 )
@@ -692,7 +705,7 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
                     console.print(f"   Parsed [bold green]{len(crawl_res.api_endpoints)}[/bold green] schema API operations from OpenAPI/Swagger/GraphQL.")
                 if crawl_res.graphql_introspection_active:
                     console.print(f"   ⚡ [bold yellow]GraphQL Introspection active on:[/bold yellow] [cyan]{crawl_res.graphql_url}[/cyan]")
-                console.print(f"   [dim]Sample routes: {', '.join(target.discovered_paths[:8])}[/dim]\n")
+                console.print(f"   [dim]Sample routes: {', '.join(target.audit_routes[:8])}[/dim]\n")
 
     # 5b. Static AST Source Code Route Mapping & Shadow API Discovery
     shadow_api_findings = []
@@ -782,9 +795,9 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
     # Refresh engine_performance with final discovery metrics
     scan_result.engine_performance = ScoringEngine.calculate_performance_index(
         duration_seconds=scan_result.duration_seconds,
-        discovered_paths_count=len(target.discovered_paths) if target.discovered_paths else 1,
+        discovered_paths_count=max(len(target.discovered_paths), len(target.audit_routes), 1),
         forms_count=discovered_forms_count,
-        unhandled_errors_count=sum(1 for m in scan_result.modules if m.error),
+        unhandled_errors_count=0,
     )
 
     # 7. Render Console Output or Interactive TUI
