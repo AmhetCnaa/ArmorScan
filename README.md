@@ -1,352 +1,106 @@
 <div align="center">
 
   <a href="https://github.com/AmhetCnaa/ArmorScan">
-    <img src="docs/assets/hero-banner.svg" alt="ArmorScan v1.1.1 Hero Banner" width="100%" />
+    <img src="docs/assets/hero-banner.svg" alt="ArmorScan Banner" width="100%" />
   </a>
 
   <br />
   <br />
 
   <p align="center">
-    <em>"Turbo Speed & Deep Spider: Next-generation, non-destructive DAST, Micro-Timeout Fast-Bailout (<5s), Deep HTML Form/Parameter Spider, and 100/100 Engine Performance Index — with 0 False Positives."</em>
+    <strong>High-velocity, non-destructive dynamic application security testing (DAST) for modern stacks.</strong><br />
+    Zero false positives • Micro-timeout fast bailout (&lt; 8.5s) • Deep spider &amp; protocol resilience • Air-gapped reporting.
   </p>
 
   <p align="center">
-    <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11 | 3.12" /></a>
-    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/Release-v1.1.1-10B981?style=flat-square&logo=github" alt="Release v1.1.1" /></a>
-    <a href="#-real-world-battle-tested-benchmarks-v111"><img src="https://img.shields.io/badge/Scan%20Velocity-%3C8s%20Turbo-brightgreen?style=flat-square" alt="Scan Velocity" /></a>
-    <a href="#-real-world-battle-tested-benchmarks-v111"><img src="https://img.shields.io/badge/Engine%20Index-100%2F100%20Apex-blueviolet?style=flat-square" alt="Engine Performance" /></a>
-    <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/OWASP%20Juice%20Shop-83.3%25%20Recall-F59E0B?style=flat-square&logo=owasp&logoColor=white" alt="OWASP Juice Shop 83.3% Recall" /></a>
-    <a href="benchmark/juice_shop_results.md"><img src="https://img.shields.io/badge/False%20Positives-0%20(100%25%20Precision)-06B6D4?style=flat-square" alt="0 False Positives" /></a>
-    <a href="tests/"><img src="https://img.shields.io/badge/Tests-193%2F193%20Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Tests" /></a>
-    <a href="#-pure-svg-visual-attack-surface--threat-topology-map"><img src="https://img.shields.io/badge/Topology%20Map-Pure%20SVG%20Zero--CDN-blue?style=flat-square" alt="Air-Gapped Topology" /></a>
-    <a href="armorscan/templates/"><img src="https://img.shields.io/badge/Templates-29%2B%20Rules-8B5CF6?style=flat-square" alt="29+ YAML Rules" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical%20Clause-6366F1?style=flat-square" alt="License MIT + Ethical Clause" /></a>
-    <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Status" /></a>
+    <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.11%20%7C%203.12-18181b?style=flat-square&logo=python&logoColor=a1a1aa" alt="Python 3.11 | 3.12" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/Release-v1.1.1-18181b?style=flat-square&logo=github&logoColor=10b981" alt="Release v1.1.1" /></a>
+    <a href="#real-world-battle-tested-benchmarks"><img src="https://img.shields.io/badge/Scan%20Velocity-%3C8.5s-18181b?style=flat-square&logoColor=10b981" alt="Scan Velocity" /></a>
+    <a href="#real-world-battle-tested-benchmarks"><img src="https://img.shields.io/badge/Precision-100%25%20(0%20FP)-18181b?style=flat-square&logoColor=10b981" alt="0 False Positives" /></a>
+    <a href="#real-world-battle-tested-benchmarks"><img src="https://img.shields.io/badge/Engine%20Index-100%2F100%20Apex-18181b?style=flat-square&logoColor=10b981" alt="Apex Engine Index" /></a>
+    <a href="tests/"><img src="https://img.shields.io/badge/Tests-193%2F193%20Passed-18181b?style=flat-square&logo=pytest&logoColor=10b981" alt="Tests" /></a>
+    <a href="armorscan/templates/"><img src="https://img.shields.io/badge/Templates-29%2B%20Rules-18181b?style=flat-square&logoColor=a1a1aa" alt="Templates" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT%20%2B%20Ethical-18181b?style=flat-square&logoColor=a1a1aa" alt="License" /></a>
+    <a href="https://github.com/AmhetCnaa/ArmorScan/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AmhetCnaa/ArmorScan/ci.yml?style=flat-square&logo=githubactions&logoColor=10b981&label=CI&color=18181b" alt="CI Status" /></a>
   </p>
 
   <p align="center">
-    <a href="#-start-in-30-seconds"><strong>Quick Start</strong></a> &nbsp;•&nbsp;
-    <a href="#-static-ast-source-code-route-mapping---source-dir"><strong>AST Route Mapper</strong></a> &nbsp;•&nbsp;
-    <a href="#-ephemeral-asynchronous-outbound-callback-verifier"><strong>Blind SSRF</strong></a> &nbsp;•&nbsp;
-    <a href="#-concurrency--micro-burst-transaction-isolation-auditor"><strong>Concurrency</strong></a> &nbsp;•&nbsp;
-    <a href="#-protocol-resilience-websocket-cswsh--graphql"><strong>Protocols</strong></a> &nbsp;•&nbsp;
-    <a href="#-multi-role-bolaidor-permission-matrix"><strong>BOLA Matrix</strong></a> &nbsp;•&nbsp;
-    <a href="#-built-in-http-forward-proxy--live-traffic-auditor"><strong>Live Proxy</strong></a> &nbsp;•&nbsp;
-    <a href="#-real-world-battle-tested-benchmarks-v111"><strong>Live Benchmarks</strong></a>
+    <a href="#quick-start">Quick Start</a> &nbsp;•&nbsp;
+    <a href="#real-world-battle-tested-benchmarks">Live Benchmarks</a> &nbsp;•&nbsp;
+    <a href="#core-capabilities">Capabilities</a> &nbsp;•&nbsp;
+    <a href="#interactive-workstation--reporting">Reporting</a> &nbsp;•&nbsp;
+    <a href="#architecture">Architecture</a> &nbsp;•&nbsp;
+    <a href="#cicd-pipeline-gate">CI/CD Gate</a>
   </p>
 
 </div>
 
 ---
 
-## ⚡ Start in 30 Seconds
+## Quick Start
+
+### 1. Installation
+Install via `pip` or `pipx`:
 
 ```bash
-# 1. Install (via pip or pipx)
 pip install armorscan
+```
 
-# 2. Interactive Terminal Workstation (TUI) or Full HTML Topology Report
+### 2. Run an Audit
+Launch an interactive split-screen terminal workstation or output an air-gapped HTML topology report:
+
+```bash
+# Terminal workstation (TUI)
 armorscan http://localhost:3000 --tui
-armorscan http://localhost:3000 --html report.html
 
-# 3. Static AST Source Code Route Mapping & Shadow API Audit
-armorscan http://localhost:3000 --source-dir ./my-backend-app
-
-# 4. Multi-Role BOLA/IDOR Permission Matrix & Non-Destructive API Fuzzing
-armorscan http://localhost:3000 --matrix-roles "admin:Bearer <T1>,user:Bearer <T2>,guest:" --fuzz
-
-# 5. Live Background HTTP Forward Proxy & Passive Traffic Auditor
-armorscan proxy --port 8080 --auto-audit
-
-# 6. Self-Healing AI: Automated Remediation Pull Request to GitHub
-armorscan https://my-app.com --auto-pr --github-repo "owner/repo" --github-token "$GH_TOKEN"
-
-# 7. CI/CD Quality Gate with GitHub SARIF 2.1.0 Code Scanning
-armorscan https://staging.example.com --fail-under 80 --sarif results.sarif
+# Deep spider crawling with standalone HTML report
+armorscan http://localhost:3000 --crawl --html report.html
 ```
 
----
-
-## 🧬 Static AST Source Code Route Mapping (`--source-dir`)
-
-Bridge SAST and DAST without executing untrusted code. By analyzing your backend repository using Python's native `ast` engine and AST-based regex parsing for JavaScript/TypeScript, ArmorScan automatically discovers undocumented routes, expected query/body parameters, and authentication middleware gaps:
+### 3. Advanced Discovery & Protocol Auditing
 
 ```bash
-armorscan http://localhost:3000 --source-dir ./my-backend-app
-```
+# Hybrid SAST+DAST: map undocumented endpoints from backend source code
+armorscan http://localhost:3000 --source-dir ./my-app
 
-- 🐍 **Supported Frameworks:** FastAPI (`@app.get`, `@router.post`), Flask (`@app.route`), Django (`path()`, `re_path()`), Express.js (`app.get`, `router.post`).
-- 👻 **Shadow & Administrative API Detection:** Automatically flags sensitive internal/admin routes (`/admin/...`, `/internal/...`, `/debug/...`) lacking authentication guards (`Depends()`, `@login_required`, `authMiddleware`) as `SHADOW_API_UNPROTECTED_ROUTE` (**HIGH**, CWE-306).
-- 🎯 **Target Injection:** Newly discovered endpoints are seamlessly fed into ArmorScan's active DAST audit queue, expanding test coverage across hidden backend services.
+# Multi-role BOLA / IDOR access control matrix
+armorscan http://localhost:3000 --matrix-roles "admin:Bearer <T1>,user:Bearer <T2>,guest:"
 
----
-
-## 📡 Ephemeral Asynchronous Outbound Callback Verifier
-
-Detect Blind SSRF and unvalidated webhook processing with 100% mathematical certainty. ArmorScan spins up an ephemeral, non-destructive local listener bound strictly to `127.0.0.1` and passes unique canary URLs to callback and webhook parameters:
-
-```bash
-# Audited automatically during standard scan or custom runs
-armorscan http://localhost:3000
-```
-
-- 🔒 **Zero External Leakage:** Uses ephemeral local socket binding (`http://127.0.0.1:<port>/verify/<uuid>`), completely avoiding untrusted third-party Collaborator or webhook services.
-- 🎯 **100% Mathematical Proof:** Vulnerabilities are flagged as `UNVALIDATED_ASYNC_OUTBOUND_CALLBACK` (**HIGH**, CWE-918, `CONFIRMED`) ONLY when the backend worker dispatches an HTTP request containing the exact cryptographically generated UUID token.
-
----
-
-## ⚡ Concurrency & Micro-Burst Transaction Isolation Auditor
-
-Audit race conditions, double-spend anomalies, and missing row-level database locks without creating denial of service:
-
-```bash
-# Evaluates state-changing endpoints (coupons, vouchers, balance, checkout)
-armorscan http://localhost:3000
-```
-
-- ⏱️ **Synchronized Micro-Burst Barrier:** Leverages Python's `asyncio.Event` to coordinate 8 to 15 parallel requests, releasing them simultaneously with sub-2-millisecond jitter.
-- 🛡️ **Race Flaw Detection:** Analyzes HTTP status codes and responses. When multiple requests claim single-use resources successfully (multiple HTTP 200/201 responses), flags `CONCURRENCY_ISOLATION_ANOMALY` (**HIGH**, CWE-362, `FIRM`).
-
----
-
-## 🔄 Protocol Resilience: WebSocket (CSWSH) & GraphQL
-
-Modern APIs rely heavily on real-time protocols and unified query layers. ArmorScan audits protocol-level resilience against CSRF and DoS vectors:
-
-- 🔌 **Cross-Site WebSocket Hijacking (CSWSH):** Tests WebSocket upgrade handshakes (`HTTP 101 Switching Protocols`) with untrusted foreign `Origin: https://evil-attacker.com` headers. Flags `WEBSOCKET_MISSING_ORIGIN_VALIDATION` (**HIGH**, CWE-1385, `CONFIRMED`) if the handshake succeeds without validation.
-- ⚡ **GraphQL Unbounded Batching & Query Amplification:** Probes GraphQL endpoints with 15+ aliased sub-queries and array batching payloads. Flags `GRAPHQL_UNBOUNDED_BATCHING` (**MEDIUM**, CWE-770, `CONFIRMED`) when backends lack query cost analysis or batch limits.
-
----
-
-## 🔐 Multi-Role BOLA/IDOR Permission Matrix
-
-Broken Object Level Authorization (BOLA/IDOR) is the most critical vulnerability in modern API architectures. ArmorScan now automatically derives and verifies a **Role Access Control Matrix** across multi-tier identities using non-destructive, read-only differential probes:
-
-```bash
-armorscan http://localhost:3000 \
-  --matrix-roles "admin:Bearer <T1>,user:Bearer <T2>,guest:"
-```
-
-- 🚨 **Unauthenticated BOLA (`CRITICAL`):** Flags when private user objects or orders return `200 OK` with sensitive records to unauthenticated guest visitors.
-- ⚠️ **Cross-Tenant IDOR (`HIGH`):** Flags when Tenant B's credentials can retrieve Tenant A's private records without authorization checks.
-- 📊 **Visual Access Matrix Grid:** Generates a real-time role permission table directly in the standalone HTML report (`armorscan-report.html`).
-
----
-
-## 🛰️ Built-in HTTP Forward Proxy & Live Traffic Auditor
-
-Route your browser, Cypress/Playwright suites, or mobile simulator traffic through ArmorScan to passively audit real-world traffic on the fly:
-
-```bash
-armorscan proxy --port 8080 --auto-audit
-```
-
-```text
-[GET 200] /api/user/profile -> 🛡️ 3 Findings: MISSING_CSP, COOKIE_MISSING_HTTPONLY, AWS_KEY_LEAK
-[GET 200] /static/main.js -> Clean
-```
-
-- ⚡ **Pure Asyncio Engine:** Zero external dependencies (no Java, no Mitmproxy required).
-- 🔒 **HTTPS Tunneling:** Supports full TLS tunneling via standard HTTP `CONNECT`.
-- 👁️ **Live Passive Audits:** Automatically inspects new routes for missing CSP, HSTS, insecure cookies without `HttpOnly`/`Secure`, leaked API keys (OpenAI, AWS, JWTs), and database stack traces.
-
----
-
-## 🚀 "Self-Healing AI" — Automated GitHub Pull Request Opener
-
-Close the remediation loop entirely. Instead of leaving developers with a diff to manually copy-paste, ArmorScan can automatically branch your repository, commit the patch, and open a ready-to-merge Pull Request:
-
-```bash
-armorscan https://my-app.com \
-  --auto-pr \
-  --github-repo "owner/repo" \
-  --github-token "$GH_TOKEN"
-```
-
-1. **Synthesizes Patch:** Derives verified framework remediation for Express, FastAPI, Django, or Nginx.
-2. **Creates Branch:** Spawns `armorscan/security-patch-<timestamp>` from the default branch.
-3. **Commits Changes:** Updates the affected configuration or middleware file with a standardized commit message.
-4. **Opens Pull Request:** Submits a rich Markdown PR detailing the CWE, severity, business impact, and verification instructions.
-
----
-
-## 💥 API Fuzzing & Anomaly Crash Detector
-
-Safely mutate parameter boundaries without sending destructive exploits or corrupting database records:
-
-```bash
+# Safe parameter boundary fuzzing & race-condition auditor
 armorscan http://localhost:3000 --fuzz
 ```
 
-- 🔢 **Numeric Extremes:** Tests 64-bit bounds (`9223372036854775807`, `-9223372036854775808`), `NaN`, `-1`, and floating-point epsilons.
-- 🔤 **String & Buffer Bounds:** Probes with 1024-4096 character buffers, Unicode Right-to-Left (RTL) override (`\u202E`), and null-byte sequences (`%00`).
-- 🧩 **JSON Type Confusion:** Mutates primitive fields into objects (`{}`), arrays (`[]`), and `null`.
-- 🛡️ **Zero False Positive Anomaly Criteria:**
-  - `UNHANDLED_EXCEPTION_500_ANOMALY` (**HIGH**): Server crashes with HTTP 500/502/503 when baseline was healthy.
-  - `POTENTIAL_RESOURCE_EXHAUSTION_LAG` (**MEDIUM**): Latency degrades by >10x baseline (> 2.0s).
-
 ---
 
-## 🛡️ Autonomous Sentinel — Continuous Security Watcher
+## Real-World Battle-Tested Benchmarks
 
-Transform ArmorScan into a lightweight, zero-AI, 100% deterministic background security guardian. Sentinel runs continuous scans at fixed intervals, computes state differences against your baseline, and dispatches rich alert webhooks to **Discord**, **Slack**, or **Telegram** **ONLY** when a new vulnerability emerges or the security score drops:
+ArmorScan v1.1.1 is tested against production-grade, intentionally vulnerable industry targets across distinct technology stacks. Every metric below is **empirically audited over live network conditions**:
 
-```bash
-# Monitor localhost every 1 hour and alert Discord & Slack on regressions
-armorscan watch http://localhost:3000 \
-  --interval 1h \
-  --baseline armorscan-baseline.json \
-  --webhook "https://discord.com/api/webhooks/..." \
-  --slack-webhook "https://hooks.slack.com/services/..."
-
-# Monitor production with Telegram alerts
-armorscan watch https://api.example.com \
-  --interval 24h \
-  --telegram-token "123456:ABC-DEF..." \
-  --telegram-chat "-100123456789"
-```
-
-- 🪶 **Ultra-Lightweight:** Consumes < 25 MB RAM and 0% CPU while sleeping.
-- 🎯 **Zero Spam Tolerance:** Silent when the security posture is unchanged; alerts immediately on new flaws.
-- 📈 **Score Regression Alerts:** Fires high-priority alerts if score decreases (e.g., `85 -> 60`).
-
----
-
-## 🤖 AI Vulnerability Storyteller & Auto-Patch Engine
-
-Stop handing developers raw stack traces without context. ArmorScan's dual-mode AI engine translates findings into executive business summaries and ready-to-apply unified git diffs:
-
-```bash
-armorscan http://localhost:3000 --ai-explain --ai-patch --repo-path ./my-app
-```
-
-- **Dual-Layer Architecture:**
-  1. **Offline / Rule-Based (Default):** Zero API keys or external services required. Deterministically generates hardened patches for **Express.js**, **FastAPI**, **Django**, and **Nginx**.
-  2. **AI-Assisted (Ollama, OpenAI, or Gemini):** When `OPENAI_API_KEY`, `GEMINI_API_KEY`, or local Ollama (`http://localhost:11434`) is present, synthesizes contextual unified diffs matching your repository's actual controllers.
-
-```diff
-diff --git a/routes/basket.js b/routes/basket.js
---- a/routes/basket.js
-+++ b/routes/basket.js
-@@ -10,6 +10,10 @@ router.get('/basket/:id', async (req, res) => {
-   const basket = await BasketModel.findByPk(req.params.id);
-   if (!basket) return res.status(404).json({ error: 'Not found' });
-+  // Enforce object-level tenant ownership check (ArmorScan Auto-Patch)
-+  if (basket.UserId !== req.user.id) {
-+    return res.status(403).json({ error: 'Forbidden: Unauthorized object access' });
-+  }
-   return res.json(basket);
- });
-```
-
----
-
-## 🌐 Interactive Attack Surface Topology Map
-
-Standalone HTML reports (`--html report.html`) now embed an air-gapped, zero-CDN interactive **Attack Surface & Risk Topology Graph**:
-- **Target Host (Center) ➔ Endpoints & Open Ports (Tier 1) ➔ Vulnerability Nodes (Tier 2)**.
-- **1-Click Card Focus:** Clicking any vulnerability node in the graph smoothly scrolls the page and highlights the corresponding finding card.
-- **Color-Coded Severities:** Instant visual clarity for Critical, High, and Medium risk vectors.
-
----
-
-## 🖥️ Interactive TUI Workstation
-
-Launch the split-screen terminal workstation (`--tui`) to navigate severity-ranked findings on the left while inspecting live HTTP differential evidence, 1-click `cURL` reproduction commands, and framework-specific remediation snippets on the right:
-
-<div align="center">
-  <img src="docs/assets/tui-preview.svg" alt="ArmorScan Interactive TUI Dashboard Preview" width="100%" />
-</div>
-
----
-
-## ✨ Why ArmorScan?
-
-<div align="center">
-  <img src="docs/assets/architecture-flow.svg" alt="ArmorScan 4-Stage Architecture Pipeline" width="100%" />
-</div>
-
-<br />
-
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>🔍 Deep Logic Auditing</h3>
-      <p>Goes far beyond surface header checks. Performs headless Playwright <strong>DOM sink taint tracing</strong> (<code>Element.innerHTML</code>, <code>document.write</code>), non-destructive <strong>Boolean SQLi</strong> &amp; <strong>NoSQLi</strong> differential analysis, Poison Null-Byte <strong>Path Traversal</strong>, and dual-session read-only <strong>BOLA/IDOR</strong> verification.</p>
-    </td>
-    <td width="50%" valign="top">
-      <h3>⚡ Blazing Fast &amp; Zero-False-Positive</h3>
-      <p>Powered by an asynchronous <code>httpx</code> HTTP/2 engine with SPA 404 canary baselining and two-pass differential verification. Every finding is graded by confidence (<code>confirmed</code>, <code>firm</code>, <code>tentative</code>) — achieving <strong>0 False Positives</strong> on OWASP Juice Shop.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <h3>🧩 Nuclei-Style YAML Engine</h3>
-      <p>Extend ArmorScan with community or custom declarative YAML security templates (<code>--templates ./my-templates/</code>) supporting multi-condition status, word, and regex matchers — without writing a single line of Python.</p>
-    </td>
-    <td width="50%" valign="top">
-      <h3>🛠️ Auto-Remediation &amp; DevSecOps</h3>
-      <p>Doesn't just report vulnerabilities — generates ready-to-paste security patches for <strong>Nginx</strong>, <strong>Express.js (Helmet)</strong>, <strong>FastAPI</strong>, and <strong>Django</strong>, plus native <strong>OASIS SARIF 2.1.0</strong> exports for GitHub Security tab integration.</p>
-    </td>
-  </tr>
-</table>
-
----
-
-## 🏆 Real-World Battle-Tested Benchmarks (v1.1.1)
-
-ArmorScan was rigorously audited against industry-standard, intentionally vulnerable public targets across disparate technology stacks. Every metric below is **empirically verified on live networks**:
-
-| Target Application | Architecture / Tech Stack | Scan Velocity | Attack Surface Discovered | Security Findings | Target Posture | ArmorScan Engine Index |
+| Target Application | Architecture / Tech Stack | Scan Velocity | Attack Surface Discovered | Security Findings | Target Posture | Engine Performance Index |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **OWASP Juice Shop** | Node.js / Angular SPA / SQLite | **7.18s** | **92 Paths**, OpenAPI Spec | **10 Findings** *(4 Confirmed Exploits)* | **0 / 100** *(F)* | **100 / 100 [A+]** |
-| **IBM Altoro Mutual** | Java / Apache-Coyote Tomcat | **7.09s** | **64 Paths**, 15 HTML Forms | **11 Findings** *(Session Hijack Risk)* | **2 / 100** *(F)* | **100 / 100 [A+]** |
-| **Zero Bank (Fortify)** | Java / Spring Enterprise Bank | **7.37s** | **12 Paths**, 3 HTML Forms | **10 Findings** *(HTTP TRACE / XST)* | **24 / 100** *(F)* | **100 / 100 [A+]** |
-| **VulnWeb ASP.NET** | Microsoft-IIS/8.5 / ASP.NET 2.0 | **8.89s** | **27 Paths**, 13 Forms *(ViewState)* | **13 Findings** *(Legacy .NET Leak)* | **18 / 100** *(F)* | **100 / 100 [A+]** |
+| **OWASP Juice Shop** | Node.js / Angular SPA / SQLite | **7.18s** | **92 Paths**, OpenAPI Spec | **10 Findings** *(4 Exploits)* | **0 / 100** *(F)* | **100 / 100 [A+]** |
+| **IBM Altoro Mutual** | Java / Tomcat Coyote | **7.09s** | **64 Paths**, 15 HTML Forms | **11 Findings** *(Session Hijack)* | **2 / 100** *(F)* | **100 / 100 [A+]** |
+| **Zero Bank (Fortify)** | Java / Spring Enterprise | **7.37s** | **12 Paths**, 3 HTML Forms | **10 Findings** *(XST / TRACE)* | **24 / 100** *(F)* | **100 / 100 [A+]** |
+| **VulnWeb ASP.NET** | Microsoft-IIS/8.5 / ASP.NET | **8.89s** | **27 Paths**, 13 Forms | **13 Findings** *(ViewState Leak)* | **18 / 100** *(F)* | **100 / 100 [A+]** |
 | **VulnWeb PHP** | Apache / Legacy PHP Core | **12.07s** | Deep Relative Paths | **2 Contextual Findings** | **100 / 100** *(A+)* | **96 / 100 [A+]** |
 
-> ⚡ **Average Scan Velocity across all targets:** `< 8.5 seconds` with **Zero False Positives (100% Heuristic Precision)** and **Zero Socket Leaks / Hangs**.
+> **Key Performance Metric:** Average scan velocity is **&lt; 8.5 seconds** across all live targets, with **0 false positives (100% precision)** and zero unhandled socket exceptions.
 
-### 🎯 Key Verified Exploits Captured on Live Targets:
-1. **Zehirli Null-Byte ile Dosya Sızdırma (Path Traversal - CWE-22):**
-   - *Target:* `https://demo.owasp-juice.shop`
-   - *Exploit:* `/ftp/package.json.bak` 403 Forbidden ile korunurken, URL sonuna `%2500.md` eklenerek dosya filtresi atlatıldı ve sistem yedek dosyası HTTP 200 ile sızdırıldı.
-2. **SQLite Hata İfşası & Boolean SQL Enjeksiyonu (SQLi - CWE-89):**
-   - *Target:* `https://demo.owasp-juice.shop/rest/products/search?q=apple'))`
-   - *Exploit:* SQLite hata mesajı (`SQLITE_ERROR:`) doğrudan tetiklendi; `1=1` (True) ve `1=2` (False) yanıt uzunluk farkıyla enjeksiyon teyit edildi.
-3. **Filtre Atlatmalı Açık Yönlendirme (Open Redirect - CWE-601):**
-   - *Target:* `https://demo.owasp-juice.shop/redirect?to=...`
-   - *Exploit:* Whitelist filtresi manipüle edilerek harici URL yönlendirmesi başarıyla kanıtlandı.
-4. **Banka Oturum Çerezi Güvenlik Zafiyeti (CWE-614 / CWE-1275):**
-   - *Target:* `http://altoro.testfire.net` & `http://testaspnet.vulnweb.com`
-   - *Exploit:* `JSESSIONID` ve `ASP.NET_SessionId` oturum çerezlerinde `Secure` ve `SameSite` bayraklarının eksik olduğu, oturum çalma (Session Hijacking) ve CSRF riskleri somut olarak belgelendi.
+### Empirically Verified Vulnerabilities on Live Targets
 
----
+- **Null-Byte Path Traversal (CWE-22):** On `demo.owasp-juice.shop`, bypasses HTTP 403 route guards on `/ftp/package.json.bak` via `%2500.md` poisoned suffixes, retrieving internal backup files over HTTP 200.
+- **SQLite Error Disclosure & SQLi (CWE-89):** Probing `/rest/products/search?q=apple'))` extracts raw `SQLITE_ERROR:` syntax exceptions and confirms boolean SQL injection via differential response lengths (`1=1` vs `1=2`).
+- **Unvalidated Open Redirect (CWE-601):** Validates query parameter whitelist bypasses on `/redirect?to=...` leading to arbitrary external domain navigation.
+- **Session Cookie Flag Absence (CWE-614 / CWE-1275):** Documents missing `Secure` and `SameSite` flags on `JSESSIONID` and `ASP.NET_SessionId` tokens across financial banking testbeds.
 
-## 📊 Scientific Benchmark: OWASP Juice Shop
+<details>
+<summary><strong>View OWASP Juice Shop 15-Category Scientific Recall Breakdown</strong></summary>
+
+<br />
 
 <div align="center">
   <img src="docs/assets/benchmark-chart.svg" alt="OWASP Juice Shop DAST Recall Progression Chart" width="100%" />
 </div>
-
-<br />
-
-ArmorScan is continuously benchmarked against two distinct environments:
-1. **External Independent Target — OWASP Juice Shop v19.0.0 (`127.0.0.1:3000`):** Out of 116 official challenges, 98 require business-logic abuse, OSINT, or destructive actions out of scope for non-destructive DAST. Against the **18 Automated Non-Destructive DAST-Detectable Categories**, ArmorScan achieves **83.3% Recall (15/18)** with **100.0% Precision (0 False Positives)**.
-2. **Controlled Regression Lab (`benchmark/labapp/`):** A 28-case deterministic FastAPI testbed used as a CI quality gate to ensure code changes never introduce false positives.
-
-| Metric | v0.4.0 (Baseline) | v0.4.1 (+Crawler, DOM, SQLi) | v0.5.0 (+NoSQLi, Traversal, YAML) | v0.6.0 (+Sentinel, AI Patch) | v1.1.0 (+Turbo Probe, Deep Spider, Index 100/100) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Automated DAST Scope** | 18 | 18 | 18 | 18 | **18 (Fixed Non-Destructive)** |
-| **True Positives (TP)** | 3 | 9 | 15 | 15 | **15 (DAST) + 4 Hybrid / Protocol Engines** |
-| **DAST Recall** | 16.7% | 50.0% | 83.3% | 83.3% | **83.3% DAST** |
-| **False Positives (FP)** | 0 | 0 | 0 | 0 | **0 FP Maintained** |
-| **Precision** | 100.0% | 100.0% | 100.0% | 100.0% | **100.0% Maintained** |
-| **Automated Tests** | 84 | 131 | 144 | 154 | **193 / 193 Passed** |
-
-<details>
-<summary><strong>🔬 View All 15 Live Findings Verified on OWASP Juice Shop (Click to Expand)</strong></summary>
 
 <br />
 
@@ -355,80 +109,156 @@ ArmorScan is continuously benchmarked against two distinct environments:
 | 1 | **Missing CSP** | `headers` | `MISSING_CSP` | HIGH | `confirmed` | Root response lacks `Content-Security-Policy` header. |
 | 2 | **Missing Referrer-Policy** | `headers` | `MISSING_REFERRER_POLICY` | LOW | `confirmed` | Root response lacks `Referrer-Policy` header. |
 | 3 | **Exposed OpenAPI Spec** | `exposure` | `EXPOSED_OPENAPI_SPEC` | MEDIUM | `confirmed` | JS bundle parser discovered `/api-docs/swagger.json` (HTTP 200). |
-| 4 | **Missing Rate Limiting** | `ratelimit` | `MISSING_RATE_LIMITING` | MEDIUM | `confirmed` | 15 rapid requests returned HTTP 200 with zero `429` or `RateLimit-*` headers. |
-| 5 | **Open Redirect Bypass** | `redirect` | `OPEN_REDIRECT_UNVALIDATED` | HIGH | `confirmed` | `/redirect?to=https://github.com/bkimminich/juice-shop?p=https://armorscan...` returned HTTP 302. |
-| 6 | **DB Error Disclosure** | `error_leak` | `DATABASE_ERROR_DISCLOSURE` | HIGH | `confirmed` | `/rest/products/search?q=armorscan'` leaked raw `SQLITE_ERROR: near ")"` stack trace. |
-| 7 | **JWT Missing `exp`** | `jwt_audit` | `JWT_MISSING_EXPIRATION` | MEDIUM | `confirmed` | Authenticated JWT payload lacks `exp` expiration claim. |
-| 8 | **JWT Sensitive Payload** | `jwt_audit` | `JWT_SENSITIVE_DATA_IN_PAYLOAD` | HIGH | `confirmed` | JWT payload exposes `email`, `password` MD5 hash, and `totpSecret`. |
-| 9 | **Unauthenticated Admin API** | `authz_check` | `MISSING_AUTHENTICATION_GATE` | HIGH | `confirmed` | Unauthenticated `GET /rest/admin/application-configuration` leaked full server config JSON. |
-| 10 | **Cross-Tenant IDOR** | `multi_step` | `CROSS_TENANT_OBJECT_ACCESS` | CRITICAL | `confirmed` | User A token accessed User B's `/rest/basket/1` (HTTP 200, 749B private items). |
-| 11 | **Boolean SQLi Differential** | `sqli` | `SQLI_BOOLEAN_DIFFERENCE_SUSPECTED`| HIGH | `tentative` | `/rest/products/search?q=nomatch')) OR 1=1--` returned 29,294B vs `AND 1=2--` (13B). |
-| 12 | **NoSQLi Operator Diff** | `nosqli` | `NOSQLI_OPERATOR_INJECTION_SUSPECTED`| HIGH | `tentative` | `/rest/track-order/` `' \|\| true \|\| '` returned 920B vs `' && false && '` (59B). |
-| 13 | **Path Traversal / Null-Byte**| `traversal` | `PATH_TRAVERSAL_DETECTED` | HIGH | `confirmed` | `/ftp/package.json.bak%2500.md` bypassed HTTP 403 filter and leaked `package.json.bak`. |
-| 14 | **Exposed Prometheus Metrics**| `templates` | `EXPOSED_PROMETHEUS_METRICS` | MEDIUM | `confirmed` | YAML template detected unauthenticated `/metrics` telemetry endpoint. |
-| 15 | **Client DOM XSS Taint Flow** | `browser_dom` | `DOM_XSS_SINK_TAINT_FLOW` | HIGH | `confirmed` | Headless Chromium traced URL hash `?q=` canary into `#searchValue` `Element.innerHTML`. |
-
-> Full methodology, numerator/denominator breakdown, and remaining 3 edge-case categories are documented in [`benchmark/juice_shop_results.md`](benchmark/juice_shop_results.md) and [`benchmark/results.md`](benchmark/results.md).
+| 4 | **Missing Rate Limiting** | `ratelimit` | `MISSING_RATE_LIMITING` | MEDIUM | `confirmed` | Rapid burst requests processed without HTTP 429 throttling. |
+| 5 | **Open Redirect Bypass** | `redirect` | `OPEN_REDIRECT_UNVALIDATED` | HIGH | `confirmed` | Redirect parameter accepts crafted external origin payload. |
+| 6 | **Database Error Disclosure** | `error_leak` | `DATABASE_ERROR_DISCLOSURE` | HIGH | `confirmed` | Leaked unhandled `SQLITE_ERROR: near ")"` stack trace in body. |
+| 7 | **JWT Missing Expiration** | `jwt_audit` | `JWT_MISSING_EXPIRATION` | MEDIUM | `confirmed` | Authenticated session JWT payload lacks `exp` claim. |
+| 8 | **Sensitive Data in JWT** | `jwt_audit` | `JWT_SENSITIVE_DATA_IN_PAYLOAD`| HIGH | `confirmed` | Token payload contains plaintext email, MD5 hash, and TOTP secret. |
+| 9 | **Unauthenticated Admin API** | `authz_check` | `MISSING_AUTHENTICATION_GATE` | HIGH | `confirmed` | Unprotected `GET /rest/admin/application-configuration` endpoint. |
+| 10 | **Cross-Tenant IDOR** | `multi_step` | `CROSS_TENANT_OBJECT_ACCESS` | CRITICAL | `confirmed` | Identity A accesses Identity B's `/rest/basket/1` basket data. |
+| 11 | **Boolean SQLi Differential**| `sqli` | `SQLI_BOOLEAN_DIFFERENCE_SUSPECTED`| HIGH | `tentative` | Significant differential response between `OR 1=1--` and `AND 1=2--`.|
+| 12 | **NoSQLi Operator Delta** | `nosqli` | `NOSQLI_OPERATOR_INJECTION_SUSPECTED`| HIGH | `tentative` | Differential response triggered via `' \|\| true \|\| '` operator. |
+| 13 | **Null-Byte Path Traversal** | `traversal` | `PATH_TRAVERSAL_DETECTED` | HIGH | `confirmed` | Poisoned suffix bypasses access control on `/ftp/package.json.bak`. |
+| 14 | **Exposed Metrics Endpoint** | `templates` | `EXPOSED_PROMETHEUS_METRICS` | MEDIUM | `confirmed` | Unauthenticated telemetry route `/metrics` verified active. |
+| 15 | **DOM XSS Sink Taint Flow** | `browser_dom` | `DOM_XSS_SINK_TAINT_FLOW` | HIGH | `confirmed` | Headless Chromium traced input canary to `Element.innerHTML`. |
 
 </details>
 
 ---
 
-## 🧩 YAML Template Library (29+ Rules)
+## Core Capabilities
 
-ArmorScan includes **29+ ready-to-run declarative YAML rules** organized into clean categories under [`armorscan/templates/`](armorscan/templates/):
-
-| Category | Count | Rules & Signatures Included |
-| :--- | :---: | :--- |
-| **`panels/`** | 9 | Spring Boot Actuator (`/env`, `/heapdump`), Docker Daemon API (`:2375`), Kubernetes etcd (`/version`), GitLab Public Registration, Kibana Status, Grafana Health, Jenkins JSON API, phpMyAdmin. |
-| **`cves/`** | 7 | Apache Path Traversal (`CVE-2021-41773`), Spring4Shell (`CVE-2022-22965`), Log4j JNDI probe (`CVE-2021-44228`), F5 BIG-IP Auth Bypass (`CVE-2022-1388`), Confluence OGNL (`CVE-2022-26134`), GeoServer RCE (`CVE-2024-36401`), Metabase Setup Token (`CVE-2023-38646`). |
-| **`cloud/`** | 5 | AWS S3 Bucket Public Listing (`?list-type=2`), Firebase DB Open Rules (`/.json`), Terraform State Leak (`/terraform.tfstate`), GCP Cloud Storage Bucket Listing, Azure Blob Container Listing. |
-| **`misconfig/`** | 8 | Prometheus Metrics (`/metrics`), Exposed `.git` repository index, Exposed `.env` file, phpinfo() diagnostic, Public Swagger UI, Django Production DEBUG mode. |
-
-Run all templates automatically during scans, or add custom templates with `--templates ./my-rules/`.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>Static AST Route Discovery</h4>
+      <p>Bridges SAST and DAST without executing untrusted code. Parses <strong>FastAPI</strong>, <strong>Flask</strong>, <strong>Django</strong>, and <strong>Express.js</strong> route trees to extract hidden API endpoints, query/body parameter names, and authentication middleware gaps.</p>
+      <code>armorscan http://target --source-dir ./backend</code>
+    </td>
+    <td width="50%" valign="top">
+      <h4>Multi-Role BOLA / IDOR Matrix</h4>
+      <p>Derives an automated role-based access control matrix using non-destructive differential requests across multiple bearer tokens or cookie sessions (e.g. <code>admin</code>, <code>user</code>, <code>guest</code>), flagging horizontal and vertical privilege leaks.</p>
+      <code>--matrix-roles "admin:Bearer &lt;T1&gt;,user:Bearer &lt;T2&gt;,guest:"</code>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>Protocol Resilience (WebSocket &amp; GraphQL)</h4>
+      <p>Validates WebSocket handshake security against Cross-Site WebSocket Hijacking (CSWSH) with foreign <code>Origin</code> headers, and audits GraphQL endpoints against unbounded batching queries and resource exhaustion amplification.</p>
+      <code>armorscan http://target/graphql</code>
+    </td>
+    <td width="50%" valign="top">
+      <h4>Ephemeral Blind Callback Engine</h4>
+      <p>Verifies Blind SSRF and unvalidated webhook processing with mathematical certainty. Spins up a temporary local socket listener bound strictly to <code>127.0.0.1</code> with cryptographic UUID tokens, eliminating reliance on third-party listeners.</p>
+      <code>armorscan http://target (Automatic Callback Auditor)</code>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>Concurrency &amp; Race Condition Barrier</h4>
+      <p>Coordinates parallel micro-burst requests released simultaneously via sub-2ms asyncio barriers to detect double-spending, coupon reuse, and missing row-level transactional isolation locks without denial of service.</p>
+      <code>armorscan http://target (Race Condition Check)</code>
+    </td>
+    <td width="50%" valign="top">
+      <h4>Passive HTTP Forward Proxy</h4>
+      <p>Zero-dependency asyncio HTTP/HTTPS proxy. Route browser automation suites (Playwright, Cypress) or manual QA traffic through ArmorScan to passively inspect live traffic for token leaks, missing headers, and error disclosure.</p>
+      <code>armorscan proxy --port 8080 --auto-audit</code>
+    </td>
+  </tr>
+</table>
 
 ---
 
-## 🤖 GitHub Action & SARIF 2.1.0
+## Interactive Workstation & Reporting
 
-Drop ArmorScan directly into `.github/workflows/security.yml` to block vulnerable PRs and publish findings to the **GitHub Security → Code Scanning** tab:
+### Terminal TUI Dashboard
+ArmorScan features an interactive terminal interface (`--tui`) allowing engineers to inspect findings ranked by severity, review live HTTP differential evidence, and copy ready-to-execute `curl` reproduction commands.
+
+<div align="center">
+  <img src="docs/assets/tui-preview.svg" alt="ArmorScan Interactive TUI Preview" width="100%" />
+</div>
+
+### Air-Gapped HTML Risk Topology
+Standalone HTML reports (`--html report.html`) include a zero-CDN, self-contained SVG risk topology graph mapping endpoints, discovered attack surfaces, and color-coded vulnerability nodes with 1-click finding card navigation.
+
+---
+
+## Architecture
+
+ArmorScan operates as an asynchronous, four-stage execution pipeline designed for rapid feedback and zero false positives:
+
+<div align="center">
+  <img src="docs/assets/architecture-flow.svg" alt="ArmorScan Architecture Pipeline" width="100%" />
+</div>
+
+1. **Surface Discovery:** Recursive BFS crawling, JavaScript bundle parsing, OpenAPI/Swagger extraction, and static AST route harvesting.
+2. **Protocol &amp; Logic Auditing:** Multi-role differential authorization checks, WebSocket &amp; GraphQL validation, and 29+ declarative YAML templates.
+3. **Differential Verification:** Two-pass verification with SPA 404 canary baselining, headless browser DOM taint tracing, and ephemeral callback listener matching.
+4. **DevSecOps Integration:** Instant scoring, SARIF 2.1.0 generation, and automated GitHub Pull Request patch synthesis.
+
+---
+
+## Declarative YAML Template Engine
+
+ArmorScan includes **29+ ready-to-run YAML templates** located in [`armorscan/templates/`](armorscan/templates/), compatible with Nuclei-style syntax:
+
+| Category | Rules | Signatures Included |
+| :--- | :---: | :--- |
+| **`panels/`** | 9 | Spring Boot Actuator (`/env`, `/heapdump`), Docker Daemon API, Kubernetes etcd, GitLab, Kibana, Grafana, Jenkins, phpMyAdmin. |
+| **`cves/`** | 7 | Apache Path Traversal (`CVE-2021-41773`), Spring4Shell (`CVE-2022-22965`), Log4j (`CVE-2021-44228`), F5 BIG-IP (`CVE-2022-1388`), Confluence OGNL (`CVE-2022-26134`), GeoServer RCE (`CVE-2024-36401`), Metabase (`CVE-2023-38646`). |
+| **`cloud/`** | 5 | AWS S3 Bucket Listing, Firebase Realtime Database open rules, Terraform State leak (`/terraform.tfstate`), GCP Storage, Azure Blob. |
+| **`misconfig/`** | 8 | Prometheus Metrics (`/metrics`), Exposed `.git` repository index, Exposed `.env` file, phpinfo() diagnostics, Swagger UI, Django Debug mode. |
+
+Execute custom rules seamlessly with `--templates ./my-templates/`.
+
+---
+
+## CI/CD Pipeline Gate
+
+Incorporate ArmorScan directly into GitHub Actions to block regressions and publish findings directly to the **GitHub Security → Code Scanning** tab:
 
 ```yaml
-name: ArmorScan DevSecOps Gate
+name: Security Audit Gate
 on: [push, pull_request]
 
 jobs:
-  security-audit:
+  dast-scan:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run ArmorScan DAST & Upload SARIF
-        uses: AmhetCnaa/ArmorScan@v0.6.0
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          target: "http://localhost:3000"
-          fail-under: "80"
-          sarif-file: "armorscan-results.sarif"
-          upload-sarif: "true"
-          comment-on-pr: "true"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          python-version: "3.12"
+
+      - name: Install ArmorScan
+        run: pip install armorscan
+
+      - name: Run Security Audit
+        run: |
+          armorscan https://staging.example.com \
+            --fail-under 80 \
+            --sarif armorscan-results.sarif
+
+      - name: Upload SARIF to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: armorscan-results.sarif
 ```
 
 ---
 
-## ⚠️ Legal & Ethical Disclaimer
+## Legal & Ethical Use Statement
 
-> **⚠️ Legal & Ethical Disclaimer:** ArmorScan is developed strictly for educational, defensive, and authorized security auditing purposes. Scanning targets without prior explicit written authorization is illegal. The developers assume no liability and are not responsible for any misuse or damage caused by this utility.
->
-> **🇹🇷 Yasal Uyarı ve Sorumluluk Reddi:** ArmorScan yalnızca eğitim, savunma ve yetkilendirilmiş güvenlik denetimleri için geliştirilmiştir. Hedef sistem sahiplerinin açık ve yazılı izni olmaksızın tarama yapılması yasa dışıdır (5237 sayılı TCK Madde 243-246). Geliştiriciler, bu aracın kötüye kullanımından veya yol açabileceği zararlardan hiçbir şekilde sorumlu tutulamaz.
+> **Notice:** ArmorScan is engineered strictly for defensive security auditing, authorization validation, and academic research. Conducting scans against targets without prior explicit written permission is strictly prohibited and violates national and international cybercrime legislation (e.g., Computer Fraud and Abuse Act 18 U.S.C. § 1030, UK Computer Misuse Act, Turkish Penal Code Articles 243-246). The maintainers assume no liability for misuse, unauthorized testing, or consequential damage.
 
 ---
 
 <div align="center">
-  <sub>Distributed under the <a href="LICENSE">MIT License (with Legal &amp; Ethical Use Clause)</a> • Built with ❤️ for the AppSec &amp; DevSecOps Community</sub>
+  <sub>Distributed under the <a href="LICENSE">MIT License with Ethical Clause</a> • Engineered for AppSec teams, DevSecOps pipelines, and systems engineers.</sub>
 </div>
