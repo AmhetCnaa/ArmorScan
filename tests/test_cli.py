@@ -97,10 +97,10 @@ def test_cli_parser_custom_flags():
 async def test_cli_quality_gate_failed(tmp_path):
     parser = build_parser()
     html_out = str(tmp_path / "report.html")
-    args = parser.parse_args(["https://vuln-site.com", "--fail-under", "80", "--html", html_out, "-q"])
+    args = parser.parse_args(["http://localhost:3000", "--fail-under", "80", "--html", html_out, "-q"])
 
     failing_result = ScanResult(
-        target=ScanTarget.from_url("https://vuln-site.com"),
+        target=ScanTarget.from_url("http://localhost:3000"),
         summary=ScanSummary(score=65, grade=Grade.C),
     )
 
@@ -120,7 +120,7 @@ async def test_cli_quality_gate_passed(tmp_path):
     html_out = str(tmp_path / "report.html")
     json_out = str(tmp_path / "report.json")
     args = parser.parse_args([
-        "https://secure-site.com",
+        "http://localhost:3000",
         "--fail-under", "80",
         "--html", html_out,
         "--json", json_out,
@@ -128,7 +128,7 @@ async def test_cli_quality_gate_passed(tmp_path):
     ])
 
     passing_result = ScanResult(
-        target=ScanTarget.from_url("https://secure-site.com"),
+        target=ScanTarget.from_url("http://localhost:3000"),
         summary=ScanSummary(score=95, grade=Grade.A_PLUS),
     )
 

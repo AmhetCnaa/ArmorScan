@@ -502,6 +502,18 @@ async def run_sentinel_watch_async(target_url: str, args: argparse.Namespace, co
 
     target = ScanTarget.from_url(target_url)
     verify_ssl = False if args.insecure else (not target.is_localhost)
+
+    from armorscan.core.ownership import OwnershipGate
+    async with HttpClient.for_target(target, verify_ssl=verify_ssl) as gate_client:
+        ownership = await OwnershipGate.verify_target_access(
+            target,
+            gate_client,
+            master_key=getattr(args, "master_key", None),
+        )
+    if not ownership.authorized:
+        console.print(f"[bold red]Authorization Denied:[/bold red] {ownership.message}")
+        return 3
+
     modules = get_default_modules(template_paths=getattr(args, "templates", None))
     runner = ScanRunner(modules=modules, verify_ssl=verify_ssl)
 
@@ -620,12 +632,47 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
         )
         return await run_benchmark_async(benchmark_args)
 
+    # 3b. Handle 'verify-domain' command: generate unique cryptographic domain ownership token
+    if raw_target and raw_target.lower() in ("verify-domain", "verify"):
+        from armorscan.core.ownership import OwnershipGate
+        domain_url = args.host_or_target
+        if not domain_url:
+            console.print("[bold red]Error:[/bold red] Missing target URL. Usage: [cyan]armorscan verify-domain https://your-domain.com[/cyan]")
+            return 2
+        try:
+            dom_target = ScanTarget.from_url(domain_url)
+        except Exception as e:
+            console.print(f"[bold red]Invalid target URL:[/bold red] {e}")
+            return 2
+        token = OwnershipGate.generate_domain_challenge(dom_target.host)
+        console.print(
+            Panel(
+                f"🔐 [bold white]ArmorScan Domain Ownership Challenge Generator[/bold white]\n\n"
+                f"Target Host: [bold cyan]{dom_target.host}[/bold cyan]\n"
+                f"Unique Verification Token (Valid Today UTC):\n"
+                f"  [bold green]{token}[/bold green]\n\n"
+                f"[bold yellow]Complete ANY of the following 3 verification methods on your server:[/bold yellow]\n"
+                f"  [bold white]1. HTTP Well-Known File (Recommended):[/bold white]\n"
+                f"     Create [cyan]{dom_target.base_url.rstrip('/')}/.well-known/armorscan-verify.txt[/cyan]\n"
+                f"     containing: [green]{token}[/green]\n\n"
+                f"  [bold white]2. HTML Meta Tag:[/bold white]\n"
+                f"     Add to your homepage [cyan]<head>[/cyan]:\n"
+                f"     [green]<meta name=\"armorscan-verification\" content=\"{token}\">[/green]\n\n"
+                f"  [bold white]3. HTTP Response Header:[/bold white]\n"
+                f"     Return header on [cyan]/[/cyan]:\n"
+                f"     [green]X-ArmorScan-Verification: {token}[/green]",
+                border_style="green",
+                box=ROUNDED,
+            )
+        )
+        return 0
+
     # 4. Handle 'scan' sub-syntax: 'armorscan scan https://...'
     if raw_target and raw_target.lower() == "scan":
         raw_target = args.host_or_target
 
     if not raw_target:
-        console.print("[bold red]Error:[/bold red] Missing target URL. Usage: [cyan]armorscan https://example.com[/cyan], [cyan]armorscan discover[/cyan], or [cyan]armorscan benchmark[/cyan]")
+        console.print("[bold red]Error:[/bold red] Missing target URL. Usage: [cyan]armorscan https://example.com[/cyan], [cyan]armorscan verify-domain https://example.com[/cyan], or [cyan]armorscan discover[/cyan]")
         return 2
 
     try:
@@ -661,6 +708,36 @@ async def run_scan_async(args: argparse.Namespace, console: Console) -> int:
 
     if auth_config.has_auth and not args.quiet:
         console.print("🔐 [bold cyan]Authenticated scanning enabled[/bold cyan] (custom credentials / macro configured)\n")
+
+    # 4b. Pre-Flight Zero-Trust Domain Ownership & Master Key Gate
+    from armorscan.core.ownership import OwnershipGate
+    async with HttpClient.for_target(target, verify_ssl=verify_ssl, auth_config=auth_config) as gate_client:
+        ownership = await OwnershipGate.verify_target_access(
+            target,
+            gate_client,
+            master_key=getattr(args, "master_key", None),
+        )
+    if not ownership.authorized:
+        console.print(
+            Panel(
+                f"🛑 [bold red]TARGET AUTHORIZATION DENIED (ZERO-TRUST OWNERSHIP GATE)[/bold red]\n\n"
+                f"ArmorScan strictly prohibits unauthorized scanning of third-party external websites.\n"
+                f"Target [bold yellow]{target.host}[/bold yellow] does not present valid cryptographic ownership proof.\n\n"
+                f"[bold white]If you are the administrator of {target.host}, verify ownership using ONE method:[/bold white]\n"
+                f"  • [bold cyan]Method 1 (File):[/bold cyan] Place [green]{ownership.expected_token}[/green] inside:\n"
+                f"    [underline]{target.base_url.rstrip('/')}/.well-known/armorscan-verify.txt[/underline]\n"
+                f"  • [bold cyan]Method 2 (HTML):[/bold cyan] Add to homepage <head>:\n"
+                f"    [green]<meta name=\"armorscan-verification\" content=\"{ownership.expected_token}\">[/green]\n"
+                f"  • [bold cyan]Method 3 (Header):[/bold cyan] Add HTTP response header:\n"
+                f"    [green]X-ArmorScan-Verification: {ownership.expected_token}[/green]\n\n"
+                f"[dim]Tip: Run 'armorscan verify-domain {target.base_url}' for setup instructions.[/dim]",
+                border_style="red",
+                box=ROUNDED,
+            )
+        )
+        return 3
+    elif not args.quiet and ownership.mode != "localhost":
+        console.print(f"🛡️ [bold green]Target Authorization Verified:[/bold green] {ownership.message}\n")
 
     # 5. Optional Web Crawling & Deep Spidering
     discovered_forms_count = 0
